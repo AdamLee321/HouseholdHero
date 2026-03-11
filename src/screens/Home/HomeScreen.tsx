@@ -47,15 +47,8 @@ const TILES: Tile[] = [
   },
   {
     label: 'My Family',
-    subtitle: 'Members, roles & admin',
-    emoji: '👨‍👩‍👧‍👦',
-    screen: 'MyFamily',
-    colorKey: 'family',
-  },
-  {
-    label: 'My Family',
     subtitle: '1 Member',
-    emoji: '👪',
+    emoji: '👨‍👩‍👧‍👦',
     screen: 'MyFamily',
     colorKey: 'family',
   },
