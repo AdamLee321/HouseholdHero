@@ -32,6 +32,16 @@ export default function FloatingTabBar({
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom > 0 ? insets.bottom : 16;
 
+  // Hide when navigated into a nested screen (any stack deeper than root)
+  const activeRoute = state.routes[state.index];
+  const nestedState = activeRoute?.state;
+  const isNestedDeep =
+    nestedState !== undefined &&
+    nestedState.index !== undefined &&
+    nestedState.index > 0;
+
+  if (isNestedDeep) {return null;}
+
   return (
     <View
       style={[
