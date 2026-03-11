@@ -5,6 +5,7 @@ import { HomeStackParamList } from '../types';
 import HomeScreen from '../screens/Home/HomeScreen';
 import ShoppingScreen from '../screens/Shopping/ShoppingScreen';
 import TodosScreen from '../screens/Todos/TodosScreen';
+import TodoListScreen from '../screens/Todos/TodoListScreen';
 import ChoresScreen from '../screens/Chores/ChoresScreen';
 import CalendarScreen from '../screens/Calendar/CalendarScreen';
 import MessagesScreen from '../screens/Messages/MessagesScreen';
@@ -41,6 +42,11 @@ export default function HomeStack() {
         name="Todos"
         component={TodosScreen}
         options={{ title: 'To-Do Lists' }}
+      />
+      <Stack.Screen
+        name="TodoList"
+        component={TodoListScreen}
+        options={({route}) => ({title: route.params.title})}
       />
       <Stack.Screen
         name="Chores"

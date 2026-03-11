@@ -13,6 +13,7 @@ export type HomeStackParamList = {
   Home: undefined;
   Shopping: undefined;
   Todos: undefined;
+  TodoList: {listId: string; title: string};
   Chores: undefined;
   Calendar: undefined;
   Messages: undefined;

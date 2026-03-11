@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList } from '../../types';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
+import { subscribeToTodoLists } from '../../services/todoService';
+import auth from '@react-native-firebase/auth';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -60,8 +62,14 @@ export default function HomeScreen() {
   const { family, profile } = useFamilyStore();
   const insets = useSafeAreaInsets();
 
-  const todosCount = 0;
+  const [todosCount, setTodosCount] = useState(0);
   const calendarCount = 0;
+  const uid = auth().currentUser?.uid ?? '';
+
+  useEffect(() => {
+    if (!family) {return;}
+    return subscribeToTodoLists(family.id, uid, lists => setTodosCount(lists.length));
+  }, [family]);
 
   function getSubtitle(tile: Tile): string | undefined {
     if (tile.screen === 'Todos') {
