@@ -25,7 +25,7 @@ export default function HomeStack() {
         headerTitleStyle: {color: colors.text, fontWeight: '700'},
         headerShadowVisible: false,
       }}>
-      <Stack.Screen name="Home" component={HomeScreen} options={{title: 'HouseholdHero'}} />
+      <Stack.Screen name="Home" component={HomeScreen} options={{headerShown: false}} />
       <Stack.Screen name="Shopping" component={ShoppingScreen} options={{title: 'Shopping List'}} />
       <Stack.Screen name="Todos" component={TodosScreen} options={{title: 'To-Do Lists'}} />
       <Stack.Screen name="Chores" component={ChoresScreen} options={{title: 'Chores'}} />

@@ -6,13 +6,16 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Switch,
 } from 'react-native';
 import {useTheme} from '../../theme/useTheme';
+import {useThemeStore} from '../../store/themeStore';
 import {useAuthStore} from '../../store/authStore';
 import {useFamilyStore} from '../../store/familyStore';
 
 export default function SettingsScreen() {
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
+  const {preference, setPreference} = useThemeStore();
   const {signOut, user} = useAuthStore();
   const {family, profile} = useFamilyStore();
 
@@ -57,6 +60,30 @@ export default function SettingsScreen() {
         </View>
       )}
 
+      {/* Appearance */}
+      <View style={[styles.section, {backgroundColor: colors.surface}]}>
+        <Text style={[styles.sectionTitle, {color: colors.textSecondary}]}>APPEARANCE</Text>
+
+        <View style={[styles.row, {borderBottomColor: colors.border}]}>
+          <Text style={[styles.rowLabel, {color: colors.text}]}>Dark Mode</Text>
+          <Switch
+            value={isDark}
+            onValueChange={val => setPreference(val ? 'dark' : 'light')}
+            trackColor={{false: colors.border, true: colors.primary}}
+            thumbColor="#fff"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => setPreference('system')}>
+          <Text style={[styles.rowLabel, {color: colors.text}]}>Use System Default</Text>
+          {preference === 'system' && (
+            <Text style={[styles.checkmark, {color: colors.primary}]}>✓</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
       {/* Sign out */}
       <TouchableOpacity
         style={[styles.signOutBtn, {backgroundColor: colors.surface, borderColor: colors.danger}]}
@@ -70,51 +97,38 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {flex: 1},
   content: {padding: 16, paddingBottom: 40},
-  card: {
-    borderRadius: 18,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
+  card: {borderRadius: 18, padding: 24, alignItems: 'center', marginBottom: 16},
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+    width: 72, height: 72, borderRadius: 36,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
   },
   avatarText: {fontSize: 30, fontWeight: '700'},
   displayName: {fontSize: 20, fontWeight: '700', marginBottom: 4},
   email: {fontSize: 14},
-  familyCard: {
-    borderRadius: 18,
-    padding: 24,
-    marginBottom: 16,
-  },
+  familyCard: {borderRadius: 18, padding: 24, marginBottom: 16},
   familyCardLabel: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    marginBottom: 4,
+    color: 'rgba(255,255,255,0.65)', fontSize: 11,
+    fontWeight: '700', letterSpacing: 1.2, marginBottom: 4,
   },
   familyCardName: {color: '#fff', fontSize: 22, fontWeight: '700', marginBottom: 16},
   divider: {height: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 16},
-  familyCardCode: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: 10,
-    marginBottom: 8,
-  },
+  familyCardCode: {color: '#fff', fontSize: 36, fontWeight: '800', letterSpacing: 10, marginBottom: 8},
   familyCardHint: {color: 'rgba(255,255,255,0.6)', fontSize: 12},
+  section: {borderRadius: 18, marginBottom: 16, overflow: 'hidden'},
+  sectionTitle: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 1.2,
+    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8,
+  },
+  row: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  rowLabel: {fontSize: 16},
+  checkmark: {fontSize: 18, fontWeight: '700'},
   signOutBtn: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    marginTop: 8,
+    borderRadius: 14, paddingVertical: 16,
+    alignItems: 'center', borderWidth: 1, marginTop: 8,
   },
   signOutText: {fontWeight: '700', fontSize: 16},
 });

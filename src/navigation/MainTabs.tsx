@@ -38,10 +38,7 @@ export default function MainTabs() {
         component={SettingsScreen}
         options={{
           title: 'Settings',
-          headerShown: true,
-          headerStyle: {backgroundColor: colors.surface},
-          headerTitleStyle: {color: colors.text, fontWeight: '700'},
-          headerShadowVisible: false,
+          headerShown: false,
           tabBarIcon: ({focused}) => (
             <Text style={{fontSize: 22, opacity: focused ? 1 : 0.5}}>⚙️</Text>
           ),
