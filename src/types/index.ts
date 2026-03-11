@@ -1,6 +1,7 @@
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
+  // Only one is shown at a time based on auth state
 };
 
 export type MainTabParamList = {
