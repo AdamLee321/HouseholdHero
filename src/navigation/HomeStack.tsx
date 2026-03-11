@@ -13,6 +13,9 @@ import ContactsScreen from '../screens/Contacts/ContactsScreen';
 import LocationScreen from '../screens/Location/LocationScreen';
 import DocumentsScreen from '../screens/Documents/DocumentsScreen';
 import MyFamilyScreen from '../screens/MyFamily/MyFamilyScreen';
+import BudgetScreen from '../screens/Budget/BudgetScreen';
+import GalleryScreen from '../screens/Gallery/GalleryScreen';
+import RecipesScreen from '../screens/Recipes/RecipesScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -82,6 +85,21 @@ export default function HomeStack() {
         name="MyFamily"
         component={MyFamilyScreen}
         options={{ title: 'My Family' }}
+      />
+      <Stack.Screen
+        name="Budget"
+        component={BudgetScreen}
+        options={{ title: 'Budget' }}
+      />
+      <Stack.Screen
+        name="Gallery"
+        component={GalleryScreen}
+        options={{ title: 'Gallery' }}
+      />
+      <Stack.Screen
+        name="Recipes"
+        component={RecipesScreen}
+        options={{ title: 'Recipes' }}
       />
     </Stack.Navigator>
   );

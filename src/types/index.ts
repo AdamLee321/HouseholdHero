@@ -21,4 +21,7 @@ export type HomeStackParamList = {
   Location: undefined;
   Documents: undefined;
   MyFamily: undefined;
+  Budget: undefined;
+  Gallery: undefined;
+  Recipes: undefined;
 };

@@ -23,7 +23,10 @@ export const lightColors = {
     contacts: { bg: '#FEE8E8', icon: '#FF3B30' },
     location: { bg: '#E8EEFE', icon: '#5856D6' },
     documents: { bg: '#FEFBE8', icon: '#FFCC00' },
-    family: { bg: '#E8F8F8', icon: '#00C7BE' },
+    family:    { bg: '#E8F8F8', icon: '#00C7BE' },
+    budget:    { bg: '#E8F6EE', icon: '#30B050' },
+    gallery:   { bg: '#FEE8F5', icon: '#FF2D9B' },
+    recipes:   { bg: '#FFF0E8', icon: '#FF6B35' },
   },
 };
 
@@ -51,7 +54,10 @@ export const darkColors: typeof lightColors = {
     contacts: { bg: '#2B0D0D', icon: '#FF453A' },
     location: { bg: '#0D0D2B', icon: '#6E6CF0' },
     documents: { bg: '#2B2700', icon: '#FFD60A' },
-    family: { bg: '#0D2B2B', icon: '#5AC8FA' },
+    family:    { bg: '#0D2B2B', icon: '#5AC8FA' },
+    budget:    { bg: '#0D2B1A', icon: '#30D158' },
+    gallery:   { bg: '#2B0D1E', icon: '#FF375F' },
+    recipes:   { bg: '#2B1A0D', icon: '#FF9F0A' },
   },
 };
 

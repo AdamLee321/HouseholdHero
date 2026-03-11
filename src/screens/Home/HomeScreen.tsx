@@ -51,10 +51,31 @@ const TILES: Tile[] = [
   },
   {
     label: 'My Family',
-    subtitle: '1 Member',
+    subtitle: 'Members, roles & admin',
     emoji: '👨‍👩‍👧‍👦',
     screen: 'MyFamily',
     colorKey: 'family',
+  },
+  {
+    label: 'Budget',
+    subtitle: 'Monthly spending tracker',
+    emoji: '💰',
+    screen: 'Budget',
+    colorKey: 'budget',
+  },
+  {
+    label: 'Gallery',
+    subtitle: 'Shared family photos',
+    emoji: '📸',
+    screen: 'Gallery',
+    colorKey: 'gallery',
+  },
+  {
+    label: 'Recipes',
+    subtitle: 'Family recipe book',
+    emoji: '🍳',
+    screen: 'Recipes',
+    colorKey: 'recipes',
   },
 ];
 
