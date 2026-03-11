@@ -1,7 +1,8 @@
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;
-  // Only one is shown at a time based on auth state
+  Onboarding: undefined;
+  // Only one is shown at a time based on auth + family state
 };
 
 export type MainTabParamList = {
