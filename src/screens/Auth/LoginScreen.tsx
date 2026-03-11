@@ -9,13 +9,16 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import ReactNativeBiometrics from 'react-native-biometrics';
+import {useTheme} from '../../theme/useTheme';
 
 type Mode = 'login' | 'register' | 'phone';
 
 export default function LoginScreen() {
+  const {colors} = useTheme();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,9 +46,7 @@ export default function LoginScreen() {
   }
 
   async function handleSendOtp() {
-    if (!phone) {
-      return Alert.alert('Error', 'Please enter a phone number.');
-    }
+    if (!phone) {return Alert.alert('Error', 'Please enter a phone number.');}
     setLoading(true);
     try {
       const confirmation = await auth().signInWithPhoneNumber(phone);
@@ -62,7 +63,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await confirm.confirm(otp);
-    } catch (e: any) {
+    } catch {
       Alert.alert('Invalid code', 'Please check the code and try again.');
     } finally {
       setLoading(false);
@@ -75,147 +76,146 @@ export default function LoginScreen() {
     if (!available) {
       return Alert.alert('Unavailable', 'Biometric authentication is not available on this device.');
     }
-    const {success} = await rnBiometrics.simplePrompt({
-      promptMessage: 'Confirm identity',
-    });
+    const {success} = await rnBiometrics.simplePrompt({promptMessage: 'Confirm identity'});
     if (success) {
-      // Biometric success — in a real app you'd retrieve stored credentials
-      // and sign in silently. For now we show guidance.
       Alert.alert('Biometric verified', 'Please sign in with your credentials first to enable biometric login.');
     }
   }
 
+  const inputStyle = [styles.input, {
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.text,
+  }];
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, {backgroundColor: colors.background}]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.inner}>
+      <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
         <Text style={styles.logo}>🏠</Text>
-        <Text style={styles.title}>HouseholdHero</Text>
+        <Text style={[styles.title, {color: colors.text}]}>HouseholdHero</Text>
 
-        {/* Mode tabs */}
-        <View style={styles.tabs}>
+        <View style={[styles.tabs, {backgroundColor: colors.surfaceSecondary}]}>
           {(['login', 'register', 'phone'] as Mode[]).map(m => (
             <TouchableOpacity
               key={m}
-              style={[styles.tab, mode === m && styles.tabActive]}
+              style={[styles.tab, mode === m && [styles.tabActive, {backgroundColor: colors.surface}]]}
               onPress={() => {setMode(m); setConfirm(null);}}>
-              <Text style={[styles.tabText, mode === m && styles.tabTextActive]}>
-                {m === 'login' ? 'Email' : m === 'register' ? 'Register' : 'Phone'}
+              <Text style={[styles.tabText, {color: mode === m ? colors.primary : colors.textTertiary}]}>
+                {m === 'login' ? 'Sign In' : m === 'register' ? 'Register' : 'Phone'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Email / Register form */}
         {(mode === 'login' || mode === 'register') && (
           <>
             <TextInput
-              style={styles.input}
+              style={inputStyle}
               placeholder="Email"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
             />
             <TextInput
-              style={styles.input}
+              style={inputStyle}
               placeholder="Password"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textTertiary}
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
-            <TouchableOpacity style={styles.btn} onPress={handleEmailAuth} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
+            <TouchableOpacity
+              style={[styles.btn, {backgroundColor: colors.primary}]}
+              onPress={handleEmailAuth}
+              disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : (
                 <Text style={styles.btnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
               )}
             </TouchableOpacity>
           </>
         )}
 
-        {/* Phone form */}
         {mode === 'phone' && (
           <>
             {!confirm ? (
               <>
                 <TextInput
-                  style={styles.input}
+                  style={inputStyle}
                   placeholder="+1 234 567 8900"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={setPhone}
                 />
-                <TouchableOpacity style={styles.btn} onPress={handleSendOtp} disabled={loading}>
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
+                <TouchableOpacity
+                  style={[styles.btn, {backgroundColor: colors.primary}]}
+                  onPress={handleSendOtp}
+                  disabled={loading}>
+                  {loading ? <ActivityIndicator color="#fff" /> : (
                     <Text style={styles.btnText}>Send Code</Text>
                   )}
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.hint}>Enter the 6-digit code sent to {phone}</Text>
+                <Text style={[styles.hint, {color: colors.textSecondary}]}>
+                  Enter the 6-digit code sent to {phone}
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={inputStyle}
                   placeholder="000000"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={colors.textTertiary}
                   keyboardType="number-pad"
                   maxLength={6}
                   value={otp}
                   onChangeText={setOtp}
                 />
-                <TouchableOpacity style={styles.btn} onPress={handleVerifyOtp} disabled={loading}>
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
+                <TouchableOpacity
+                  style={[styles.btn, {backgroundColor: colors.primary}]}
+                  onPress={handleVerifyOtp}
+                  disabled={loading}>
+                  {loading ? <ActivityIndicator color="#fff" /> : (
                     <Text style={styles.btnText}>Verify Code</Text>
                   )}
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setConfirm(null)}>
-                  <Text style={styles.link}>Change number</Text>
+                  <Text style={[styles.link, {color: colors.primary}]}>Change number</Text>
                 </TouchableOpacity>
               </>
             )}
           </>
         )}
 
-        {/* Biometric */}
         <TouchableOpacity style={styles.biometricBtn} onPress={handleBiometric}>
-          <Text style={styles.biometricText}>🔒 Use Face ID / Fingerprint</Text>
+          <Text style={[styles.biometricText, {color: colors.primary}]}>🔒 Use Face ID / Fingerprint</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
-  inner: {flex: 1, justifyContent: 'center', paddingHorizontal: 28},
+  container: {flex: 1},
+  inner: {flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingVertical: 40},
   logo: {fontSize: 56, textAlign: 'center', marginBottom: 8},
-  title: {fontSize: 28, fontWeight: '700', textAlign: 'center', color: '#1a1a1a', marginBottom: 32},
-  tabs: {flexDirection: 'row', marginBottom: 20, borderRadius: 10, backgroundColor: '#f0f0f0', padding: 4},
+  title: {fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 32},
+  tabs: {flexDirection: 'row', marginBottom: 20, borderRadius: 10, padding: 4},
   tab: {flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center'},
-  tabActive: {backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2},
-  tabText: {color: '#999', fontWeight: '600'},
-  tabTextActive: {color: '#4F6EF7'},
+  tabActive: {shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2},
+  tabText: {fontWeight: '600'},
   input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12,
+    borderWidth: 1, borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 16, color: '#1a1a1a', marginBottom: 12,
+    fontSize: 16, marginBottom: 12,
   },
-  btn: {
-    backgroundColor: '#4F6EF7', borderRadius: 12,
-    paddingVertical: 16, alignItems: 'center', marginTop: 4,
-  },
+  btn: {borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 4},
   btnText: {color: '#fff', fontWeight: '700', fontSize: 16},
-  hint: {color: '#666', textAlign: 'center', marginBottom: 12},
-  link: {color: '#4F6EF7', textAlign: 'center', marginTop: 12},
+  hint: {textAlign: 'center', marginBottom: 12},
+  link: {textAlign: 'center', marginTop: 12},
   biometricBtn: {marginTop: 24, alignItems: 'center'},
-  biometricText: {color: '#4F6EF7', fontWeight: '600', fontSize: 15},
+  biometricText: {fontWeight: '600', fontSize: 15},
 });
