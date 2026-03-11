@@ -27,9 +27,14 @@ function generateInviteCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-export async function createFamily(familyName: string, displayName: string): Promise<Family> {
+export async function createFamily(
+  familyName: string,
+  displayName: string,
+): Promise<Family> {
   const user = auth().currentUser;
-  if (!user) {throw new Error('Not authenticated');}
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
 
   const inviteCode = generateInviteCode();
   const familyRef = firestore().collection('families').doc();
@@ -43,19 +48,30 @@ export async function createFamily(familyName: string, displayName: string): Pro
 
   await familyRef.set(family);
 
-  await firestore().collection('users').doc(user.uid).set({
-    uid: user.uid,
-    displayName: displayName.trim(),
-    email: user.email ?? null,
-    familyId: familyRef.id,
-  }, {merge: true});
+  await firestore()
+    .collection('users')
+    .doc(user.uid)
+    .set(
+      {
+        uid: user.uid,
+        displayName: displayName.trim(),
+        email: user.email ?? null,
+        familyId: familyRef.id,
+      },
+      { merge: true },
+    );
 
-  return {id: familyRef.id, ...family};
+  return { id: familyRef.id, ...family };
 }
 
-export async function joinFamily(inviteCode: string, displayName: string): Promise<Family> {
+export async function joinFamily(
+  inviteCode: string,
+  displayName: string,
+): Promise<Family> {
   const user = auth().currentUser;
-  if (!user) {throw new Error('Not authenticated');}
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
 
   const snapshot = await firestore()
     .collection('families')
@@ -68,34 +84,46 @@ export async function joinFamily(inviteCode: string, displayName: string): Promi
   }
 
   const doc = snapshot.docs[0];
-  const family = {id: doc.id, ...doc.data()} as Family;
+  const family = { id: doc.id, ...doc.data() } as Family;
 
   await doc.ref.update({
     members: firestore.FieldValue.arrayUnion(user.uid),
   });
 
-  await firestore().collection('users').doc(user.uid).set({
-    uid: user.uid,
-    displayName: displayName.trim(),
-    email: user.email ?? null,
-    familyId: doc.id,
-  }, {merge: true});
+  await firestore()
+    .collection('users')
+    .doc(user.uid)
+    .set(
+      {
+        uid: user.uid,
+        displayName: displayName.trim(),
+        email: user.email ?? null,
+        familyId: doc.id,
+      },
+      { merge: true },
+    );
 
   return family;
 }
 
 export async function loadUserProfile(): Promise<UserProfile | null> {
   const user = auth().currentUser;
-  if (!user) {return null;}
+  if (!user) {
+    return null;
+  }
 
   const doc = await firestore().collection('users').doc(user.uid).get();
-  if (!doc.exists) {return null;}
+  if (!doc.exists) {
+    return null;
+  }
 
   return doc.data() as UserProfile;
 }
 
 export async function loadFamily(familyId: string): Promise<Family | null> {
   const doc = await firestore().collection('families').doc(familyId).get();
-  if (!doc.exists) {return null;}
-  return {id: doc.id, ...doc.data()} as Family;
+  if (!doc.exists) {
+    return null;
+  }
+  return { id: doc.id, ...doc.data() } as Family;
 }

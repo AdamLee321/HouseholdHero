@@ -19,4 +19,5 @@ export type HomeStackParamList = {
   Contacts: undefined;
   Location: undefined;
   Documents: undefined;
+  MyFamily: undefined;
 };

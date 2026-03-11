@@ -15,14 +15,15 @@ export const lightColors = {
 
   // Feature tile accent colours
   tiles: {
-    shopping:  {bg: '#EEF1FE', icon: '#4F6EF7'},
-    todos:     {bg: '#E8F8EE', icon: '#34C759'},
-    chores:    {bg: '#FEF3E8', icon: '#FF9500'},
-    calendar:  {bg: '#F2EEFE', icon: '#AF52DE'},
-    messages:  {bg: '#E8F8F8', icon: '#00C7BE'},
-    contacts:  {bg: '#FEE8E8', icon: '#FF3B30'},
-    location:  {bg: '#E8EEFE', icon: '#5856D6'},
-    documents: {bg: '#FEFBE8', icon: '#FFCC00'},
+    shopping: { bg: '#EEF1FE', icon: '#4F6EF7' },
+    todos: { bg: '#E8F8EE', icon: '#34C759' },
+    chores: { bg: '#FEF3E8', icon: '#FF9500' },
+    calendar: { bg: '#F2EEFE', icon: '#AF52DE' },
+    messages: { bg: '#E8F8F8', icon: '#00C7BE' },
+    contacts: { bg: '#FEE8E8', icon: '#FF3B30' },
+    location: { bg: '#E8EEFE', icon: '#5856D6' },
+    documents: { bg: '#FEFBE8', icon: '#FFCC00' },
+    family: { bg: '#E8F8F8', icon: '#00C7BE' },
   },
 };
 
@@ -42,14 +43,15 @@ export const darkColors: typeof lightColors = {
   success: '#32D74B',
 
   tiles: {
-    shopping:  {bg: '#1A2040', icon: '#6B8AFF'},
-    todos:     {bg: '#0D2B17', icon: '#32D74B'},
-    chores:    {bg: '#2B1D00', icon: '#FF9F0A'},
-    calendar:  {bg: '#200D2B', icon: '#BF5AF2'},
-    messages:  {bg: '#0D2B2B', icon: '#5AC8FA'},
-    contacts:  {bg: '#2B0D0D', icon: '#FF453A'},
-    location:  {bg: '#0D0D2B', icon: '#6E6CF0'},
-    documents: {bg: '#2B2700', icon: '#FFD60A'},
+    shopping: { bg: '#1A2040', icon: '#6B8AFF' },
+    todos: { bg: '#0D2B17', icon: '#32D74B' },
+    chores: { bg: '#2B1D00', icon: '#FF9F0A' },
+    calendar: { bg: '#200D2B', icon: '#BF5AF2' },
+    messages: { bg: '#0D2B2B', icon: '#5AC8FA' },
+    contacts: { bg: '#2B0D0D', icon: '#FF453A' },
+    location: { bg: '#0D0D2B', icon: '#6E6CF0' },
+    documents: { bg: '#2B2700', icon: '#FFD60A' },
+    family: { bg: '#0D2B2B', icon: '#5AC8FA' },
   },
 };
 

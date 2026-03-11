@@ -1,4 +1,4 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 
 type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -9,5 +9,5 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>(set => ({
   preference: 'system',
-  setPreference: preference => set({preference}),
+  setPreference: preference => set({ preference }),
 }));

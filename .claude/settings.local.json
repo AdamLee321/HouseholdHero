@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/adamlee/Desktop/Apps/HouseholdHero/ios && pod install 2>&1 | tail -10)",
+      "Bash(xcodebuild -workspace HouseholdHero.xcworkspace -scheme HouseholdHero -configuration Debug -sdk iphonesimulator 2>&1 | grep \": error:\" | head -10)",
+      "Bash(npx react-native:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

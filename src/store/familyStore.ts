@@ -1,5 +1,5 @@
-import {create} from 'zustand';
-import {Family, UserProfile} from '../services/familyService';
+import { create } from 'zustand';
+import { Family, UserProfile } from '../services/familyService';
 
 interface FamilyState {
   family: Family | null;
@@ -15,8 +15,8 @@ export const useFamilyStore = create<FamilyState>(set => ({
   family: null,
   profile: null,
   loading: false,
-  setFamily: family => set({family}),
-  setProfile: profile => set({profile}),
-  setLoading: loading => set({loading}),
-  reset: () => set({family: null, profile: null, loading: false}),
+  setFamily: family => set({ family }),
+  setProfile: profile => set({ profile }),
+  setLoading: loading => set({ loading }),
+  reset: () => set({ family: null, profile: null, loading: false }),
 }));
