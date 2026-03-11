@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { HomeStackParamList } from '../../types';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { subscribeToTodoLists } from '../../services/todoService';
+import { subscribeToShoppingList } from '../../services/shoppingService';
 import auth from '@react-native-firebase/auth';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
@@ -63,15 +64,32 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
   const [todosCount, setTodosCount] = useState(0);
+  const [shoppingCount, setShoppingCount] = useState(0);
   const calendarCount = 0;
   const uid = auth().currentUser?.uid ?? '';
 
   useEffect(() => {
-    if (!family) {return;}
-    return subscribeToTodoLists(family.id, uid, lists => setTodosCount(lists.length));
+    if (!family) {
+      return;
+    }
+    const unsubTodos = subscribeToTodoLists(family.id, uid, lists =>
+      setTodosCount(lists.length),
+    );
+    const unsubShopping = subscribeToShoppingList(family.id, items => {
+      setShoppingCount(items.filter(i => !i.checked).length);
+    });
+    return () => {
+      unsubTodos();
+      unsubShopping();
+    };
   }, [family]);
 
   function getSubtitle(tile: Tile): string | undefined {
+    if (tile.screen === 'Shopping') {
+      return shoppingCount > 0
+        ? `${shoppingCount} item${shoppingCount !== 1 ? 's' : ''}`
+        : undefined;
+    }
     if (tile.screen === 'Todos') {
       return todosCount > 0
         ? `${todosCount} list${todosCount !== 1 ? 's' : ''}`
