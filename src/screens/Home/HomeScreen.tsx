@@ -15,6 +15,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingList } from '../../services/shoppingService';
+import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import auth from '@react-native-firebase/auth';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
@@ -62,6 +63,7 @@ export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { family, profile } = useFamilyStore();
   const insets = useSafeAreaInsets();
+  const tabBarScroll = useTabBarScroll();
 
   const [todosCount, setTodosCount] = useState(0);
   const [shoppingCount, setShoppingCount] = useState(0);
@@ -107,6 +109,7 @@ export default function HomeScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
+      {...tabBarScroll}
       contentContainerStyle={[
         styles.content,
         { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 100 },

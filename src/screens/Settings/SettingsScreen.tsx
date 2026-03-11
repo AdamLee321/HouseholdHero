@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { useTheme } from '../../theme/useTheme';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
@@ -20,6 +21,7 @@ export default function SettingsScreen() {
   const { signOut, user } = useAuthStore();
   const { family, profile } = useFamilyStore();
   const insets = useSafeAreaInsets();
+  const tabBarScroll = useTabBarScroll();
 
   function handleSignOut() {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -31,6 +33,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
+      {...tabBarScroll}
       contentContainerStyle={[
         styles.content,
         { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 100 },
