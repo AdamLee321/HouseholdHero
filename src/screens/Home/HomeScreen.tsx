@@ -15,6 +15,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingList } from '../../services/shoppingService';
+import { subscribeToCalendarEvents } from '../../services/calendarService';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import auth from '@react-native-firebase/auth';
 
@@ -88,7 +89,7 @@ export default function HomeScreen() {
 
   const [todosCount, setTodosCount] = useState(0);
   const [shoppingCount, setShoppingCount] = useState(0);
-  const calendarCount = 0;
+  const [calendarCount, setCalendarCount] = useState(0);
   const uid = auth().currentUser?.uid ?? '';
 
   useEffect(() => {
@@ -101,9 +102,15 @@ export default function HomeScreen() {
     const unsubShopping = subscribeToShoppingList(family.id, items => {
       setShoppingCount(items.filter(i => !i.checked).length);
     });
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const unsubCalendar = subscribeToCalendarEvents(family.id, events => {
+      setCalendarCount(events.filter(e => e.startDate >= startOfToday.getTime()).length);
+    });
     return () => {
       unsubTodos();
       unsubShopping();
+      unsubCalendar();
     };
   }, [family]);
 
@@ -120,7 +127,7 @@ export default function HomeScreen() {
     }
     if (tile.screen === 'Calendar') {
       return calendarCount > 0
-        ? `${calendarCount} event${calendarCount !== 1 ? 's' : ''} this month`
+        ? `${calendarCount} upcoming event${calendarCount !== 1 ? 's' : ''}`
         : undefined;
     }
     return tile.subtitle;

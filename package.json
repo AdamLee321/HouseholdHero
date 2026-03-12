@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.6.0",
     "@react-native-firebase/app": "^23.8.6",
     "@react-native-firebase/auth": "^23.8.6",
     "@react-native-firebase/firestore": "^23.8.6",
@@ -20,6 +21,8 @@
     "react": "19.2.3",
     "react-native": "0.84.1",
     "react-native-biometrics": "^3.0.1",
+    "react-native-calendar-events": "^2.2.0",
+    "react-native-calendars": "^1.1314.0",
     "react-native-gesture-handler": "^2.30.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
