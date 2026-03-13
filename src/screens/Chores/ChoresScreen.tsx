@@ -115,7 +115,7 @@ export default function ChoresScreen() {
         <TouchableOpacity
           style={[
             styles.fab,
-            { backgroundColor: colors.primary, bottom: insets.bottom + 90 },
+            { backgroundColor: colors.primary, bottom: insets.bottom + 30 },
           ]}
           onPress={() => setModalVisible(true)}
         >

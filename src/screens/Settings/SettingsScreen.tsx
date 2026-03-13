@@ -74,7 +74,7 @@ export default function SettingsScreen() {
           APPEARANCE
         </Text>
 
-        <View style={[styles.row, { borderBottomColor: colors.border }]}>
+        <View style={[styles.row, styles.rowDivider, { borderBottomColor: colors.border }]}>
           <Text style={[styles.rowLabel, { color: colors.text }]}>
             Dark Mode
           </Text>
@@ -177,6 +177,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+  rowDivider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   rowLabel: { fontSize: 16 },

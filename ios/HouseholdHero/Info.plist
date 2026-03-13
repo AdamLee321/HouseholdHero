@@ -33,6 +33,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>HouseholdHero uses your camera to add photos to the family gallery.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HouseholdHero accesses your photo library to add photos to the family gallery.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>HouseholdHero uses your location to share it with your family members.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

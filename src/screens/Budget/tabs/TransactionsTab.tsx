@@ -7,10 +7,10 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Swipeable} from 'react-native-gesture-handler';
-import {useTheme} from '../../../theme/useTheme';
-import {Transaction} from '../../../services/budgetService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
+import { useTheme } from '../../../theme/useTheme';
+import { Transaction } from '../../../services/budgetService';
 
 interface Props {
   transactions: Transaction[];
@@ -31,27 +31,40 @@ function cents(n: number): string {
   return `$${(n / 100).toFixed(2)}`;
 }
 
-export default function TransactionsTab({transactions, uid, isAdmin, onDelete, onAdd}: Props) {
-  const {colors} = useTheme();
+export default function TransactionsTab({
+  transactions,
+  uid,
+  isAdmin,
+  onDelete,
+  onAdd,
+}: Props) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const ACCENT = colors.tiles.budget.icon;
 
   function confirmDelete(txn: Transaction) {
-    Alert.alert('Delete Transaction', `Remove "${txn.note || txn.categoryName}" — ${cents(txn.amount)}?`, [
-      {text: 'Cancel', style: 'cancel'},
-      {text: 'Delete', style: 'destructive', onPress: () => onDelete(txn)},
-    ]);
+    Alert.alert(
+      'Delete Transaction',
+      `Remove "${txn.note || txn.categoryName}" — ${cents(txn.amount)}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => onDelete(txn) },
+      ],
+    );
   }
 
-  function renderItem({item}: {item: Transaction}) {
+  function renderItem({ item }: { item: Transaction }) {
     const canDelete = isAdmin || item.addedBy === uid;
 
     const renderRight = () => {
-      if (!canDelete) {return null;}
+      if (!canDelete) {
+        return null;
+      }
       return (
         <TouchableOpacity
-          style={[styles.deleteAction, {backgroundColor: colors.danger}]}
-          onPress={() => confirmDelete(item)}>
+          style={[styles.deleteAction, { backgroundColor: colors.danger }]}
+          onPress={() => confirmDelete(item)}
+        >
           <Text style={styles.deleteText}>Delete</Text>
         </TouchableOpacity>
       );
@@ -59,19 +72,22 @@ export default function TransactionsTab({transactions, uid, isAdmin, onDelete, o
 
     return (
       <Swipeable renderRightActions={renderRight}>
-        <View style={[styles.txnRow, {backgroundColor: colors.surface}]}>
-          <View style={[styles.catBadge, {backgroundColor: ACCENT + '22'}]}>
+        <View style={[styles.txnRow, { backgroundColor: colors.surface }]}>
+          <View style={[styles.catBadge, { backgroundColor: ACCENT + '22' }]}>
             <Text style={styles.catEmoji}>{item.categoryEmoji}</Text>
           </View>
           <View style={styles.txnInfo}>
-            <Text style={[styles.txnNote, {color: colors.text}]} numberOfLines={1}>
+            <Text
+              style={[styles.txnNote, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {item.note || item.categoryName}
             </Text>
-            <Text style={[styles.txnMeta, {color: colors.textTertiary}]}>
+            <Text style={[styles.txnMeta, { color: colors.textTertiary }]}>
               {item.categoryName} · {item.addedByName} · {formatDate(item.date)}
             </Text>
           </View>
-          <Text style={[styles.txnAmount, {color: colors.text}]}>
+          <Text style={[styles.txnAmount, { color: colors.text }]}>
             {cents(item.amount)}
           </Text>
         </View>
@@ -86,25 +102,29 @@ export default function TransactionsTab({transactions, uid, isAdmin, onDelete, o
         keyExtractor={item => item.id}
         renderItem={renderItem}
         ListEmptyComponent={
-          <View style={[styles.emptyCard, {backgroundColor: colors.surface}]}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
             <Text style={styles.emptyEmoji}>🧾</Text>
-            <Text style={[styles.emptyTitle, {color: colors.text}]}>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
               No transactions
             </Text>
-            <Text style={[styles.emptySub, {color: colors.textSecondary}]}>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
               Tap + to log your first expense this month.
             </Text>
           </View>
         }
         contentContainerStyle={[
           styles.listContent,
-          {paddingBottom: insets.bottom + 100},
+          { paddingBottom: insets.bottom + 100 },
         ]}
       />
 
       <TouchableOpacity
-        style={[styles.fab, {backgroundColor: ACCENT, bottom: insets.bottom + 90}]}
-        onPress={onAdd}>
+        style={[
+          styles.fab,
+          { backgroundColor: ACCENT, bottom: insets.bottom + 30 },
+        ]}
+        onPress={onAdd}
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </>
@@ -112,7 +132,7 @@ export default function TransactionsTab({transactions, uid, isAdmin, onDelete, o
 }
 
 const styles = StyleSheet.create({
-  listContent: {paddingHorizontal: 16, paddingTop: 12},
+  listContent: { paddingHorizontal: 16, paddingTop: 12 },
 
   txnRow: {
     flexDirection: 'row',
@@ -129,11 +149,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 10,
   },
-  catEmoji: {fontSize: 20},
-  txnInfo: {flex: 1},
-  txnNote: {fontSize: 15, fontWeight: '600'},
-  txnMeta: {fontSize: 12, marginTop: 2},
-  txnAmount: {fontSize: 16, fontWeight: '700', marginLeft: 8},
+  catEmoji: { fontSize: 20 },
+  txnInfo: { flex: 1 },
+  txnNote: { fontSize: 15, fontWeight: '600' },
+  txnMeta: { fontSize: 12, marginTop: 2 },
+  txnAmount: { fontSize: 16, fontWeight: '700', marginLeft: 8 },
 
   deleteAction: {
     justifyContent: 'center',
@@ -142,7 +162,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 12,
   },
-  deleteText: {color: '#fff', fontWeight: '600', fontSize: 13},
+  deleteText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   emptyCard: {
     borderRadius: 16,
@@ -151,9 +171,9 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginHorizontal: 16,
   },
-  emptyEmoji: {fontSize: 44, marginBottom: 12},
-  emptyTitle: {fontSize: 18, fontWeight: '700', marginBottom: 6},
-  emptySub: {fontSize: 14, textAlign: 'center'},
+  emptyEmoji: { fontSize: 44, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', marginBottom: 6 },
+  emptySub: { fontSize: 14, textAlign: 'center' },
 
   fab: {
     position: 'absolute',
@@ -166,8 +186,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  fabText: {color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300'},
+  fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
 });

@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
-import {useTheme} from '../../theme/useTheme';
-import {useFamilyStore} from '../../store/familyStore';
+import { useTheme } from '../../theme/useTheme';
+import { useFamilyStore } from '../../store/familyStore';
 import {
   CalendarEvent,
   subscribeToCalendarEvents,
@@ -17,16 +17,16 @@ import AddEventModal from './components/AddEventModal';
 
 type Tab = 'month' | 'upcoming' | 'past';
 
-const TABS: {key: Tab; label: string; emoji: string}[] = [
-  {key: 'month', label: 'Month', emoji: '📅'},
-  {key: 'upcoming', label: 'Upcoming', emoji: '🔜'},
-  {key: 'past', label: 'Past', emoji: '🕰️'},
+const TABS: { key: Tab; label: string; emoji: string }[] = [
+  { key: 'month', label: 'Month', emoji: '📅' },
+  { key: 'upcoming', label: 'Upcoming', emoji: '🔜' },
+  { key: 'past', label: 'Past', emoji: '🕰️' },
 ];
 
 export default function CalendarScreen() {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const {family, profile} = useFamilyStore();
+  const { family, profile } = useFamilyStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('month');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -68,9 +68,9 @@ export default function CalendarScreen() {
   const showFab = activeTab === 'month' || activeTab === 'upcoming';
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top tab bar */}
-      <View style={[styles.tabBar, {backgroundColor: colors.surface}]}>
+      <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
         {TABS.map(tab => (
           <TouchableOpacity
             key={tab.key}
@@ -81,7 +81,8 @@ export default function CalendarScreen() {
                 borderBottomWidth: 2,
               },
             ]}
-            onPress={() => setActiveTab(tab.key)}>
+            onPress={() => setActiveTab(tab.key)}
+          >
             <Text style={styles.tabEmoji}>{tab.emoji}</Text>
             <Text
               style={[
@@ -92,7 +93,8 @@ export default function CalendarScreen() {
                       ? colors.tiles.calendar.icon
                       : colors.textTertiary,
                 },
-              ]}>
+              ]}
+            >
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -119,10 +121,11 @@ export default function CalendarScreen() {
             styles.fab,
             {
               backgroundColor: colors.tiles.calendar.icon,
-              bottom: insets.bottom + 90,
+              bottom: insets.bottom + 30,
             },
           ]}
-          onPress={() => setModalVisible(true)}>
+          onPress={() => setModalVisible(true)}
+        >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
@@ -137,13 +140,13 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1},
+  container: { flex: 1 },
   tabBar: {
     flexDirection: 'row',
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   tabBtn: {
@@ -154,9 +157,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabEmoji: {fontSize: 18},
-  tabLabel: {fontSize: 12, fontWeight: '600'},
-  content: {flex: 1},
+  tabEmoji: { fontSize: 18 },
+  tabLabel: { fontSize: 12, fontWeight: '600' },
+  content: { flex: 1 },
   fab: {
     position: 'absolute',
     right: 20,
@@ -168,8 +171,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  fabText: {color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300'},
+  fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
 });

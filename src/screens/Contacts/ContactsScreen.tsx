@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,11 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Swipeable} from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
 import auth from '@react-native-firebase/auth';
-import {useTheme} from '../../theme/useTheme';
-import {useFamilyStore} from '../../store/familyStore';
+import { useTheme } from '../../theme/useTheme';
+import { useFamilyStore } from '../../store/familyStore';
 import {
   EmergencyContact,
   subscribeToContacts,
@@ -59,8 +59,9 @@ function ContactRow({
     }
     return (
       <TouchableOpacity
-        style={[styles.deleteAction, {backgroundColor: colors.danger}]}
-        onPress={onDelete}>
+        style={[styles.deleteAction, { backgroundColor: colors.danger }]}
+        onPress={onDelete}
+      >
         <Text style={styles.deleteText}>Delete</Text>
       </TouchableOpacity>
     );
@@ -68,9 +69,9 @@ function ContactRow({
 
   return (
     <Swipeable renderRightActions={renderRightActions}>
-      <View style={[styles.contactRow, {backgroundColor: colors.surface}]}>
+      <View style={[styles.contactRow, { backgroundColor: colors.surface }]}>
         {/* Avatar */}
-        <View style={[styles.avatar, {backgroundColor: ACCENT + '22'}]}>
+        <View style={[styles.avatar, { backgroundColor: ACCENT + '22' }]}>
           <Text style={[styles.avatarEmoji]}>
             {contact.type === 'shared' ? '🚨' : '👤'}
           </Text>
@@ -79,19 +80,19 @@ function ContactRow({
         {/* Info */}
         <View style={styles.contactInfo}>
           <View style={styles.contactNameRow}>
-            <Text style={[styles.contactName, {color: colors.text}]}>
+            <Text style={[styles.contactName, { color: colors.text }]}>
               {contact.name}
             </Text>
-            {contact.locked && (
-              <Text style={styles.lockIcon}>🔒</Text>
-            )}
+            {contact.locked && <Text style={styles.lockIcon}>🔒</Text>}
           </View>
           {!!contact.relation && (
-            <Text style={[styles.contactRelation, {color: colors.textSecondary}]}>
+            <Text
+              style={[styles.contactRelation, { color: colors.textSecondary }]}
+            >
               {contact.relation}
             </Text>
           )}
-          <Text style={[styles.contactPhone, {color: colors.textTertiary}]}>
+          <Text style={[styles.contactPhone, { color: colors.textTertiary }]}>
             {contact.phone}
           </Text>
         </View>
@@ -101,8 +102,9 @@ function ContactRow({
           {/* Lock toggle — admin, shared contacts only */}
           {isAdmin && contact.type === 'shared' && (
             <TouchableOpacity
-              style={[styles.actionBtn, {borderColor: colors.border}]}
-              onPress={onToggleLock}>
+              style={[styles.actionBtn, { borderColor: colors.border }]}
+              onPress={onToggleLock}
+            >
               <Text style={styles.actionBtnText}>
                 {contact.locked ? '🔓' : '🔒'}
               </Text>
@@ -110,8 +112,9 @@ function ContactRow({
           )}
           {/* Call button */}
           <TouchableOpacity
-            style={[styles.callBtn, {backgroundColor: ACCENT}]}
-            onPress={() => callPhone(contact.phone)}>
+            style={[styles.callBtn, { backgroundColor: ACCENT }]}
+            onPress={() => callPhone(contact.phone)}
+          >
             <Text style={styles.callBtnText}>📞</Text>
           </TouchableOpacity>
         </View>
@@ -121,9 +124,9 @@ function ContactRow({
 }
 
 export default function ContactsScreen() {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const {family} = useFamilyStore();
+  const { family } = useFamilyStore();
 
   const uid = auth().currentUser?.uid ?? '';
   const isAdmin = uid === family?.createdBy;
@@ -167,7 +170,7 @@ export default function ContactsScreen() {
       'Delete Contact',
       `Remove "${contact.name}" from emergency contacts?`,
       [
-        {text: 'Cancel', style: 'cancel'},
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
@@ -185,7 +188,7 @@ export default function ContactsScreen() {
   }
 
   return (
-    <View style={[styles.container, {backgroundColor: colors.background}]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={[]}
         keyExtractor={() => ''}
@@ -197,30 +200,39 @@ export default function ContactsScreen() {
               <View
                 style={[
                   styles.adminBadge,
-                  {backgroundColor: colors.tiles.contacts.bg},
-                ]}>
+                  { backgroundColor: colors.tiles.contacts.bg },
+                ]}
+              >
                 <Text
                   style={[
                     styles.adminBadgeText,
-                    {color: colors.tiles.contacts.icon},
-                  ]}>
+                    { color: colors.tiles.contacts.icon },
+                  ]}
+                >
                   ⚙️ You manage shared contacts
                 </Text>
               </View>
             )}
 
             {/* Shared contacts */}
-            <Text style={[styles.sectionHeader, {color: colors.textSecondary}]}>
+            <Text
+              style={[styles.sectionHeader, { color: colors.textSecondary }]}
+            >
               Family Contacts
             </Text>
             {sharedContacts.length === 0 ? (
               <View
-                style={[styles.emptySection, {backgroundColor: colors.surface}]}>
+                style={[
+                  styles.emptySection,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
                 <Text
                   style={[
                     styles.emptySectionText,
-                    {color: colors.textTertiary},
-                  ]}>
+                    { color: colors.textTertiary },
+                  ]}
+                >
                   {isAdmin
                     ? 'Add family emergency contacts with the + button'
                     : 'No family contacts added yet'}
@@ -244,18 +256,24 @@ export default function ContactsScreen() {
             <Text
               style={[
                 styles.sectionHeader,
-                {color: colors.textSecondary, marginTop: 24},
-              ]}>
+                { color: colors.textSecondary, marginTop: 24 },
+              ]}
+            >
               My Contacts
             </Text>
             {personalContacts.length === 0 ? (
               <View
-                style={[styles.emptySection, {backgroundColor: colors.surface}]}>
+                style={[
+                  styles.emptySection,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
                 <Text
                   style={[
                     styles.emptySectionText,
-                    {color: colors.textTertiary},
-                  ]}>
+                    { color: colors.textTertiary },
+                  ]}
+                >
                   Add your own personal emergency contacts
                 </Text>
               </View>
@@ -276,7 +294,7 @@ export default function ContactsScreen() {
         }
         contentContainerStyle={[
           styles.listContent,
-          {paddingBottom: insets.bottom + 100},
+          { paddingBottom: insets.bottom + 100 },
         ]}
       />
 
@@ -286,10 +304,11 @@ export default function ContactsScreen() {
           styles.fab,
           {
             backgroundColor: colors.tiles.contacts.icon,
-            bottom: insets.bottom + 90,
+            bottom: insets.bottom + 30,
           },
         ]}
-        onPress={() => setModalVisible(true)}>
+        onPress={() => setModalVisible(true)}
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
@@ -304,8 +323,8 @@ export default function ContactsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1},
-  listContent: {paddingHorizontal: 16, paddingTop: 16},
+  container: { flex: 1 },
+  listContent: { paddingHorizontal: 16, paddingTop: 16 },
 
   adminBadge: {
     borderRadius: 10,
@@ -313,7 +332,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 16,
   },
-  adminBadgeText: {fontSize: 13, fontWeight: '600'},
+  adminBadgeText: { fontSize: 13, fontWeight: '600' },
 
   sectionHeader: {
     fontSize: 12,
@@ -329,7 +348,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: 'center',
   },
-  emptySectionText: {fontSize: 13, textAlign: 'center'},
+  emptySectionText: { fontSize: 13, textAlign: 'center' },
 
   contactRow: {
     flexDirection: 'row',
@@ -346,15 +365,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  avatarEmoji: {fontSize: 20},
-  contactInfo: {flex: 1},
-  contactNameRow: {flexDirection: 'row', alignItems: 'center', gap: 4},
-  contactName: {fontSize: 15, fontWeight: '600'},
-  lockIcon: {fontSize: 12},
-  contactRelation: {fontSize: 12, marginTop: 1},
-  contactPhone: {fontSize: 12, marginTop: 2},
+  avatarEmoji: { fontSize: 20 },
+  contactInfo: { flex: 1 },
+  contactNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  contactName: { fontSize: 15, fontWeight: '600' },
+  lockIcon: { fontSize: 12 },
+  contactRelation: { fontSize: 12, marginTop: 1 },
+  contactPhone: { fontSize: 12, marginTop: 2 },
 
-  contactActions: {flexDirection: 'row', gap: 6, alignItems: 'center'},
+  contactActions: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   actionBtn: {
     width: 34,
     height: 34,
@@ -363,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionBtnText: {fontSize: 15},
+  actionBtnText: { fontSize: 15 },
   callBtn: {
     width: 38,
     height: 38,
@@ -371,7 +390,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  callBtnText: {fontSize: 18},
+  callBtnText: { fontSize: 18 },
 
   deleteAction: {
     justifyContent: 'center',
@@ -380,7 +399,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 12,
   },
-  deleteText: {color: '#fff', fontWeight: '600', fontSize: 13},
+  deleteText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   fab: {
     position: 'absolute',
@@ -393,8 +412,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  fabText: {color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300'},
+  fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
 });

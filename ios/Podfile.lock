@@ -2819,6 +2819,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-image-picker (8.2.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-maps (1.27.2):
     - react-native-maps/Maps (= 1.27.2)
   - react-native-maps/Generated (1.27.2):
@@ -3555,6 +3577,7 @@ DEPENDENCIES:
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
+  - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -3708,6 +3731,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-documents/picker"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
+  react-native-image-picker:
+    :path: "../node_modules/react-native-image-picker"
   react-native-maps:
     :path: "../node_modules/react-native-maps"
   react-native-safe-area-context:
@@ -3860,6 +3885,7 @@ SPEC CHECKSUMS:
   react-native-biometrics: 43ed5b828646a7862dbc7945556446be00798e7d
   react-native-document-picker: 5b20fbc3ac7aaa8402bc86958c0a859758754a33
   react-native-geolocation: b2fa81eb9f75c46b8e6e74ed9a4b56dab1523927
+  react-native-image-picker: 4123dc2b15a0b6fc2f027e6cf94ae5f48c9ae9b0
   react-native-maps: af78b37e4581e4c534ee6932e89e92d33b3d9db3
   react-native-safe-area-context: 90476586077446d5eab1d41ac3e767b016ac41d6
   React-NativeModulesApple: 5ba0903927f6b8d335a091700e9fda143980f819
