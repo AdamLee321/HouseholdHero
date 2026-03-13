@@ -2,8 +2,6 @@ import React, {useState} from 'react';
 import {
   Modal,
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Switch,
@@ -11,6 +9,8 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import Text from '../../../components/Text';
+import TextInput from '../../../components/TextInput';
 import {useTheme} from '../../../theme/useTheme';
 
 interface Props {

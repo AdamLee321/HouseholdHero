@@ -1,11 +1,11 @@
 import React, {useEffect, useRef} from 'react';
 import {
   Animated,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import Text from '../components/Text';
 import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../theme/useTheme';

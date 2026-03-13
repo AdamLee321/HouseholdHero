@@ -1,5 +1,8 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+import OcticonIcon from '@react-native-vector-icons/octicons';
 import { useTheme } from '../theme/useTheme';
 import { HomeStackParamList } from '../types';
 import HomeScreen from '../screens/Home/HomeScreen';
@@ -19,6 +22,16 @@ import RecipesScreen from '../screens/Recipes/RecipesScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
+function HomeBackButton() {
+  const navigation = useNavigation();
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 8 }}>
+      <OcticonIcon name="home-fill" size={22} color={colors.primary} />
+    </TouchableOpacity>
+  );
+}
+
 export default function HomeStack() {
   const { colors } = useTheme();
 
@@ -29,6 +42,7 @@ export default function HomeStack() {
         headerTintColor: colors.primary,
         headerTitleStyle: { color: colors.text, fontWeight: '700' },
         headerShadowVisible: false,
+        headerLeft: () => <HomeBackButton />,
       }}
     >
       <Stack.Screen

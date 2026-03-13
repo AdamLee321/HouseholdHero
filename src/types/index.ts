@@ -1,3 +1,8 @@
+export interface TilePref {
+  order: string[];
+  hidden: string[];
+}
+
 export type RootStackParamList = {
   Main: undefined;
   Auth: undefined;

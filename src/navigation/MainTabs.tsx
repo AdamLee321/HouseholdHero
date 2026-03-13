@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MainTabParamList } from '../types';
 import HomeStack from './HomeStack';
-import SettingsScreen from '../screens/Settings/SettingsScreen';
+import SettingsStack from './SettingsStack';
 import FloatingTabBar from './FloatingTabBar';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -14,7 +14,7 @@ export default function MainTabs() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="HomeTab" component={HomeStack} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Settings" component={SettingsStack} />
     </Tab.Navigator>
   );
 }

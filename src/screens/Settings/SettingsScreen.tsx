@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -9,13 +8,21 @@ import {
   Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import LucideIcon from '@react-native-vector-icons/lucide';
+import Text from '../../components/Text';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import { useTheme } from '../../theme/useTheme';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
 import { useFamilyStore } from '../../store/familyStore';
+import { SettingsStackParamList } from '../../navigation/SettingsStack';
+
+type SettingsNavProp = NativeStackNavigationProp<SettingsStackParamList, 'SettingsHome'>;
 
 export default function SettingsScreen() {
+  const navigation = useNavigation<SettingsNavProp>();
   const { colors, isDark } = useTheme();
   const { preference, setPreference } = useThemeStore();
   const { signOut, user } = useAuthStore();
@@ -96,6 +103,22 @@ export default function SettingsScreen() {
           {preference === 'system' && (
             <Text style={[styles.checkmark, { color: colors.primary }]}>✓</Text>
           )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Home Screen */}
+      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          HOME SCREEN
+        </Text>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => navigation.navigate('OrganiseTiles')}
+        >
+          <Text style={[styles.rowLabel, { color: colors.text }]}>
+            Organise Tiles
+          </Text>
+          <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 

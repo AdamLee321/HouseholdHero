@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   Dimensions,
 } from 'react-native';
+import Text from '../../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { HomeStackParamList } from '../../types';
+import { HomeStackParamList, TilePref } from '../../types';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingList } from '../../services/shoppingService';
 import { subscribeToCalendarEvents } from '../../services/calendarService';
+import { subscribeTilePrefs } from '../../services/tilePrefsService';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import auth from '@react-native-firebase/auth';
 
@@ -41,8 +42,8 @@ const TILES: Tile[] = [
   { label: 'Chores', emoji: '🧹', screen: 'Chores', colorKey: 'chores' },
   { label: 'Calendar', emoji: '📅', screen: 'Calendar', colorKey: 'calendar' },
   { label: 'Messages', emoji: '💬', screen: 'Messages', colorKey: 'messages' },
-  { label: 'Contacts', emoji: '🚨', screen: 'Contacts', colorKey: 'contacts' },
-  { label: 'Location', emoji: '📍', screen: 'Location', colorKey: 'location' },
+  { label: 'Emergency Contacts', emoji: '🚨', screen: 'Contacts', colorKey: 'contacts' },
+  { label: 'Live Location', emoji: '📍', screen: 'Location', colorKey: 'location' },
   {
     label: 'Documents',
     subtitle: 'Store & share important documents',
@@ -90,7 +91,13 @@ export default function HomeScreen() {
   const [todosCount, setTodosCount] = useState(0);
   const [shoppingCount, setShoppingCount] = useState(0);
   const [calendarCount, setCalendarCount] = useState(0);
+  const [tilePrefs, setTilePrefs] = useState<TilePref | null>(null);
   const uid = auth().currentUser?.uid ?? '';
+
+  useEffect(() => {
+    if (!uid) return;
+    return subscribeTilePrefs(uid, setTilePrefs);
+  }, [uid]);
 
   useEffect(() => {
     if (!family) {
@@ -105,7 +112,9 @@ export default function HomeScreen() {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const unsubCalendar = subscribeToCalendarEvents(family.id, events => {
-      setCalendarCount(events.filter(e => e.startDate >= startOfToday.getTime()).length);
+      setCalendarCount(
+        events.filter(e => e.startDate >= startOfToday.getTime()).length,
+      );
     });
     return () => {
       unsubTodos();
@@ -113,6 +122,15 @@ export default function HomeScreen() {
       unsubCalendar();
     };
   }, [family]);
+
+  const orderedTiles = useMemo(() => {
+    if (!tilePrefs) return TILES;
+    const map = new Map(TILES.map(t => [t.screen, t]));
+    return tilePrefs.order
+      .filter(key => !tilePrefs.hidden.includes(key))
+      .map(key => map.get(key))
+      .filter((t): t is Tile => t !== undefined);
+  }, [tilePrefs]);
 
   function getSubtitle(tile: Tile): string | undefined {
     if (tile.screen === 'Shopping') {
@@ -164,7 +182,7 @@ export default function HomeScreen() {
 
       {/* Grid */}
       <View style={styles.grid}>
-        {TILES.map(tile => {
+        {orderedTiles.map(tile => {
           const tileColors = colors.tiles[tile.colorKey];
           const subtitle = getSubtitle(tile);
           return (

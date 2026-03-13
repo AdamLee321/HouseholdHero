@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
   Alert,
-  TextInput,
   Modal,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Text from '../../../components/Text';
+import TextInput from '../../../components/TextInput';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useTheme } from '../../../theme/useTheme';

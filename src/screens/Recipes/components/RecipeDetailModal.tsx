@@ -2,12 +2,12 @@ import React from 'react';
 import {
   Modal,
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Image,
   StyleSheet,
 } from 'react-native';
+import Text from '../../../components/Text';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../../theme/useTheme';
 import {Recipe} from '../../../services/recipeService';

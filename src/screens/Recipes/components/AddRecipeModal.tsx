@@ -2,8 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
@@ -13,6 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import Text from '../../../components/Text';
+import TextInput from '../../../components/TextInput';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../../theme/useTheme';

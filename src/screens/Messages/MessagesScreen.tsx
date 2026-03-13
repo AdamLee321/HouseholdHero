@@ -1,15 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
-  Text,
   FlatList,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import Text from '../../components/Text';
+import TextInput from '../../components/TextInput';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
 import {useTheme} from '../../theme/useTheme';

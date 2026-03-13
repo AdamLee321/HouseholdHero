@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  TextInput,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +11,8 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
+import Text from '../../components/Text';
+import TextInput from '../../components/TextInput';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,6 +9,8 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import Text from '../../components/Text';
+import TextInput from '../../components/TextInput';
 import auth from '@react-native-firebase/auth';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import { useTheme } from '../../theme/useTheme';

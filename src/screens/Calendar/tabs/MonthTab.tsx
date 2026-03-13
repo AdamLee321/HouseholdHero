@@ -1,11 +1,11 @@
 import React, {useState, useMemo} from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import Text from '../../../components/Text';
 import {Calendar} from 'react-native-calendars';
 import {Swipeable} from 'react-native-gesture-handler';
 import {useTheme} from '../../../theme/useTheme';

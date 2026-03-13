@@ -1,8 +1,10 @@
 import React, {useState} from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, Modal,
+  View, TouchableOpacity, Modal,
   KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Alert,
 } from 'react-native';
+import Text from '../../../components/Text';
+import TextInput from '../../../components/TextInput';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../../../theme/useTheme';
 import {

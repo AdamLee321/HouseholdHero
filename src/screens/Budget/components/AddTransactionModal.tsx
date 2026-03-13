@@ -2,14 +2,14 @@ import React, {useState} from 'react';
 import {
   Modal,
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import Text from '../../../components/Text';
+import TextInput from '../../../components/TextInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useTheme} from '../../../theme/useTheme';
 import {BudgetCategory} from '../../../services/budgetService';
