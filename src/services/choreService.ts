@@ -41,7 +41,9 @@ export interface ChorePoints {
 }
 
 function isDue(chore: Chore): boolean {
-  if (!chore.lastCompletedAt) {return true;}
+  if (!chore.lastCompletedAt) {
+    return true;
+  }
   const now = Date.now();
   const last = chore.lastCompletedAt;
   if (chore.frequency === 'daily') {
@@ -64,51 +66,75 @@ function isDue(chore: Chore): boolean {
   return true;
 }
 
-export {isDue};
+export { isDue };
 
-export function subscribeToRooms(familyId: string, onUpdate: (rooms: Room[]) => void) {
+export function subscribeToRooms(
+  familyId: string,
+  onUpdate: (rooms: Room[]) => void,
+) {
   return firestore()
-    .collection('families').doc(familyId).collection('rooms')
+    .collection('families')
+    .doc(familyId)
+    .collection('rooms')
     .orderBy('createdAt', 'asc')
     .onSnapshot(snap => {
-      onUpdate(snap.docs.map(d => ({id: d.id, ...d.data()} as Room)));
+      onUpdate(snap.docs.map(d => ({ id: d.id, ...d.data() } as Room)));
     });
 }
 
-export function subscribeToChores(familyId: string, onUpdate: (chores: Chore[]) => void) {
+export function subscribeToChores(
+  familyId: string,
+  onUpdate: (chores: Chore[]) => void,
+) {
   return firestore()
-    .collection('families').doc(familyId).collection('chores')
+    .collection('families')
+    .doc(familyId)
+    .collection('chores')
     .orderBy('createdAt', 'asc')
     .onSnapshot(snap => {
-      onUpdate(snap.docs.map(d => ({id: d.id, ...d.data()} as Chore)));
+      onUpdate(snap.docs.map(d => ({ id: d.id, ...d.data() } as Chore)));
     });
 }
 
-export function subscribeToLeaderboard(familyId: string, onUpdate: (board: ChorePoints[]) => void) {
+export function subscribeToLeaderboard(
+  familyId: string,
+  onUpdate: (board: ChorePoints[]) => void,
+) {
   return firestore()
-    .collection('families').doc(familyId).collection('chorePoints')
+    .collection('families')
+    .doc(familyId)
+    .collection('chorePoints')
     .orderBy('points', 'desc')
     .onSnapshot(snap => {
-      onUpdate(snap.docs.map(d => ({uid: d.id, ...d.data()} as ChorePoints)));
+      onUpdate(snap.docs.map(d => ({ uid: d.id, ...d.data() } as ChorePoints)));
     });
 }
 
 export async function createRoom(familyId: string, name: string) {
   await firestore()
-    .collection('families').doc(familyId).collection('rooms')
-    .add({name: name.trim(), createdAt: Date.now()});
+    .collection('families')
+    .doc(familyId)
+    .collection('rooms')
+    .add({ name: name.trim(), createdAt: Date.now() });
 }
 
 export async function createChore(
   familyId: string,
   data: {
-    name: string; roomId: string; roomName: string;
-    assignedTo: string | null; assignedToName: string | null;
-    frequency: ChoreFrequency; effort: ChoreEffort; note: string;
+    name: string;
+    roomId: string;
+    roomName: string;
+    assignedTo: string | null;
+    assignedToName: string | null;
+    frequency: ChoreFrequency;
+    effort: ChoreEffort;
+    note: string;
   },
 ) {
   await firestore()
-    .collection('families').doc(familyId).collection('chores')
+    .collection('families')
+    .doc(familyId)
+    .collection('chores')
     .add({
       ...data,
       name: data.name.trim(),
@@ -128,7 +154,7 @@ export async function updateChoreStatus(
   uid: string,
   displayName: string,
 ) {
-  const update: Partial<Chore> = {status: newStatus};
+  const update: Partial<Chore> = { status: newStatus };
 
   if (newStatus === 'done') {
     update.lastCompletedAt = Date.now();
@@ -137,7 +163,10 @@ export async function updateChoreStatus(
 
     // Award points
     const pointsRef = firestore()
-      .collection('families').doc(familyId).collection('chorePoints').doc(uid);
+      .collection('families')
+      .doc(familyId)
+      .collection('chorePoints')
+      .doc(uid);
     const snap = await pointsRef.get();
     if (snap.exists) {
       await pointsRef.update({
@@ -154,22 +183,38 @@ export async function updateChoreStatus(
   }
 
   await firestore()
-    .collection('families').doc(familyId).collection('chores').doc(chore.id)
+    .collection('families')
+    .doc(familyId)
+    .collection('chores')
+    .doc(chore.id)
     .update(update);
 }
 
 export async function deleteChore(familyId: string, choreId: string) {
   await firestore()
-    .collection('families').doc(familyId).collection('chores').doc(choreId).delete();
+    .collection('families')
+    .doc(familyId)
+    .collection('chores')
+    .doc(choreId)
+    .delete();
 }
 
 export async function deleteRoom(familyId: string, roomId: string) {
   // Delete all chores in this room
   const chores = await firestore()
-    .collection('families').doc(familyId).collection('chores')
-    .where('roomId', '==', roomId).get();
+    .collection('families')
+    .doc(familyId)
+    .collection('chores')
+    .where('roomId', '==', roomId)
+    .get();
   const batch = firestore().batch();
   chores.docs.forEach(d => batch.delete(d.ref));
-  batch.delete(firestore().collection('families').doc(familyId).collection('rooms').doc(roomId));
+  batch.delete(
+    firestore()
+      .collection('families')
+      .doc(familyId)
+      .collection('rooms')
+      .doc(roomId),
+  );
   await batch.commit();
 }
