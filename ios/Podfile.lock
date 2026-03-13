@@ -3345,6 +3345,28 @@ PODS:
     - ReactNativeDependencies
   - ReactNativeDependencies (0.84.1)
   - RecaptchaInterop (101.0.0)
+  - RNBootSplash (7.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNCalendarEvents (2.2.0):
     - React
   - RNDateTimePicker (8.6.0):
@@ -3763,6 +3785,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
+  - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
@@ -3960,6 +3983,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNBootSplash:
+    :path: "../node_modules/react-native-bootsplash"
   RNCalendarEvents:
     :path: "../node_modules/react-native-calendar-events"
   RNDateTimePicker:
@@ -4084,6 +4109,7 @@ SPEC CHECKSUMS:
   ReactCommon: 07572bf9e687c8a52fbe4a3641e9e3a1a477c78e
   ReactNativeDependencies: 5126307cdde11182c4ec2a462ac9aa922b02b24e
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
+  RNBootSplash: 8c70297a2feab838c1153ffd6932f4d5bfe27002
   RNCalendarEvents: f90f73666b6bcbb3cc8a491ffbb5e48c0db3de37
   RNDateTimePicker: 39207e620903192715b66fc2dbae4025a9d554b8
   RNFBApp: c4621b9a69ef5520ec8841afbc77bc33176945c1
