@@ -34,7 +34,9 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>HouseholdHero uses your location to share it with your family members.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>HouseholdHero uses your location to share it with your family members.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

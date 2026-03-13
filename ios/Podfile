@@ -22,6 +22,8 @@ target 'HouseholdHero' do
   use_frameworks! :linkage => :static
   $RNFirebaseAsStaticFramework = true
 
+  pod 'react-native-maps', path: '../node_modules/react-native-maps', modular_headers: true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -37,12 +39,31 @@ target 'HouseholdHero' do
     )
 
     installer.pods_project.targets.each do |target|
+      if target.name == 'react-native-maps'
+        target.build_configurations.each do |config|
+          config.build_settings['DEFINES_MODULE'] = 'YES'
+          config.build_settings['SWIFT_VERSION'] = '5.0'
+        end
+      end
+
       if ['RNFBApp', 'RNFBAnalytics', 'RNFBCrashlytics', 'RNFBRemoteConfig', 'RNFBAppCheck'].include?(target.name)
         target.build_configurations.each do |build_config|
           build_config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
           build_config.build_settings['DEFINES_MODULE'] = 'NO'
         end
       end
+    end
+
+    # Force-load all Obj-C symbols from static frameworks into the main app binary
+    # Required for react-native-maps TurboModule to register with the new architecture
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.native_targets.each do |target|
+        target.build_configurations.each do |config|
+          ldflags = config.build_settings['OTHER_LDFLAGS'] || '$(inherited)'
+          config.build_settings['OTHER_LDFLAGS'] = "#{ldflags} -ObjC" unless ldflags.include?('-ObjC')
+        end
+      end
+      aggregate_target.user_project.save
     end
   end
 end
