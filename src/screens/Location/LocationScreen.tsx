@@ -34,6 +34,10 @@ Geolocation.setRNConfiguration({
   authorizationLevel: 'whenInUse',
 });
 
+// Module-level: survives screen unmount so sharing continues in the background
+let _watchId: number | null = null;
+let _isSharing = false;
+
 const DEFAULT_REGION: Region = {
   latitude: 53.3498,
   longitude: -6.2603,
@@ -92,11 +96,20 @@ async function requestLocationPermission(): Promise<boolean> {
 }
 
 // ─── Place Marker ────────────────────────────────────────────────────────────
-function PlaceMarkerView({ place }: { place: FamilyPlace }) {
+function PlaceMarkerView({
+  place,
+  latitudeDelta,
+  isSelected,
+}: {
+  place: FamilyPlace;
+  latitudeDelta: number;
+  isSelected: boolean;
+}) {
   const cfg = PLACE_CONFIG[place.type];
-  const isPriority = cfg.priority;
-  const size = isPriority ? 52 : 36;
-  const fontSize = isPriority ? 24 : 16;
+
+  const scale = Math.max(0.55, Math.min(Math.sqrt(latitudeDelta / 0.01), 1.0));
+  const size = Math.round(36 * scale);
+  const fontSize = Math.round(16 * scale);
 
   return (
     <View style={styles.placeMarkerWrap}>
@@ -108,19 +121,18 @@ function PlaceMarkerView({ place }: { place: FamilyPlace }) {
             height: size,
             borderRadius: size / 2,
             backgroundColor: cfg.color,
-            borderWidth: isPriority ? 3 : 2,
+            borderWidth: isSelected ? 2 : 2,
+            borderColor: '#fff',
           },
         ]}
       >
         <Text style={{ fontSize }}>{cfg.emoji}</Text>
       </View>
-      {isPriority && (
-        <View style={[styles.placeMarkerLabel, { backgroundColor: cfg.color }]}>
-          <Text style={styles.placeMarkerLabelText}>
-            {place.name.toUpperCase()}
-          </Text>
-        </View>
-      )}
+      <View style={[styles.placeMarkerLabel, { backgroundColor: cfg.color, opacity: isSelected ? 1 : 0 }]}>
+        <Text style={styles.placeMarkerLabelText}>
+          {place.name.toUpperCase()}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -137,7 +149,7 @@ export default function LocationScreen() {
 
   const [locations, setLocations] = useState<MemberLocation[]>([]);
   const [places, setPlaces] = useState<FamilyPlace[]>([]);
-  const [sharing, setSharing] = useState(false);
+  const [sharing, setSharing] = useState(_isSharing);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [pendingCoord, setPendingCoord] = useState<{
     lat: number;
@@ -150,7 +162,7 @@ export default function LocationScreen() {
   const [editingPlace, setEditingPlace] = useState<FamilyPlace | undefined>(
     undefined,
   );
-  const watchIdRef = useRef<number | null>(null);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!family) return;
@@ -163,13 +175,6 @@ export default function LocationScreen() {
     const unsub = subscribePlaces(family.id, setPlaces);
     return unsub;
   }, [family]);
-
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null)
-        Geolocation.clearWatch(watchIdRef.current);
-    };
-  }, []);
 
   // Fit map to show all members + places on first data load
   useEffect(() => {
@@ -194,8 +199,7 @@ export default function LocationScreen() {
       );
       return;
     }
-    setSharing(true);
-    const watchId = Geolocation.watchPosition(
+    _watchId = Geolocation.watchPosition(
       position => {
         const { latitude, longitude, accuracy } = position.coords;
         if (family) {
@@ -218,16 +222,31 @@ export default function LocationScreen() {
         fastestInterval: 5000,
       },
     );
-    watchIdRef.current = watchId;
+    _isSharing = true;
+    setSharing(true);
   }
 
-  async function handleStopSharing() {
-    if (watchIdRef.current !== null) {
-      Geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
-    setSharing(false);
-    if (family) await stopSharing(family.id, uid);
+  function handleStopSharing() {
+    Alert.alert(
+      'Stop sharing?',
+      'Your location will no longer be visible to your family.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Stop Sharing',
+          style: 'destructive',
+          onPress: async () => {
+            if (_watchId !== null) {
+              Geolocation.clearWatch(_watchId);
+              _watchId = null;
+            }
+            _isSharing = false;
+            setSharing(false);
+            if (family) await stopSharing(family.id, uid);
+          },
+        },
+      ],
+    );
   }
 
   function flyTo(lat: number, lng: number) {
@@ -330,9 +349,16 @@ export default function LocationScreen() {
             key={place.id}
             coordinate={{ latitude: place.lat, longitude: place.lng }}
             anchor={{ x: 0.5, y: 1 }}
-            onCalloutPress={() => flyTo(place.lat, place.lng)}
+            tracksViewChanges={selectedPlaceId === place.id}
+            onPress={() =>
+              setSelectedPlaceId(prev => (prev === place.id ? null : place.id))
+            }
           >
-            <PlaceMarkerView place={place} />
+            <PlaceMarkerView
+              place={place}
+              latitudeDelta={region.latitudeDelta}
+              isSelected={selectedPlaceId === place.id}
+            />
           </Marker>
         ))}
       </MapView>
@@ -448,7 +474,10 @@ export default function LocationScreen() {
                 return (
                   <TouchableOpacity
                     key={place.id}
-                    onPress={() => flyTo(place.lat, place.lng)}
+                    onPress={() => {
+                      flyTo(place.lat, place.lng);
+                      setSelectedPlaceId(place.id);
+                    }}
                     onLongPress={() => handlePlaceLongPress(place)}
                     delayLongPress={400}
                     style={[
