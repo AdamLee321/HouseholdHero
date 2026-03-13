@@ -42,8 +42,13 @@ const TILES: Tile[] = [
   { label: 'Chores', emoji: '🧹', screen: 'Chores', colorKey: 'chores' },
   { label: 'Calendar', emoji: '📅', screen: 'Calendar', colorKey: 'calendar' },
   { label: 'Messages', emoji: '💬', screen: 'Messages', colorKey: 'messages' },
-  { label: 'Emergency Contacts', emoji: '🚨', screen: 'Contacts', colorKey: 'contacts' },
-  { label: 'Live Location', emoji: '📍', screen: 'Location', colorKey: 'location' },
+  {
+    label: 'Emergency Contacts',
+    emoji: '🚨',
+    screen: 'Contacts',
+    colorKey: 'contacts',
+  },
+  { label: 'Map', emoji: '📍', screen: 'Location', colorKey: 'location' },
   {
     label: 'Documents',
     subtitle: 'Store & share important documents',

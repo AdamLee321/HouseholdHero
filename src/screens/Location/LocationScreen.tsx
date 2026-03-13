@@ -21,6 +21,13 @@ import {
   updateLocation,
   stopSharing,
 } from '../../services/locationService';
+import {
+  subscribePlaces,
+  deletePlace,
+  PLACE_CONFIG,
+} from '../../services/placesService';
+import { FamilyPlace, PlaceType } from '../../types';
+import AddPlaceModal from './components/AddPlaceModal';
 
 Geolocation.setRNConfiguration({
   skipPermissionRequests: false,
@@ -34,7 +41,6 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 0.05,
 };
 
-// Stable colour per member name
 const MEMBER_COLORS = [
   '#4F6EF7',
   '#34C759',
@@ -52,7 +58,6 @@ function memberColor(name: string): string {
   }
   return MEMBER_COLORS[Math.abs(hash) % MEMBER_COLORS.length];
 }
-
 function initials(name: string): string {
   return name
     .split(' ')
@@ -61,18 +66,12 @@ function initials(name: string): string {
     .toUpperCase()
     .slice(0, 2);
 }
-
 function timeAgo(ts: number): string {
   const sec = Math.floor((Date.now() - ts) / 1000);
-  if (sec < 60) {
-    return 'Just now';
-  }
+  if (sec < 60) return 'Just now';
   const min = Math.floor(sec / 60);
-  if (min < 60) {
-    return `${min}m ago`;
-  }
-  const hr = Math.floor(min / 60);
-  return `${hr}h ago`;
+  if (min < 60) return `${min}m ago`;
+  return `${Math.floor(min / 60)}h ago`;
 }
 
 async function requestLocationPermission(): Promise<boolean> {
@@ -89,9 +88,44 @@ async function requestLocationPermission(): Promise<boolean> {
     );
     return result === PermissionsAndroid.RESULTS.GRANTED;
   }
-  return true; // iOS permission is handled natively via Info.plist
+  return true;
 }
 
+// ─── Place Marker ────────────────────────────────────────────────────────────
+function PlaceMarkerView({ place }: { place: FamilyPlace }) {
+  const cfg = PLACE_CONFIG[place.type];
+  const isPriority = cfg.priority;
+  const size = isPriority ? 52 : 36;
+  const fontSize = isPriority ? 24 : 16;
+
+  return (
+    <View style={styles.placeMarkerWrap}>
+      <View
+        style={[
+          styles.placeMarkerCircle,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: cfg.color,
+            borderWidth: isPriority ? 3 : 2,
+          },
+        ]}
+      >
+        <Text style={{ fontSize }}>{cfg.emoji}</Text>
+      </View>
+      {isPriority && (
+        <View style={[styles.placeMarkerLabel, { backgroundColor: cfg.color }]}>
+          <Text style={styles.placeMarkerLabelText}>
+            {place.name.toUpperCase()}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
 export default function LocationScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -102,41 +136,54 @@ export default function LocationScreen() {
   const ACCENT = colors.tiles.location.icon;
 
   const [locations, setLocations] = useState<MemberLocation[]>([]);
+  const [places, setPlaces] = useState<FamilyPlace[]>([]);
   const [sharing, setSharing] = useState(false);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const [pendingCoord, setPendingCoord] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [showAddPlace, setShowAddPlace] = useState(false);
+  const [preselectedType, setPreselectedType] = useState<PlaceType | undefined>(
+    undefined,
+  );
+  const [editingPlace, setEditingPlace] = useState<FamilyPlace | undefined>(
+    undefined,
+  );
   const watchIdRef = useRef<number | null>(null);
 
-  // Subscribe to all family member locations
   useEffect(() => {
-    if (!family) {
-      return;
-    }
+    if (!family) return;
     const unsub = subscribeToLocations(family.id, setLocations);
     return unsub;
   }, [family]);
 
-  // Clean up watch on unmount
+  useEffect(() => {
+    if (!family) return;
+    const unsub = subscribePlaces(family.id, setPlaces);
+    return unsub;
+  }, [family]);
+
   useEffect(() => {
     return () => {
-      if (watchIdRef.current !== null) {
+      if (watchIdRef.current !== null)
         Geolocation.clearWatch(watchIdRef.current);
-      }
     };
   }, []);
 
-  // When other members share their location, fit map to all markers
+  // Fit map to show all members + places on first data load
   useEffect(() => {
-    if (locations.length === 0 || !mapRef.current) {
-      return;
-    }
-    mapRef.current.fitToCoordinates(
-      locations.map(l => ({ latitude: l.lat, longitude: l.lng })),
-      {
-        edgePadding: { top: 80, right: 60, bottom: 220, left: 60 },
-        animated: true,
-      },
-    );
-  }, [locations.length]);
+    if (!mapRef.current) return;
+    const coords = [
+      ...locations.map(l => ({ latitude: l.lat, longitude: l.lng })),
+      ...places.map(p => ({ latitude: p.lat, longitude: p.lng })),
+    ];
+    if (coords.length === 0) return;
+    mapRef.current.fitToCoordinates(coords, {
+      edgePadding: { top: 80, right: 60, bottom: 280, left: 60 },
+      animated: true,
+    });
+  }, [locations.length, places.length]);
 
   async function startSharing() {
     const granted = await requestLocationPermission();
@@ -147,9 +194,7 @@ export default function LocationScreen() {
       );
       return;
     }
-
     setSharing(true);
-
     const watchId = Geolocation.watchPosition(
       position => {
         const { latitude, longitude, accuracy } = position.coords;
@@ -163,16 +208,9 @@ export default function LocationScreen() {
             accuracy,
           );
         }
-        // Move map to own position on first fix
-        setRegion(prev => ({
-          ...prev,
-          latitude,
-          longitude,
-        }));
+        setRegion(prev => ({ ...prev, latitude, longitude }));
       },
-      error => {
-        console.warn('Location error:', error.message);
-      },
+      error => console.warn('Location error:', error.message),
       {
         enableHighAccuracy: true,
         distanceFilter: 10,
@@ -180,7 +218,6 @@ export default function LocationScreen() {
         fastestInterval: 5000,
       },
     );
-
     watchIdRef.current = watchId;
   }
 
@@ -190,17 +227,64 @@ export default function LocationScreen() {
       watchIdRef.current = null;
     }
     setSharing(false);
-    if (family) {
-      await stopSharing(family.id, uid);
-    }
+    if (family) await stopSharing(family.id, uid);
   }
 
-  function handleToggleSharing() {
-    if (sharing) {
-      handleStopSharing();
-    } else {
-      startSharing();
-    }
+  function flyTo(lat: number, lng: number) {
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      500,
+    );
+  }
+
+  function openAddPlace(type?: PlaceType) {
+    setEditingPlace(undefined);
+    setPreselectedType(type);
+    setShowAddPlace(true);
+  }
+
+  function openEditPlace(place: FamilyPlace) {
+    setPendingCoord(null);
+    setEditingPlace(place);
+    setPreselectedType(undefined);
+    setShowAddPlace(true);
+  }
+
+  function handlePlaceLongPress(place: FamilyPlace) {
+    const cfg = PLACE_CONFIG[place.type];
+    Alert.alert(`${cfg.emoji} ${place.name}`, 'What would you like to do?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Edit', onPress: () => openEditPlace(place) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert(
+            `Remove ${place.name}?`,
+            'This will remove the pin for all family members.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Remove',
+                style: 'destructive',
+                onPress: () => family && deletePlace(family.id, place.id),
+              },
+            ],
+          ),
+      },
+    ]);
+  }
+
+  function handleModalClose() {
+    setShowAddPlace(false);
+    setPendingCoord(null);
+    setPreselectedType(undefined);
+    setEditingPlace(undefined);
   }
 
   return (
@@ -212,7 +296,15 @@ export default function LocationScreen() {
         region={region}
         onRegionChangeComplete={setRegion}
         userInterfaceStyle={isDark ? 'dark' : 'light'}
+        onLongPress={e => {
+          const { latitude, longitude } = e.nativeEvent.coordinate;
+          setPendingCoord({ lat: latitude, lng: longitude });
+          setEditingPlace(undefined);
+          setPreselectedType(undefined);
+          setShowAddPlace(true);
+        }}
       >
+        {/* Member markers */}
         {locations.map(loc => (
           <Marker
             key={loc.uid}
@@ -221,35 +313,38 @@ export default function LocationScreen() {
           >
             <View
               style={[
-                styles.markerPin,
+                styles.memberPin,
                 { backgroundColor: memberColor(loc.displayName) },
               ]}
             >
-              <Text style={styles.markerInitials}>
+              <Text style={styles.memberInitials}>
                 {initials(loc.displayName)}
               </Text>
             </View>
           </Marker>
         ))}
+
+        {/* Place markers */}
+        {places.map(place => (
+          <Marker
+            key={place.id}
+            coordinate={{ latitude: place.lat, longitude: place.lng }}
+            anchor={{ x: 0.5, y: 1 }}
+            onCalloutPress={() => flyTo(place.lat, place.lng)}
+          >
+            <PlaceMarkerView place={place} />
+          </Marker>
+        ))}
       </MapView>
 
-      {/* Empty state overlay */}
-      {locations.length === 0 && (
-        <View
-          style={[
-            styles.emptyOverlay,
-            { backgroundColor: colors.surface + 'EE' },
-          ]}
-        >
-          <Text style={styles.emptyEmoji}>📍</Text>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            No one is sharing yet
-          </Text>
-          <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
-            Tap the button below to share your location
-          </Text>
-        </View>
-      )}
+      {/* Long-press hint */}
+      <View
+        style={[styles.hintBadge, { backgroundColor: colors.surface + 'EE' }]}
+      >
+        <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+          Hold map to drop a pin
+        </Text>
+      </View>
 
       {/* Bottom card */}
       <View
@@ -261,71 +356,137 @@ export default function LocationScreen() {
           },
         ]}
       >
-        {/* Member list */}
-        {locations.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.memberScroll}
-            contentContainerStyle={styles.memberScrollContent}
-          >
-            {locations.map(loc => (
-              <TouchableOpacity
-                key={loc.uid}
-                style={styles.memberChip}
-                onPress={() => {
-                  mapRef.current?.animateToRegion(
-                    {
-                      latitude: loc.lat,
-                      longitude: loc.lng,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    },
-                    500,
-                  );
-                }}
-              >
-                <View
-                  style={[
-                    styles.chipAvatar,
-                    { backgroundColor: memberColor(loc.displayName) },
-                  ]}
-                >
-                  <Text style={styles.chipInitials}>
-                    {initials(loc.displayName)}
-                  </Text>
-                </View>
-                <View style={styles.chipInfo}>
-                  <Text
-                    style={[styles.chipName, { color: colors.text }]}
-                    numberOfLines={1}
-                  >
-                    {loc.uid === uid ? 'You' : loc.displayName}
-                  </Text>
-                  <Text
-                    style={[styles.chipTime, { color: colors.textTertiary }]}
-                  >
-                    {timeAgo(loc.updatedAt)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
-        {/* Toggle button */}
+        {/* ── Share button ── */}
         <TouchableOpacity
           style={[
             styles.toggleBtn,
             { backgroundColor: sharing ? colors.danger : ACCENT },
           ]}
-          onPress={handleToggleSharing}
+          onPress={() => (sharing ? handleStopSharing() : startSharing())}
         >
           <Text style={styles.toggleBtnText}>
             {sharing ? '⏹ Stop Sharing' : '📍 Share My Location'}
           </Text>
         </TouchableOpacity>
+
+        {/* ── Member location chips ── */}
+        {locations.length > 0 && (
+          <>
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.memberScroll}
+              contentContainerStyle={styles.memberScrollContent}
+            >
+              {locations.map(loc => (
+                <TouchableOpacity
+                  key={loc.uid}
+                  style={styles.memberChip}
+                  onPress={() => flyTo(loc.lat, loc.lng)}
+                >
+                  <View
+                    style={[
+                      styles.chipAvatar,
+                      { backgroundColor: memberColor(loc.displayName) },
+                    ]}
+                  >
+                    <Text style={styles.chipInitials}>
+                      {initials(loc.displayName)}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text
+                      style={[styles.chipName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {loc.uid === uid ? 'You' : loc.displayName}
+                    </Text>
+                    <Text
+                      style={[styles.chipTime, { color: colors.textTertiary }]}
+                    >
+                      {timeAgo(loc.updatedAt)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Divider before places */}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        {/* ── Places section ── */}
+        <View style={styles.placesHeader}>
+          <Text style={[styles.placesTitle, { color: colors.textSecondary }]}>
+            FAMILY PLACES
+          </Text>
+          <TouchableOpacity
+            onPress={() => openAddPlace()}
+            style={[styles.addPlaceBtn, { backgroundColor: ACCENT + '20' }]}
+          >
+            <Text style={[styles.addPlaceBtnText, { color: ACCENT }]}>
+              + Add Place
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {places.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsContent}
+          >
+            {places
+              .slice()
+              .reverse()
+              .map(place => {
+                const cfg = PLACE_CONFIG[place.type];
+                return (
+                  <TouchableOpacity
+                    key={place.id}
+                    onPress={() => flyTo(place.lat, place.lng)}
+                    onLongPress={() => handlePlaceLongPress(place)}
+                    delayLongPress={400}
+                    style={[
+                      styles.placeChip,
+                      {
+                        backgroundColor: cfg.color + '20',
+                        borderColor: cfg.color + '60',
+                      },
+                    ]}
+                  >
+                    <Text style={styles.placeChipEmoji}>{cfg.emoji}</Text>
+                    <Text
+                      style={[styles.placeChipName, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {place.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+          </ScrollView>
+        ) : (
+          <Text style={[styles.noPlacesHint, { color: colors.textSecondary }]}>
+            Tap "+ Add Place" or hold the map to pin a location
+          </Text>
+        )}
       </View>
+
+      {/* Add / Edit Place Modal */}
+      <AddPlaceModal
+        visible={showAddPlace}
+        familyId={family?.id ?? ''}
+        uid={uid}
+        coord={pendingCoord}
+        preselectedType={preselectedType}
+        editingPlace={editingPlace}
+        onClose={handleModalClose}
+      />
     </View>
   );
 }
@@ -333,7 +494,8 @@ export default function LocationScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  markerPin: {
+  // Member markers
+  memberPin: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -347,30 +509,58 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  markerInitials: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  memberInitials: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
-  emptyOverlay: {
-    position: 'absolute',
-    top: '30%',
-    alignSelf: 'center',
-    borderRadius: 16,
-    padding: 24,
+  // Place markers
+  placeMarkerWrap: { alignItems: 'center' },
+  placeMarkerCircle: {
     alignItems: 'center',
-    marginHorizontal: 40,
+    justifyContent: 'center',
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
   },
-  emptyEmoji: { fontSize: 36, marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
-  emptyHint: { fontSize: 13, textAlign: 'center', marginTop: 4 },
+  placeMarkerLabel: {
+    marginTop: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 3,
+  },
+  placeMarkerLabelText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 
+  // Hint badge
+  hintBadge: {
+    position: 'absolute',
+    top: 16,
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  hintText: { fontSize: 12 },
+
+  // Bottom card
   bottomCard: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingTop: 16,
-    paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -378,14 +568,17 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
-  memberScroll: { marginBottom: 12 },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 12 },
+
+  // Member chips
+  memberScroll: { marginBottom: 4, paddingHorizontal: 16 },
   memberScrollContent: { gap: 8, paddingRight: 8 },
   memberChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
   },
   chipAvatar: {
     width: 36,
@@ -395,14 +588,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipInitials: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  chipInfo: {},
   chipName: { fontSize: 13, fontWeight: '600' },
   chipTime: { fontSize: 11 },
 
+  // Places section
+  placesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 16,
+  },
+  placesTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  addPlaceBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
+  addPlaceBtnText: { fontSize: 13, fontWeight: '700' },
+
+  chipsContent: { gap: 8, paddingBottom: 4, marginLeft: 12 },
+  placeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  placeChipEmoji: { fontSize: 15 },
+  placeChipName: { fontSize: 13, fontWeight: '600' },
+
+  noPlacesHint: { fontSize: 12, textAlign: 'center', paddingBottom: 4 },
+
+  // Share button
   toggleBtn: {
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    marginHorizontal: 16,
   },
   toggleBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

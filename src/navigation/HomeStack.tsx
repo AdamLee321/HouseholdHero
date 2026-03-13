@@ -26,7 +26,10 @@ function HomeBackButton() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   return (
-    <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 8 }}>
+    <TouchableOpacity
+      onPress={() => navigation.goBack()}
+      style={{ paddingRight: 8 }}
+    >
       <OcticonIcon name="home-fill" size={22} color={colors.primary} />
     </TouchableOpacity>
   );
@@ -63,7 +66,7 @@ export default function HomeStack() {
       <Stack.Screen
         name="TodoList"
         component={TodoListScreen}
-        options={({route}) => ({title: route.params.title})}
+        options={({ route }) => ({ title: route.params.title })}
       />
       <Stack.Screen
         name="Chores"
@@ -88,7 +91,7 @@ export default function HomeStack() {
       <Stack.Screen
         name="Location"
         component={LocationScreen}
-        options={{ title: 'Live Location' }}
+        options={{ title: 'Map' }}
       />
       <Stack.Screen
         name="Documents"

@@ -16,7 +16,10 @@ function HomeBackButton() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   return (
-    <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingRight: 8 }}>
+    <TouchableOpacity
+      onPress={() => navigation.goBack()}
+      style={{ paddingRight: 8 }}
+    >
       <OcticonIcon name="home-fill" size={22} color={colors.primary} />
     </TouchableOpacity>
   );
@@ -47,7 +50,7 @@ export default function MoreStack() {
       <Stack.Screen
         name="Location"
         component={LocationScreen}
-        options={{ title: 'Live Location' }}
+        options={{ title: 'Map' }}
       />
       <Stack.Screen
         name="Documents"

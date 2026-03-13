@@ -11,7 +11,7 @@ type MoreNavProp = NativeStackNavigationProp<MoreStackParamList, 'MoreHome'>;
 
 const items: { label: string; screen: keyof MoreStackParamList }[] = [
   { label: 'Emergency Contacts', screen: 'Contacts' },
-  { label: 'Live Location', screen: 'Location' },
+  { label: 'Map', screen: 'Location' },
   { label: 'Documents', screen: 'Documents' },
 ];
 

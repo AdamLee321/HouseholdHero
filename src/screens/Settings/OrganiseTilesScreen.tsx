@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -35,25 +41,32 @@ interface TileItem {
   visible: boolean;
 }
 
-const TILE_META: Record<string, { label: string; emoji: string; colorKey: keyof AppColors['tiles'] }> = {
-  Shopping:  { label: 'Shopping',          emoji: '🛒', colorKey: 'shopping' },
-  Todos:     { label: 'To-Do Lists',        emoji: '✅', colorKey: 'todos' },
-  Chores:    { label: 'Chores',             emoji: '🧹', colorKey: 'chores' },
-  Calendar:  { label: 'Calendar',           emoji: '📅', colorKey: 'calendar' },
-  Messages:  { label: 'Messages',           emoji: '💬', colorKey: 'messages' },
-  Contacts:  { label: 'Emergency Contacts', emoji: '🚨', colorKey: 'contacts' },
-  Location:  { label: 'Live Location',      emoji: '📍', colorKey: 'location' },
-  Documents: { label: 'Documents',          emoji: '📄', colorKey: 'documents' },
-  MyFamily:  { label: 'My Family',          emoji: '👨‍👩‍👧‍👦', colorKey: 'family' },
-  Budget:    { label: 'Budget',             emoji: '💰', colorKey: 'budget' },
-  Gallery:   { label: 'Gallery',            emoji: '📸', colorKey: 'gallery' },
-  Recipes:   { label: 'Recipes',            emoji: '🍳', colorKey: 'recipes' },
+const TILE_META: Record<
+  string,
+  { label: string; emoji: string; colorKey: keyof AppColors['tiles'] }
+> = {
+  Shopping: { label: 'Shopping', emoji: '🛒', colorKey: 'shopping' },
+  Todos: { label: 'To-Do Lists', emoji: '✅', colorKey: 'todos' },
+  Chores: { label: 'Chores', emoji: '🧹', colorKey: 'chores' },
+  Calendar: { label: 'Calendar', emoji: '📅', colorKey: 'calendar' },
+  Messages: { label: 'Messages', emoji: '💬', colorKey: 'messages' },
+  Contacts: { label: 'Emergency Contacts', emoji: '🚨', colorKey: 'contacts' },
+  Location: { label: 'Map', emoji: '📍', colorKey: 'location' },
+  Documents: { label: 'Documents', emoji: '📄', colorKey: 'documents' },
+  MyFamily: { label: 'My Family', emoji: '👨‍👩‍👧‍👦', colorKey: 'family' },
+  Budget: { label: 'Budget', emoji: '💰', colorKey: 'budget' },
+  Gallery: { label: 'Gallery', emoji: '📸', colorKey: 'gallery' },
+  Recipes: { label: 'Recipes', emoji: '🍳', colorKey: 'recipes' },
 };
 
 function buildItems(prefs: TilePref): TileItem[] {
   const ordered = prefs.order
     .filter(k => TILE_META[k])
-    .map(k => ({ key: k, ...TILE_META[k], visible: !prefs.hidden.includes(k) }));
+    .map(k => ({
+      key: k,
+      ...TILE_META[k],
+      visible: !prefs.hidden.includes(k),
+    }));
   const seen = new Set(prefs.order);
   DEFAULT_TILE_ORDER.filter(k => !seen.has(k)).forEach(k => {
     if (TILE_META[k]) ordered.push({ key: k, ...TILE_META[k], visible: true });
@@ -125,17 +138,20 @@ export default function OrganiseTilesScreen() {
   // Called from worklet → JS thread
   const jsSetDragFrom = useCallback((i: number) => setDragFrom(i), []);
   const jsSetDragTo = useCallback((i: number) => setDragTo(i), []);
-  const jsCommit = useCallback((from: number, to: number) => {
-    setDragFrom(null);
-    setDragTo(null);
-    if (from !== to) {
-      setItems(prev => {
-        const next = reorder(prev, from, to);
-        saveTilePrefs(uid, itemsToPrefs(next));
-        return next;
-      });
-    }
-  }, [uid]);
+  const jsCommit = useCallback(
+    (from: number, to: number) => {
+      setDragFrom(null);
+      setDragTo(null);
+      if (from !== to) {
+        setItems(prev => {
+          const next = reorder(prev, from, to);
+          saveTilePrefs(uid, itemsToPrefs(next));
+          return next;
+        });
+      }
+    },
+    [uid],
+  );
   const jsCancel = useCallback(() => {
     setDragFrom(null);
     setDragTo(null);
@@ -190,13 +206,18 @@ export default function OrganiseTilesScreen() {
     ],
   }));
 
-  const toggleVisible = useCallback((key: string) => {
-    setItems(prev => {
-      const next = prev.map(i => i.key === key ? { ...i, visible: !i.visible } : i);
-      saveTilePrefs(uid, itemsToPrefs(next));
-      return next;
-    });
-  }, [uid]);
+  const toggleVisible = useCallback(
+    (key: string) => {
+      setItems(prev => {
+        const next = prev.map(i =>
+          i.key === key ? { ...i, visible: !i.visible } : i,
+        );
+        saveTilePrefs(uid, itemsToPrefs(next));
+        return next;
+      });
+    },
+    [uid],
+  );
 
   const draggingItem = dragFrom !== null ? items[dragFrom] : null;
   const gridHeight = Math.ceil(items.length / 2) * ROW_HEIGHT - TILE_GAP;
@@ -209,14 +230,18 @@ export default function OrganiseTilesScreen() {
       <ScrollView
         scrollEnabled={dragFrom === null}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24, paddingTop: 4 }}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 24,
+          paddingTop: 4,
+        }}
       >
         <GestureDetector gesture={pan}>
           <View style={[styles.grid, { height: gridHeight }]}>
             {items.map((item, index) => {
               const pos = posOf(index);
               const isGhost = dragFrom === index;
-              const isTarget = dragTo === index && dragFrom !== null && dragFrom !== index;
+              const isTarget =
+                dragTo === index && dragFrom !== null && dragFrom !== index;
               const tileColors = colors.tiles[item.colorKey];
               return (
                 <View
@@ -225,7 +250,13 @@ export default function OrganiseTilesScreen() {
                 >
                   {isGhost ? (
                     // Empty ghost where the tile originated
-                    <View style={[styles.tile, styles.ghost, { borderColor: colors.primary }]} />
+                    <View
+                      style={[
+                        styles.tile,
+                        styles.ghost,
+                        { borderColor: colors.primary },
+                      ]}
+                    />
                   ) : (
                     <View
                       style={[
@@ -235,25 +266,37 @@ export default function OrganiseTilesScreen() {
                           shadowColor: isDark ? '#000' : '#aaa',
                           opacity: item.visible ? 1 : 0.4,
                           borderWidth: isTarget ? 2 : 0,
-                          borderColor: isTarget ? colors.primary : 'transparent',
+                          borderColor: isTarget
+                            ? colors.primary
+                            : 'transparent',
                         },
                       ]}
                     >
                       <Text style={[styles.tileLabel, { color: colors.text }]}>
                         {item.label}
                       </Text>
-                      <View style={[styles.iconWrap, { backgroundColor: tileColors.bg }]}>
+                      <View
+                        style={[
+                          styles.iconWrap,
+                          { backgroundColor: tileColors.bg },
+                        ]}
+                      >
                         <Text style={styles.emoji}>{item.emoji}</Text>
                       </View>
                       <TouchableOpacity
                         onPress={() => toggleVisible(item.key)}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        style={[styles.eyeBadge, { backgroundColor: colors.surface }]}
+                        style={[
+                          styles.eyeBadge,
+                          { backgroundColor: colors.surface },
+                        ]}
                       >
                         <LucideIcon
                           name={item.visible ? 'eye' : 'eye-off'}
                           size={14}
-                          color={item.visible ? colors.primary : colors.textSecondary}
+                          color={
+                            item.visible ? colors.primary : colors.textSecondary
+                          }
                         />
                       </TouchableOpacity>
                     </View>
@@ -263,37 +306,43 @@ export default function OrganiseTilesScreen() {
             })}
 
             {/* Floating tile that follows the finger */}
-            {draggingItem && (() => {
-              const tileColors = colors.tiles[draggingItem.colorKey];
-              return (
-                <Animated.View
-                  pointerEvents="none"
-                  style={[styles.tileWrap, overlayStyle, styles.overlay]}
-                >
-                  <View
-                    style={[
-                      styles.tile,
-                      {
-                        backgroundColor: colors.surface,
-                        shadowColor: '#000',
-                        shadowOpacity: 0.2,
-                        shadowRadius: 20,
-                        shadowOffset: { width: 0, height: 8 },
-                        elevation: 10,
-                        opacity: draggingItem.visible ? 1 : 0.4,
-                      },
-                    ]}
+            {draggingItem &&
+              (() => {
+                const tileColors = colors.tiles[draggingItem.colorKey];
+                return (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[styles.tileWrap, overlayStyle, styles.overlay]}
                   >
-                    <Text style={[styles.tileLabel, { color: colors.text }]}>
-                      {draggingItem.label}
-                    </Text>
-                    <View style={[styles.iconWrap, { backgroundColor: tileColors.bg }]}>
-                      <Text style={styles.emoji}>{draggingItem.emoji}</Text>
+                    <View
+                      style={[
+                        styles.tile,
+                        {
+                          backgroundColor: colors.surface,
+                          shadowColor: '#000',
+                          shadowOpacity: 0.2,
+                          shadowRadius: 20,
+                          shadowOffset: { width: 0, height: 8 },
+                          elevation: 10,
+                          opacity: draggingItem.visible ? 1 : 0.4,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.tileLabel, { color: colors.text }]}>
+                        {draggingItem.label}
+                      </Text>
+                      <View
+                        style={[
+                          styles.iconWrap,
+                          { backgroundColor: tileColors.bg },
+                        ]}
+                      >
+                        <Text style={styles.emoji}>{draggingItem.emoji}</Text>
+                      </View>
                     </View>
-                  </View>
-                </Animated.View>
-              );
-            })()}
+                  </Animated.View>
+                );
+              })()}
           </View>
         </GestureDetector>
       </ScrollView>
@@ -303,7 +352,12 @@ export default function OrganiseTilesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  hint: { fontSize: 13, marginHorizontal: PADDING_H, marginTop: 12, marginBottom: 8 },
+  hint: {
+    fontSize: 13,
+    marginHorizontal: PADDING_H,
+    marginTop: 12,
+    marginBottom: 8,
+  },
   grid: { marginHorizontal: 0 },
   tileWrap: { position: 'absolute', width: TILE_SIZE, height: TILE_HEIGHT },
   overlay: { zIndex: 100 },

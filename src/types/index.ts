@@ -1,3 +1,23 @@
+export type PlaceType =
+  | 'home'
+  | 'work'
+  | 'school'
+  | 'park'
+  | 'music'
+  | 'doctor'
+  | 'hospital'
+  | 'other';
+
+export interface FamilyPlace {
+  id: string;
+  type: PlaceType;
+  name: string;
+  lat: number;
+  lng: number;
+  createdBy: string;
+  createdAt: number;
+}
+
 export interface TilePref {
   order: string[];
   hidden: string[];
