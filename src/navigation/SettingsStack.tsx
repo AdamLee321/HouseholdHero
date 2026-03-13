@@ -6,10 +6,12 @@ import LucideIcon from '@react-native-vector-icons/lucide';
 import { useTheme } from '../theme/useTheme';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
 import OrganiseTilesScreen from '../screens/Settings/OrganiseTilesScreen';
+import AccountScreen from '../screens/Settings/AccountScreen';
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
   OrganiseTiles: undefined;
+  Account: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -45,6 +47,11 @@ export default function SettingsStack() {
         name="OrganiseTiles"
         component={OrganiseTilesScreen}
         options={{ title: 'Organise Tiles' }}
+      />
+      <Stack.Screen
+        name="Account"
+        component={AccountScreen}
+        options={{ title: 'Account' }}
       />
     </Stack.Navigator>
   );

@@ -88,7 +88,7 @@ export default function OnboardingScreen() {
       >
         <Text style={styles.logo}>🏠</Text>
         <Text style={[styles.title, { color: colors.text }]}>
-          Welcome to HouseholdHero
+          Welcome to Household Hero
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Set up your family group to get started

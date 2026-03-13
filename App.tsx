@@ -10,14 +10,20 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BootSplash from 'react-native-bootsplash';
 import RootNavigator from './src/navigation/RootNavigator';
+import { useAuthStore } from './src/store/authStore';
+import { useFamilyStore } from './src/store/familyStore';
 
 export default function App() {
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
+  const initialising = useAuthStore(s => s.initialising);
+  const familyLoading = useFamilyStore(s => s.loading);
 
   useEffect(() => {
-    BootSplash.hide({ fade: true });
-  }, []);
+    if (!initialising && !familyLoading) {
+      BootSplash.hide({ fade: true });
+    }
+  }, [initialising, familyLoading]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

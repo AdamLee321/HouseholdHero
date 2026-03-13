@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Family files ─────────────────────────────────────────────────────────
+    // All family files live under families/{familyId}/...
+    // We verify the user belongs to the family by checking their Firestore profile.
+    // The user's familyId is stored on their users/{uid} document.
+
+    function userFamilyId() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.familyId;
+    }
+
+    function isFamilyMember(familyId) {
+      return isAuth() && userFamilyId() == familyId;
+    }
+
+    // Max file sizes
+    function isUnderMB(mb) {
+      return request.resource.size <= mb * 1024 * 1024;
+    }
+
+    // ── Documents ────────────────────────────────────────────────────────────
+    match /families/{familyId}/documents/{fileName} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) && isUnderMB(20);
+      allow delete: if isFamilyMember(familyId);
+      allow update: if false;
+    }
+
+    // ── Gallery ───────────────────────────────────────────────────────────────
+    match /families/{familyId}/gallery/{fileName} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) && isUnderMB(10);
+      allow delete: if isFamilyMember(familyId);
+      allow update: if false;
+    }
+
+    // ── Recipe photos ─────────────────────────────────────────────────────────
+    match /families/{familyId}/recipes/{fileName} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) && isUnderMB(10);
+      allow delete: if isFamilyMember(familyId);
+      allow update: if false;
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

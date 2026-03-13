@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    // Is the request from a signed-in user?
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Is the signed-in user a member of this family?
+    function isFamilyMember(familyId) {
+      return isAuth() &&
+        request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.members;
+    }
+
+    // Is the signed-in user the owner of this document?
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+
+    match /users/{uid} {
+      // Users can only read and write their own profile
+      allow read, write: if isOwner(uid);
+
+      // Tile preferences — private to the user
+      match /prefs/{doc} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Families ──────────────────────────────────────────────────────────────
+
+    match /families/{familyId} {
+      // Any authenticated user can read a family doc (needed to join via invite code)
+      // Only existing members can update it (e.g. add new member via arrayUnion)
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isFamilyMember(familyId);
+      allow delete: if false; // never delete a family doc from the client
+
+      // ── Live locations ────────────────────────────────────────────────────
+      match /locations/{uid} {
+        // Any family member can read all locations
+        allow read: if isFamilyMember(familyId);
+        // Only the owner can write their own location
+        allow write: if isFamilyMember(familyId) && isOwner(uid);
+      }
+
+      // ── Places ───────────────────────────────────────────────────────────
+      match /places/{placeId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      // ── Emergency contacts ────────────────────────────────────────────────
+      match /emergencyContacts/{contactId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId);
+        // Only the creator can edit or delete their own contact
+        allow update, delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.createdBy;
+      }
+
+      // ── Shopping list ─────────────────────────────────────────────────────
+      match /shoppingList/{itemId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      // ── Todo lists + items ────────────────────────────────────────────────
+      match /todos/{listId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.createdBy;
+
+        match /items/{itemId} {
+          allow read: if isFamilyMember(familyId);
+          allow create: if isFamilyMember(familyId);
+          allow update, delete: if isFamilyMember(familyId);
+        }
+      }
+
+      // ── Chores ────────────────────────────────────────────────────────────
+      match /rooms/{roomId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      match /chores/{choreId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      match /chorePoints/{uid} {
+        allow read: if isFamilyMember(familyId);
+        // Only the owner can update their own points
+        allow write: if isFamilyMember(familyId) && isOwner(uid);
+      }
+
+      // ── Messages ──────────────────────────────────────────────────────────
+      match /messages/{messageId} {
+        allow read, create: if isFamilyMember(familyId);
+        // Messages are immutable once sent — no edits or deletes
+        allow update, delete: if false;
+      }
+
+      // ── Calendar ──────────────────────────────────────────────────────────
+      match /calendarEvents/{eventId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.createdBy;
+      }
+
+      // ── Documents ─────────────────────────────────────────────────────────
+      match /documents/{docId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.uploadedBy;
+        allow update: if false;
+      }
+
+      // ── Budget ────────────────────────────────────────────────────────────
+      match /budgetCategories/{categoryId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      match /transactions/{txnId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.createdBy;
+      }
+
+      // ── Gallery ───────────────────────────────────────────────────────────
+      match /photos/{photoId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.uploadedBy;
+        allow update: if false;
+      }
+
+      // ── Recipes ───────────────────────────────────────────────────────────
+      match /recipes/{recipeId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.createdBy;
+      }
+    }
+
+    // Deny everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

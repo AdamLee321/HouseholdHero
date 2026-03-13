@@ -106,6 +106,22 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Account */}
+      <View style={[styles.section, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          ACCOUNT
+        </Text>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => navigation.navigate('Account')}
+        >
+          <Text style={[styles.rowLabel, { color: colors.text }]}>
+            Email &amp; Password
+          </Text>
+          <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
       {/* Home Screen */}
       <View style={[styles.section, { backgroundColor: colors.surface }]}>
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>

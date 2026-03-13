@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import auth from '@react-native-firebase/auth';
 import { RootStackParamList } from '../types';
@@ -13,13 +14,13 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { user, initialising, setUser, setInitialising } = useAuthStore();
-  const { family, setFamily, setProfile, setLoading } = useFamilyStore();
+  const { family, loading: familyLoading, setFamily, setProfile, setLoading } = useFamilyStore();
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async u => {
       setUser(u);
       if (u) {
-        // Load family data when user signs in
+        // Load profile + family before revealing the navigator
         setLoading(true);
         try {
           const profile = await loadUserProfile();
@@ -30,20 +31,19 @@ export default function RootNavigator() {
           }
         } finally {
           setLoading(false);
+          setInitialising(false);
         }
       } else {
         // Clear family data on sign out
         useFamilyStore.getState().reset();
-      }
-      if (initialising) {
         setInitialising(false);
       }
     });
     return unsubscribe;
   }, []);
 
-  if (initialising) {
-    return null;
+  if (initialising || familyLoading) {
+    return <View style={{ flex: 1, backgroundColor: '#00C9A7' }} />;
   }
 
   return (
