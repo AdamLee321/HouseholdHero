@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import Text from '../../components/Text';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
@@ -150,7 +150,7 @@ export default function LocationScreen() {
   const [locations, setLocations] = useState<MemberLocation[]>([]);
   const [places, setPlaces] = useState<FamilyPlace[]>([]);
   const [sharing, setSharing] = useState(_isSharing);
-  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const [latitudeDelta, setLatitudeDelta] = useState(DEFAULT_REGION.latitudeDelta);
   const [pendingCoord, setPendingCoord] = useState<{
     lat: number;
     lng: number;
@@ -212,7 +212,10 @@ export default function LocationScreen() {
             accuracy,
           );
         }
-        setRegion(prev => ({ ...prev, latitude, longitude }));
+        mapRef.current?.animateToRegion(
+          { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+          500,
+        );
       },
       error => console.warn('Location error:', error.message),
       {
@@ -312,9 +315,10 @@ export default function LocationScreen() {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        userInterfaceStyle={isDark ? 'dark' : 'light'}
+        provider={PROVIDER_GOOGLE}
+        initialRegion={DEFAULT_REGION}
+        onRegionChangeComplete={r => setLatitudeDelta(r.latitudeDelta)}
+        userInterfaceStyle={Platform.OS === 'ios' ? (isDark ? 'dark' : 'light') : undefined}
         onLongPress={e => {
           const { latitude, longitude } = e.nativeEvent.coordinate;
           setPendingCoord({ lat: latitude, lng: longitude });
@@ -356,7 +360,7 @@ export default function LocationScreen() {
           >
             <PlaceMarkerView
               place={place}
-              latitudeDelta={region.latitudeDelta}
+              latitudeDelta={latitudeDelta}
               isSelected={selectedPlaceId === place.id}
             />
           </Marker>
