@@ -28,7 +28,7 @@ service firebase.storage {
     }
 
     // ── Documents ────────────────────────────────────────────────────────────
-    match /families/{familyId}/documents/{fileName} {
+    match /families/{familyId}/documents/{allPaths=**} {
       allow read: if isFamilyMember(familyId);
       allow create: if isFamilyMember(familyId) && isUnderMB(20);
       allow delete: if isFamilyMember(familyId);

@@ -46,6 +46,14 @@ export type HomeStackParamList = {
   Contacts: undefined;
   Location: undefined;
   Documents: undefined;
+  FolderScreen: {
+    folderId: string;
+    folderName: string;
+    folderColor: string;
+    folderEmoji: string;
+    folderVisibility: string;
+    folderCreatedBy: string;
+  };
   MyFamily: undefined;
   Budget: undefined;
   Gallery: undefined;

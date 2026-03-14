@@ -152,11 +152,21 @@ service cloud.firestore {
           request.auth.uid == resource.data.createdBy;
       }
 
+      // ── Document folders ──────────────────────────────────────────────────
+      match /documentFolders/{folderId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId);
+        allow update: if isFamilyMember(familyId) &&
+          (isFamilyAdmin(familyId) || request.auth.uid == resource.data.createdBy);
+        allow delete: if isFamilyMember(familyId) &&
+          (isFamilyAdmin(familyId) || request.auth.uid == resource.data.createdBy);
+      }
+
       // ── Documents ─────────────────────────────────────────────────────────
       match /documents/{docId} {
         allow read, create: if isFamilyMember(familyId);
         allow delete: if isFamilyMember(familyId) &&
-          request.auth.uid == resource.data.uploadedBy;
+          (isFamilyAdmin(familyId) || request.auth.uid == resource.data.uploadedBy);
         allow update: if false;
       }
 

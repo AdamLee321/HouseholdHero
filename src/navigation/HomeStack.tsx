@@ -18,6 +18,7 @@ import LocationScreen from '../screens/Location/LocationScreen';
 import DocumentsScreen from '../screens/Documents/DocumentsScreen';
 import MyFamilyScreen from '../screens/MyFamily/MyFamilyScreen';
 import BudgetScreen from '../screens/Budget/BudgetScreen';
+import FolderScreen from '../screens/Documents/FolderScreen';
 import GalleryScreen from '../screens/Gallery/GalleryScreen';
 import RecipesScreen from '../screens/Recipes/RecipesScreen';
 
@@ -113,6 +114,14 @@ export default function HomeStack() {
         name="Budget"
         component={BudgetScreen}
         options={{ title: 'Budget' }}
+      />
+      <Stack.Screen
+        name="FolderScreen"
+        component={FolderScreen}
+        options={({ route }) => ({
+          title: `${route.params.folderEmoji}  ${route.params.folderName}`,
+          headerLeft: undefined, // use native back arrow instead of home icon
+        })}
       />
       <Stack.Screen
         name="Gallery"
