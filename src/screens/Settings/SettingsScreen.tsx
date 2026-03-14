@@ -61,17 +61,20 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      {/* Family card */}
-      {family && (
-        <View style={[styles.familyCard, { backgroundColor: colors.primary }]}>
-          <Text style={styles.familyCardLabel}>FAMILY</Text>
-          <Text style={styles.familyCardName}>{family.name}</Text>
-          <View style={styles.divider} />
-          <Text style={styles.familyCardLabel}>INVITE CODE</Text>
-          <Text style={styles.familyCardCode}>{family.inviteCode}</Text>
-          <Text style={styles.familyCardHint}>
-            Share this code with family members to join
+      {/* Invite Members — admin only */}
+      {family && profile?.role === 'admin' && (
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            FAMILY
           </Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('Invite')}>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Invite Members
+            </Text>
+            <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -174,33 +177,6 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 30, fontWeight: '700' },
   displayName: { fontSize: 20, fontWeight: '700', marginBottom: 4 },
   email: { fontSize: 14 },
-  familyCard: { borderRadius: 18, padding: 24, marginBottom: 16 },
-  familyCardLabel: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  familyCardName: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    marginBottom: 16,
-  },
-  familyCardCode: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: 10,
-    marginBottom: 8,
-  },
-  familyCardHint: { color: 'rgba(255,255,255,0.6)', fontSize: 12 },
   section: { borderRadius: 18, marginBottom: 16, overflow: 'hidden' },
   sectionTitle: {
     fontSize: 11,

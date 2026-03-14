@@ -2829,6 +2829,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@notifee/react-native@npm:^9.1.8":
+  version: 9.1.8
+  resolution: "@notifee/react-native@npm:9.1.8"
+  peerDependencies:
+    react-native: "*"
+  checksum: a144f7c5aa54a7e774c95b3a91341653865dfa4c8540b34ead3f281edd733830975c4f86bdfe422467d18ae97879b75be09ca25bb1818ba2ecfc56808cb570b1
+  languageName: node
+  linkType: hard
+
 "@npmcli/agent@npm:^4.0.0":
   version: 4.0.0
   resolution: "@npmcli/agent@npm:4.0.0"
@@ -3194,6 +3203,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-firebase/messaging@npm:^23.8.8":
+  version: 23.8.8
+  resolution: "@react-native-firebase/messaging@npm:23.8.8"
+  peerDependencies:
+    "@react-native-firebase/app": 23.8.8
+    expo: ">=47.0.0"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 2b2513e478ec0d7176776e26fdaffef253a709b9cfffe9d359a7b4a70e3fbadc5b9b2e287d7ac0a6399a16d1c90a0a8a084352a28ee2f9fe406b3d4794fb1238
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/storage@npm:^23.8.8":
   version: 23.8.8
   resolution: "@react-native-firebase/storage@npm:23.8.8"
@@ -3220,6 +3242,18 @@ __metadata:
   bin:
     rnvi-update-plist: lib/commonjs/scripts/updatePlist.js
   checksum: 91d0a459d4bd65866fb719442df716be717b8d5269860679a5d3cd49467c3d622b2f3b1a27c50da4e127b4fac88e9b6fa92575fa2ee0602b20e0af887e7618bb
+  languageName: node
+  linkType: hard
+
+"@react-native-vector-icons/feather@npm:^12.4.2":
+  version: 12.4.2
+  resolution: "@react-native-vector-icons/feather@npm:12.4.2"
+  dependencies:
+    "@react-native-vector-icons/common": ^12.4.1
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 618a0eb98b219b29a67bbe46e0c74c0bf90fd5103f29a6087a0003b7609678356ec91fbe17f159bbfca5ac74b79e3b21c88cf55e859bf89d59416fc751ce95c7
   languageName: node
   linkType: hard
 
@@ -3958,6 +3992,7 @@ __metadata:
     "@babel/core": ^7.25.2
     "@babel/preset-env": ^7.25.3
     "@babel/runtime": ^7.25.0
+    "@notifee/react-native": ^9.1.8
     "@react-native-async-storage/async-storage": ^2.2.0
     "@react-native-community/cli": 20.1.0
     "@react-native-community/cli-platform-android": 20.1.0
@@ -3968,7 +4003,9 @@ __metadata:
     "@react-native-firebase/app": ^23.8.8
     "@react-native-firebase/auth": ^23.8.8
     "@react-native-firebase/firestore": ^23.8.8
+    "@react-native-firebase/messaging": ^23.8.8
     "@react-native-firebase/storage": ^23.8.8
+    "@react-native-vector-icons/feather": ^12.4.2
     "@react-native-vector-icons/lucide": ^12.4.2
     "@react-native-vector-icons/octicons": ^20.4.2
     "@react-native/babel-preset": 0.84.1

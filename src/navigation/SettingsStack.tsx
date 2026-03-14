@@ -7,11 +7,13 @@ import { useTheme } from '../theme/useTheme';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
 import OrganiseTilesScreen from '../screens/Settings/OrganiseTilesScreen';
 import AccountScreen from '../screens/Settings/AccountScreen';
+import InviteScreen from '../screens/Settings/InviteScreen';
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
   OrganiseTiles: undefined;
   Account: undefined;
+  Invite: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -52,6 +54,11 @@ export default function SettingsStack() {
         name="Account"
         component={AccountScreen}
         options={{ title: 'Account' }}
+      />
+      <Stack.Screen
+        name="Invite"
+        component={InviteScreen}
+        options={{ title: 'Invite Members' }}
       />
     </Stack.Navigator>
   );

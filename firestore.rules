@@ -21,11 +21,27 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == uid;
     }
 
+    // Is the signed-in user an admin of this family?
+    function isFamilyAdmin(familyId) {
+      return isAuth() &&
+        isFamilyMember(familyId) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // ── Users ─────────────────────────────────────────────────────────────────
 
     match /users/{uid} {
-      // Users can only read and write their own profile
+      // Users can read and write their own profile
       allow read, write: if isOwner(uid);
+      // Family members can read other members' profiles (for member lists)
+      allow read: if isAuth() &&
+        resource.data.familyId != null &&
+        isFamilyMember(resource.data.familyId);
+      // Family admin can update the role field on any member in their family
+      allow update: if isAuth() &&
+        resource.data.familyId != null &&
+        isFamilyAdmin(resource.data.familyId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']);
 
       // Tile preferences — private to the user
       match /prefs/{doc} {
@@ -37,10 +53,14 @@ service cloud.firestore {
 
     match /families/{familyId} {
       // Any authenticated user can read a family doc (needed to join via invite code)
-      // Only existing members can update it (e.g. add new member via arrayUnion)
       allow read: if isAuth();
       allow create: if isAuth();
-      allow update: if isFamilyMember(familyId);
+      // Members can update anything (e.g. invite code regeneration by admin)
+      // Any auth user can update only the members field (adding themselves when joining)
+      allow update: if isFamilyMember(familyId) ||
+        (isAuth() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
+         request.resource.data.members.hasAll(resource.data.members));
       allow delete: if false; // never delete a family doc from the client
 
       // ── Live locations ────────────────────────────────────────────────────
@@ -62,9 +82,9 @@ service cloud.firestore {
       match /emergencyContacts/{contactId} {
         allow read: if isFamilyMember(familyId);
         allow create: if isFamilyMember(familyId);
-        // Only the creator can edit or delete their own contact
-        allow update, delete: if isFamilyMember(familyId) &&
-          request.auth.uid == resource.data.createdBy;
+        // Admin has full control; non-admins can only edit/delete their own contacts
+        allow update, delete: if isFamilyAdmin(familyId) ||
+          (isFamilyMember(familyId) && request.auth.uid == resource.data.addedBy);
       }
 
       // ── Shopping list ─────────────────────────────────────────────────────

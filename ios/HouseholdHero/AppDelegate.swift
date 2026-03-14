@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import FirebaseMessaging
 import RNBootSplash
 
 @main
@@ -22,6 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     FirebaseApp.configure()
 
+    UNUserNotificationCenter.current().delegate = self
+
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
@@ -34,6 +37,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     )
 
     return true
+  }
+
+  func application(_ application: UIApplication,
+                   didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    Messaging.messaging().apnsToken = deviceToken
+  }
+}
+
+extension AppDelegate: UNUserNotificationCenterDelegate {
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .sound, .badge])
   }
 }
 

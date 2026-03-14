@@ -7,8 +7,8 @@ export interface EmergencyContact {
   relation: string;
   type: 'shared' | 'personal';
   locked: boolean; // shared contacts only — cannot be deleted
-  ownerId?: string; // personal contacts only
-  ownerName?: string; // personal contacts only
+  ownerId: string | null; // personal contacts only
+  ownerName: string | null; // personal contacts only
   addedBy: string;
   createdAt: number;
 }
@@ -49,6 +49,19 @@ export async function addContact(
       ...contact,
       createdAt: Date.now(),
     });
+}
+
+export async function updateContact(
+  familyId: string,
+  contactId: string,
+  fields: Partial<Pick<EmergencyContact, 'name' | 'phone' | 'relation' | 'locked'>>,
+) {
+  await firestore()
+    .collection('families')
+    .doc(familyId)
+    .collection('emergencyContacts')
+    .doc(contactId)
+    .update(fields);
 }
 
 export async function deleteContact(familyId: string, contactId: string) {

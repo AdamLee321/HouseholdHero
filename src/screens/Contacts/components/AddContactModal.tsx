@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
@@ -12,10 +12,12 @@ import {
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
 import {useTheme} from '../../../theme/useTheme';
+import {EmergencyContact} from '../../../services/contactService';
 
 interface Props {
   visible: boolean;
   isAdmin: boolean;
+  editContact?: EmergencyContact | null;
   onClose: () => void;
   onAdd: (params: {
     name: string;
@@ -24,16 +26,25 @@ interface Props {
     type: 'shared' | 'personal';
     locked: boolean;
   }) => Promise<void>;
+  onEdit: (fields: {
+    name: string;
+    phone: string;
+    relation: string;
+    locked: boolean;
+  }) => Promise<void>;
 }
 
 export default function AddContactModal({
   visible,
   isAdmin,
+  editContact,
   onClose,
   onAdd,
+  onEdit,
 }: Props) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.contacts.icon;
+  const isEditing = !!editContact;
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -41,6 +52,18 @@ export default function AddContactModal({
   const [type, setType] = useState<'shared' | 'personal'>('personal');
   const [locked, setLocked] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (editContact) {
+      setName(editContact.name);
+      setPhone(editContact.phone);
+      setRelation(editContact.relation ?? '');
+      setType(editContact.type);
+      setLocked(editContact.locked);
+    } else {
+      reset();
+    }
+  }, [editContact, visible]);
 
   function reset() {
     setName('');
@@ -50,19 +73,28 @@ export default function AddContactModal({
     setLocked(false);
   }
 
-  async function handleAdd() {
+  async function handleSave() {
     if (!name.trim() || !phone.trim()) {
       return;
     }
     setSaving(true);
     try {
-      await onAdd({
-        name: name.trim(),
-        phone: phone.trim(),
-        relation: relation.trim(),
-        type,
-        locked: type === 'shared' ? locked : false,
-      });
+      if (isEditing) {
+        await onEdit({
+          name: name.trim(),
+          phone: phone.trim(),
+          relation: relation.trim(),
+          locked: editContact!.type === 'shared' ? locked : false,
+        });
+      } else {
+        await onAdd({
+          name: name.trim(),
+          phone: phone.trim(),
+          relation: relation.trim(),
+          type,
+          locked: type === 'shared' ? locked : false,
+        });
+      }
       reset();
       onClose();
     } finally {
@@ -91,11 +123,11 @@ export default function AddContactModal({
 
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={[styles.title, {color: colors.text}]}>
-              New Emergency Contact
+              {isEditing ? 'Edit Contact' : 'New Emergency Contact'}
             </Text>
 
-            {/* Type selector — admins only */}
-            {isAdmin && (
+            {/* Type selector — admins only, add mode only */}
+            {isAdmin && !isEditing && (
               <>
                 <Text style={[styles.label, {color: colors.textSecondary}]}>
                   Type
@@ -190,7 +222,7 @@ export default function AddContactModal({
             />
 
             {/* Locked toggle — shared contacts, admins only */}
-            {isAdmin && type === 'shared' && (
+            {isAdmin && (isEditing ? editContact!.type === 'shared' : type === 'shared') && (
               <View style={styles.toggleRow}>
                 <View style={styles.toggleInfo}>
                   <Text style={[styles.toggleTitle, {color: colors.text}]}>
@@ -231,10 +263,10 @@ export default function AddContactModal({
                   styles.btnAdd,
                   {backgroundColor: ACCENT, opacity: canSave ? 1 : 0.5},
                 ]}
-                onPress={handleAdd}
+                onPress={handleSave}
                 disabled={!canSave}>
                 <Text style={styles.btnAddText}>
-                  {saving ? 'Saving...' : 'Add Contact'}
+                  {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Contact'}
                 </Text>
               </TouchableOpacity>
             </View>

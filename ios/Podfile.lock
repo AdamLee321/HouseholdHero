@@ -1203,6 +1203,9 @@ PODS:
   - Firebase/Firestore (12.10.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 12.10.0)
+  - Firebase/Messaging (12.10.0):
+    - Firebase/CoreOnly
+    - FirebaseMessaging (~> 12.10.0)
   - Firebase/Storage (12.10.0):
     - Firebase/CoreOnly
     - FirebaseStorage (~> 12.10.0)
@@ -1245,6 +1248,20 @@ PODS:
     - gRPC-Core (~> 1.69.0)
     - leveldb-library (~> 1.22)
     - nanopb (~> 3.30910.0)
+  - FirebaseInstallations (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - PromisesObjC (~> 2.4)
+  - FirebaseMessaging (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - FirebaseInstallations (~> 12.10.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Reachability (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
   - FirebaseSharedSwift (12.10.0)
   - FirebaseStorage (12.10.0):
     - FirebaseAppCheckInterop (~> 12.10.0)
@@ -1253,6 +1270,9 @@ PODS:
     - FirebaseCoreExtension (~> 12.10.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GTMSessionFetcher/Core (< 6.0, >= 3.4)
+  - GoogleDataTransport (10.1.0):
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
   - GoogleUtilities/AppDelegateSwizzler (8.1.0):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -1272,6 +1292,9 @@ PODS:
     - GoogleUtilities/Privacy
   - GoogleUtilities/Privacy (8.1.0)
   - GoogleUtilities/Reachability (8.1.0):
+    - GoogleUtilities/Logger
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/UserDefaults (8.1.0):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - "gRPC-C++ (1.69.0)":
@@ -1376,6 +1399,7 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
+  - PromisesObjC (2.4.0)
   - RCTDeprecation (0.84.1)
   - RCTRequired (0.84.1)
   - RCTSwiftUI (0.84.1)
@@ -2957,6 +2981,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-vector-icons-feather (12.4.2)
   - react-native-vector-icons-lucide (12.4.2)
   - react-native-vector-icons-octicons (20.4.2)
   - React-NativeModulesApple (0.84.1):
@@ -3484,6 +3509,31 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
+  - RNFBMessaging (23.8.8):
+    - Firebase/Messaging (= 12.10.0)
+    - FirebaseCoreExtension
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNFBApp
+    - Yoga
   - RNFBStorage (23.8.8):
     - Firebase/Storage (= 12.10.0)
     - hermes-engine
@@ -3531,6 +3581,11 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNNotifee (9.1.8):
+    - React-Core
+    - RNNotifee/NotifeeCore (= 9.1.8)
+  - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
   - RNReanimated (4.2.2):
     - hermes-engine
     - RCTRequired
@@ -3771,6 +3826,7 @@ DEPENDENCIES:
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-maps (from `../node_modules/react-native-maps`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-vector-icons-feather (from `../node_modules/@react-native-vector-icons/feather`)"
   - "react-native-vector-icons-lucide (from `../node_modules/@react-native-vector-icons/lucide`)"
   - "react-native-vector-icons-octicons (from `../node_modules/@react-native-vector-icons/octicons`)"
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -3814,8 +3870,10 @@ DEPENDENCIES:
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
   - "RNFBFirestore (from `../node_modules/@react-native-firebase/firestore`)"
+  - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - "RNFBStorage (from `../node_modules/@react-native-firebase/storage`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
@@ -3834,14 +3892,18 @@ SPEC REPOS:
     - FirebaseCoreInternal
     - FirebaseFirestore
     - FirebaseFirestoreInternal
+    - FirebaseInstallations
+    - FirebaseMessaging
     - FirebaseSharedSwift
     - FirebaseStorage
+    - GoogleDataTransport
     - GoogleUtilities
     - "gRPC-C++"
     - gRPC-Core
     - GTMSessionFetcher
     - leveldb-library
     - nanopb
+    - PromisesObjC
     - RecaptchaInterop
 
 EXTERNAL SOURCES:
@@ -3934,6 +3996,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-maps"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-vector-icons-feather:
+    :path: "../node_modules/@react-native-vector-icons/feather"
   react-native-vector-icons-lucide:
     :path: "../node_modules/@react-native-vector-icons/lucide"
   react-native-vector-icons-octicons:
@@ -4020,10 +4084,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/auth"
   RNFBFirestore:
     :path: "../node_modules/@react-native-firebase/firestore"
+  RNFBMessaging:
+    :path: "../node_modules/@react-native-firebase/messaging"
   RNFBStorage:
     :path: "../node_modules/@react-native-firebase/storage"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNNotifee:
+    :path: "../node_modules/@notifee/react-native"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -4046,8 +4114,11 @@ SPEC CHECKSUMS:
   FirebaseCoreInternal: e7bbaeb00ab73011298f35ed223aa7371e212948
   FirebaseFirestore: 3c85b7fc1cbad3bcfc0ba807861aa55e0ad4af22
   FirebaseFirestoreInternal: a5120d3aea03c837ff9937c90e8a95f81e6a0706
+  FirebaseInstallations: 047343aa91fd6a1ebfa3eb374ddecf36a8aaddfd
+  FirebaseMessaging: ed18fb50634e6e85b5d3e77e628c21e2c928cc53
   FirebaseSharedSwift: 3d1e448b7202e36821a492941c84592d1308ea14
   FirebaseStorage: dd2dcbd47f603777206c04d2bd837e5f47ca3f4d
+  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   "gRPC-C++": cc207623316fb041a7a3e774c252cf68a058b9e8
   gRPC-Core: 860978b7db482de8b4f5e10677216309b5ff6330
@@ -4055,6 +4126,7 @@ SPEC CHECKSUMS:
   hermes-engine: 19b11cfed52f194134763d9860f327d05df85639
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
+  PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RCTDeprecation: af44b104091a34482596cd9bd7e8d90c4e9b4bd7
   RCTRequired: bb77b070f75f53398ce43c0aaaa58337cebe2bf6
   RCTSwiftUI: afc0a0a635860da1040a0b894bfd529da06d7810
@@ -4097,6 +4169,7 @@ SPEC CHECKSUMS:
   react-native-image-picker: 4123dc2b15a0b6fc2f027e6cf94ae5f48c9ae9b0
   react-native-maps: af78b37e4581e4c534ee6932e89e92d33b3d9db3
   react-native-safe-area-context: 90476586077446d5eab1d41ac3e767b016ac41d6
+  react-native-vector-icons-feather: e1fb94dbb68e5469194cc80311f27e6427c84aa3
   react-native-vector-icons-lucide: 00fefa767abccdcc044f41e34a4a1fc41f6a2da5
   react-native-vector-icons-octicons: 7b43427ddb1408cf68951d58c74cfb5bc7aa5ed1
   React-NativeModulesApple: 5ba0903927f6b8d335a091700e9fda143980f819
@@ -4141,8 +4214,10 @@ SPEC CHECKSUMS:
   RNFBApp: c4621b9a69ef5520ec8841afbc77bc33176945c1
   RNFBAuth: 141f26b1c986b49b2e166765a497acd5a74904f8
   RNFBFirestore: e1dbf5e4f0b94a4cfd72dbd29f532a0a5159627d
+  RNFBMessaging: 40923618afea919a321d1f0eab610d363229293e
   RNFBStorage: 9202fbab07e892279b7265db608d04ffb5c68e6c
   RNGestureHandler: d9e942967ed2a9a555c41591c4ee9dfeabee1f01
+  RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNReanimated: e8365b1438aba0119ea2656b56e70b9a1708b930
   RNScreens: ca829379d20b0d1ff41a0b87bc37bdc50276cef5
   RNWorklets: 30f9a363d681c776a5f9d74f6d21a6d1bb7bfe80

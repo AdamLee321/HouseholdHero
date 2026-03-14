@@ -17,10 +17,12 @@ import {
   EmergencyContact,
   subscribeToContacts,
   addContact,
+  updateContact,
   deleteContact,
-  toggleLock,
 } from '../../services/contactService';
 import AddContactModal from './components/AddContactModal';
+import Lucide from '@react-native-vector-icons/lucide';
+import Feather from '@react-native-vector-icons/feather';
 
 function callPhone(phone: string) {
   const url = `tel:${phone.replace(/\s/g, '')}`;
@@ -36,8 +38,8 @@ interface ContactRowProps {
   isAdmin: boolean;
   isOwn: boolean;
   colors: ReturnType<typeof import('../../theme/useTheme').useTheme>['colors'];
+  onEdit: () => void;
   onDelete: () => void;
-  onToggleLock: () => void;
 }
 
 function ContactRow({
@@ -45,10 +47,10 @@ function ContactRow({
   isAdmin,
   isOwn,
   colors,
+  onEdit,
   onDelete,
-  onToggleLock,
 }: ContactRowProps) {
-  const ACCENT = colors.tiles.contacts.icon;
+  const ACCENT = colors.success;
   const canDelete =
     (contact.type === 'shared' && isAdmin && !contact.locked) ||
     (contact.type === 'personal' && isOwn);
@@ -99,15 +101,13 @@ function ContactRow({
 
         {/* Actions */}
         <View style={styles.contactActions}>
-          {/* Lock toggle — admin, shared contacts only */}
-          {isAdmin && contact.type === 'shared' && (
+          {/* Edit button — admin or own contact */}
+          {(isAdmin || isOwn) && (
             <TouchableOpacity
               style={[styles.actionBtn, { borderColor: colors.border }]}
-              onPress={onToggleLock}
+              onPress={onEdit}
             >
-              <Text style={styles.actionBtnText}>
-                {contact.locked ? '🔓' : '🔒'}
-              </Text>
+              <Feather name="edit-2" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
           {/* Call button */}
@@ -115,7 +115,7 @@ function ContactRow({
             style={[styles.callBtn, { backgroundColor: ACCENT }]}
             onPress={() => callPhone(contact.phone)}
           >
-            <Text style={styles.callBtnText}>📞</Text>
+            <Lucide name="phone" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -133,6 +133,9 @@ export default function ContactsScreen() {
 
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingContact, setEditingContact] = useState<EmergencyContact | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!family) {
@@ -157,9 +160,23 @@ export default function ContactsScreen() {
     }
     await addContact(family.id, {
       ...params,
-      ownerId: params.type === 'personal' ? uid : undefined,
+      ownerId: params.type === 'personal' ? uid : null,
+      ownerName: null,
       addedBy: uid,
     });
+  }
+
+  async function handleEdit(fields: {
+    name: string;
+    phone: string;
+    relation: string;
+    locked: boolean;
+  }) {
+    if (!family || !editingContact) {
+      return;
+    }
+    await updateContact(family.id, editingContact.id, fields);
+    setEditingContact(null);
   }
 
   async function handleDelete(contact: EmergencyContact) {
@@ -178,13 +195,6 @@ export default function ContactsScreen() {
         },
       ],
     );
-  }
-
-  async function handleToggleLock(contact: EmergencyContact) {
-    if (!family) {
-      return;
-    }
-    await toggleLock(family.id, contact.id, contact.locked);
   }
 
   return (
@@ -246,8 +256,11 @@ export default function ContactsScreen() {
                   isAdmin={isAdmin}
                   isOwn={false}
                   colors={colors}
+                  onEdit={() => {
+                    setEditingContact(c);
+                    setModalVisible(true);
+                  }}
                   onDelete={() => handleDelete(c)}
-                  onToggleLock={() => handleToggleLock(c)}
                 />
               ))
             )}
@@ -285,8 +298,11 @@ export default function ContactsScreen() {
                   isAdmin={isAdmin}
                   isOwn={c.ownerId === uid}
                   colors={colors}
+                  onEdit={() => {
+                    setEditingContact(c);
+                    setModalVisible(true);
+                  }}
                   onDelete={() => handleDelete(c)}
-                  onToggleLock={() => handleToggleLock(c)}
                 />
               ))
             )}
@@ -303,11 +319,14 @@ export default function ContactsScreen() {
         style={[
           styles.fab,
           {
-            backgroundColor: colors.tiles.contacts.icon,
+            backgroundColor: colors.success,
             bottom: insets.bottom + 30,
           },
         ]}
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          setEditingContact(null);
+          setModalVisible(true);
+        }}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -315,8 +334,13 @@ export default function ContactsScreen() {
       <AddContactModal
         visible={modalVisible}
         isAdmin={isAdmin}
-        onClose={() => setModalVisible(false)}
+        editContact={editingContact}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingContact(null);
+        }}
         onAdd={handleAdd}
+        onEdit={handleEdit}
       />
     </View>
   );
@@ -382,7 +406,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionBtnText: { fontSize: 15 },
   callBtn: {
     width: 38,
     height: 38,
@@ -390,7 +413,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  callBtnText: { fontSize: 18 },
 
   deleteAction: {
     justifyContent: 'center',

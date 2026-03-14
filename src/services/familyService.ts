@@ -1,7 +1,7 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
-export type MemberRole = 'admin' | 'parent' | 'guardian';
+export type MemberRole = 'admin' | 'parent' | 'guardian' | 'child';
 
 export interface FamilyMember {
   uid: string;
@@ -13,7 +13,9 @@ export interface FamilyMember {
 export interface Family {
   id: string;
   name: string;
-  inviteCode: string;
+  parentInviteCode: string;
+  guardianInviteCode: string;
+  childInviteCode: string;
   createdBy: string;
   members: string[];
 }
@@ -39,12 +41,13 @@ export async function createFamily(
     throw new Error('Not authenticated');
   }
 
-  const inviteCode = generateInviteCode();
   const familyRef = firestore().collection('families').doc();
 
   const family: Omit<Family, 'id'> = {
     name: familyName.trim(),
-    inviteCode,
+    parentInviteCode: generateInviteCode(),
+    guardianInviteCode: generateInviteCode(),
+    childInviteCode: generateInviteCode(),
     createdBy: user.uid,
     members: [user.uid],
   };
@@ -71,24 +74,49 @@ export async function createFamily(
 export async function joinFamily(
   inviteCode: string,
   displayName: string,
-  role: 'parent' | 'guardian' = 'parent',
 ): Promise<Family> {
   const user = auth().currentUser;
   if (!user) {
     throw new Error('Not authenticated');
   }
 
-  const snapshot = await firestore()
+  const code = inviteCode.trim().toUpperCase();
+
+  // Check parent → guardian → child codes in order
+  let role: 'parent' | 'guardian' | 'child' = 'parent';
+  let snap = await firestore()
     .collection('families')
-    .where('inviteCode', '==', inviteCode.trim().toUpperCase())
+    .where('parentInviteCode', '==', code)
     .limit(1)
     .get();
 
-  if (snapshot.empty) {
+  if (snap.empty) {
+    snap = await firestore()
+      .collection('families')
+      .where('guardianInviteCode', '==', code)
+      .limit(1)
+      .get();
+    if (!snap.empty) {
+      role = 'guardian';
+    }
+  }
+
+  if (snap.empty) {
+    snap = await firestore()
+      .collection('families')
+      .where('childInviteCode', '==', code)
+      .limit(1)
+      .get();
+    if (!snap.empty) {
+      role = 'child';
+    }
+  }
+
+  if (snap.empty) {
     throw new Error('Invalid invite code. Please check and try again.');
   }
 
-  const doc = snapshot.docs[0];
+  const doc = snap.docs[0];
   const family = { id: doc.id, ...doc.data() } as Family;
 
   await doc.ref.update({
@@ -112,6 +140,20 @@ export async function joinFamily(
   return family;
 }
 
+export async function regenerateInviteCode(
+  familyId: string,
+  role: 'parent' | 'guardian' | 'child',
+): Promise<string> {
+  const newCode = generateInviteCode();
+  const field =
+    role === 'parent' ? 'parentInviteCode' :
+    role === 'guardian' ? 'guardianInviteCode' : 'childInviteCode';
+  await firestore().collection('families').doc(familyId).update({
+    [field]: newCode,
+  });
+  return newCode;
+}
+
 export async function loadUserProfile(): Promise<UserProfile | null> {
   const user = auth().currentUser;
   if (!user) {
@@ -131,5 +173,18 @@ export async function loadFamily(familyId: string): Promise<Family | null> {
   if (!doc.exists) {
     return null;
   }
-  return { id: doc.id, ...doc.data() } as Family;
+
+  const data = doc.data()!;
+  const updates: Partial<Record<string, string>> = {};
+
+  if (!data.parentInviteCode) { updates.parentInviteCode = generateInviteCode(); }
+  if (!data.guardianInviteCode) { updates.guardianInviteCode = generateInviteCode(); }
+  if (!data.childInviteCode) { updates.childInviteCode = generateInviteCode(); }
+
+  if (Object.keys(updates).length > 0) {
+    await doc.ref.update(updates);
+    Object.assign(data, updates);
+  }
+
+  return { id: doc.id, ...data } as Family;
 }

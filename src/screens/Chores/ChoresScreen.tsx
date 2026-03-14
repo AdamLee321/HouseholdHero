@@ -52,15 +52,16 @@ export default function ChoresScreen() {
       .collection('users')
       .where('familyId', '==', family.id)
       .onSnapshot(snap => {
+        if (!snap) { return; }
         setMembers(
           snap.docs.map(d => ({
             uid: d.id,
             displayName: d.data().displayName ?? 'Unknown',
             email: d.data().email ?? null,
-            role: d.data().uid === family.createdBy ? 'admin' : (d.data().role ?? 'parent'),
+            role: d.data().role ?? 'parent',
           })),
         );
-      });
+      }, () => {});
 
     return () => {
       unsubRooms();

@@ -34,7 +34,7 @@ export default function LoginScreen() {
   function authErrorMessage(code: string, isRegister: boolean): string {
     switch (code) {
       case 'auth/invalid-email':
-        return 'That doesn\'t look like a valid email address.';
+        return "That doesn't look like a valid email address.";
       case 'auth/user-not-found':
       case 'auth/wrong-password':
       case 'auth/invalid-credential':
@@ -65,9 +65,15 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       if (mode === 'register') {
-        await auth().createUserWithEmailAndPassword(email.trim().toLowerCase(), password);
+        await auth().createUserWithEmailAndPassword(
+          email.trim().toLowerCase(),
+          password,
+        );
       } else {
-        await auth().signInWithEmailAndPassword(email.trim().toLowerCase(), password);
+        await auth().signInWithEmailAndPassword(
+          email.trim().toLowerCase(),
+          password,
+        );
       }
     } catch (e: any) {
       setErrorMsg(authErrorMessage(e.code, mode === 'register'));
@@ -144,9 +150,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Image source={logo} style={styles.logo} resizeMode="contain" />
-        <Text style={[styles.title, { color: '#fff' }]}>
-          Household Hero
-        </Text>
+        <Text style={[styles.title, { color: '#fff' }]}>Household Hero</Text>
 
         <View style={[styles.tabs, { backgroundColor: 'rgba(0,0,0,0.12)' }]}>
           {(['login', 'register'] as Mode[]).map(m => (
@@ -156,7 +160,10 @@ export default function LoginScreen() {
                 styles.tab,
                 mode === m && [styles.tabActive, { backgroundColor: '#fff' }],
               ]}
-              onPress={() => { setMode(m); setErrorMsg(null); }}
+              onPress={() => {
+                setMode(m);
+                setErrorMsg(null);
+              }}
             >
               <Text
                 style={[
@@ -190,6 +197,7 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
               />
+
               <TouchableOpacity
                 style={styles.eyeBtn}
                 onPress={() => setShowPassword(p => !p)}
@@ -222,7 +230,12 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
             {mode === 'login' && (
-              <TouchableOpacity onPress={() => { setMode('forgot'); setErrorMsg(null); }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setMode('forgot');
+                  setErrorMsg(null);
+                }}
+              >
                 <Text style={styles.link}>Forgot password?</Text>
               </TouchableOpacity>
             )}
@@ -255,9 +268,7 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setMode('login')}>
-              <Text style={styles.link}>
-                Back to Sign In
-              </Text>
+              <Text style={styles.link}>Back to Sign In</Text>
             </TouchableOpacity>
           </>
         )}
@@ -313,7 +324,8 @@ const styles = StyleSheet.create({
   eyeBtn: {
     position: 'absolute',
     right: 14,
-    top: 0, bottom: 0,
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
   },
   errorBanner: {
@@ -341,8 +353,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   btnText: { color: BRAND, fontWeight: '700', fontSize: 16 },
-  hint: { textAlign: 'center', marginBottom: 12, color: 'rgba(255,255,255,0.85)' },
-  link: { textAlign: 'center', marginTop: 12, color: '#fff', fontWeight: '600' },
+  hint: {
+    textAlign: 'center',
+    marginBottom: 12,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  link: {
+    textAlign: 'center',
+    marginTop: 12,
+    color: '#fff',
+    fontWeight: '600',
+  },
   biometricBtn: { marginTop: 24, alignItems: 'center' },
-  biometricText: { fontWeight: '600', fontSize: 15, color: 'rgba(255,255,255,0.85)' },
+  biometricText: {
+    fontWeight: '600',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+  },
 });
