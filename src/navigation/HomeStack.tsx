@@ -20,6 +20,7 @@ import MyFamilyScreen from '../screens/MyFamily/MyFamilyScreen';
 import BudgetScreen from '../screens/Budget/BudgetScreen';
 import FolderScreen from '../screens/Documents/FolderScreen';
 import GalleryScreen from '../screens/Gallery/GalleryScreen';
+import GalleryGroupScreen from '../screens/Gallery/GalleryGroupScreen';
 import RecipesScreen from '../screens/Recipes/RecipesScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -127,6 +128,14 @@ export default function HomeStack() {
         name="Gallery"
         component={GalleryScreen}
         options={{ title: 'Gallery' }}
+      />
+      <Stack.Screen
+        name="GalleryGroup"
+        component={GalleryGroupScreen}
+        options={({ route }) => ({
+          title: route.params.groupName,
+          headerLeft: undefined,
+        })}
       />
       <Stack.Screen
         name="Recipes"

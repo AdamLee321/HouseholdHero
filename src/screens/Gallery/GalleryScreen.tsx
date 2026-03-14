@@ -5,13 +5,14 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  Modal,
   Alert,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import Text from '../../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import auth from '@react-native-firebase/auth';
 import { useTheme } from '../../theme/useTheme';
@@ -20,95 +21,96 @@ import {
   GalleryPhoto,
   subscribeToPhotos,
   uploadPhoto,
-  deletePhoto,
 } from '../../services/galleryService';
+import { HomeStackParamList } from '../../types';
 
-const COLUMNS = 3;
-const GAP = 2;
-const CELL_SIZE =
-  (Dimensions.get('window').width - GAP * (COLUMNS + 1)) / COLUMNS;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const H_PAD = 16;
+const COL_GAP = 10;
+const MEMBER_CARD_SIZE = (SCREEN_WIDTH - H_PAD * 2 - COL_GAP) / 2;
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+interface PhotoGroup {
+  groupName: string;
+  uploaderUid: string | null;
+  photos: GalleryPhoto[];
+}
+
+function buildGroups(photos: GalleryPhoto[]): PhotoGroup[] {
+  if (photos.length === 0) { return []; }
+  const groups: PhotoGroup[] = [{ groupName: 'All Images', uploaderUid: null, photos }];
+  const byUploader = new Map<string, { name: string; photos: GalleryPhoto[] }>();
+  for (const p of photos) {
+    if (!byUploader.has(p.uploadedBy)) {
+      byUploader.set(p.uploadedBy, { name: p.uploadedByName, photos: [] });
+    }
+    byUploader.get(p.uploadedBy)!.photos.push(p);
+  }
+  byUploader.forEach((val, uid) => {
+    groups.push({ groupName: val.name, uploaderUid: uid, photos: val.photos });
   });
+  return groups;
 }
 
 export default function GalleryScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { family, profile } = useFamilyStore();
   const uid = auth().currentUser?.uid ?? '';
-  const isAdmin = uid === family?.createdBy;
   const ACCENT = colors.tiles.gallery.icon;
 
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selected, setSelected] = useState<GalleryPhoto | null>(null);
 
   useEffect(() => {
-    if (!family) {
-      return;
-    }
-    const unsub = subscribeToPhotos(family.id, setPhotos);
-    return unsub;
+    if (!family) { return; }
+    return subscribeToPhotos(family.id, setPhotos);
   }, [family]);
+
+  const groups = buildGroups(photos);
+  // Split into hero (All Images) and member pairs for 2-col layout
+  const heroGroup = groups[0] ?? null;
+  const memberGroups = groups.slice(1);
+  // Pair members into rows of 2
+  const memberRows: PhotoGroup[][] = [];
+  for (let i = 0; i < memberGroups.length; i += 2) {
+    memberRows.push(memberGroups.slice(i, i + 2));
+  }
+
+  function goToGroup(group: PhotoGroup) {
+    navigation.navigate('GalleryGroup', {
+      groupName: group.groupName,
+      uploaderUid: group.uploaderUid,
+    });
+  }
 
   function pickSource() {
     Alert.alert('Add Photo', 'Choose a source', [
-      {
-        text: 'Camera',
-        onPress: () => openCamera(),
-      },
-      {
-        text: 'Photo Library',
-        onPress: () => openLibrary(),
-      },
+      { text: 'Camera', onPress: openCamera },
+      { text: 'Photo Library', onPress: openLibrary },
       { text: 'Cancel', style: 'cancel' },
     ]);
   }
 
   async function openCamera() {
-    const result = await launchCamera({
-      mediaType: 'photo',
-      quality: 0.8,
-      saveToPhotos: false,
-    });
-    if (result.didCancel || !result.assets?.[0]?.uri) {
-      return;
-    }
+    const result = await launchCamera({ mediaType: 'photo', quality: 0.8, saveToPhotos: false });
+    if (result.didCancel || !result.assets?.[0]?.uri) { return; }
     await handleUpload(result.assets[0].uri);
   }
 
   async function openLibrary() {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      quality: 0.8,
-      selectionLimit: 1,
-    });
-    if (result.didCancel || !result.assets?.[0]?.uri) {
-      return;
-    }
+    const result = await launchImageLibrary({ mediaType: 'photo', quality: 0.8, selectionLimit: 1 });
+    if (result.didCancel || !result.assets?.[0]?.uri) { return; }
     await handleUpload(result.assets[0].uri);
   }
 
   async function handleUpload(uri: string) {
-    if (!family) {
-      return;
-    }
+    if (!family) { return; }
     try {
       setUploading(true);
       setUploadProgress(0);
-      await uploadPhoto(
-        family.id,
-        uid,
-        profile?.displayName ?? 'Unknown',
-        uri,
-        pct => setUploadProgress(pct),
-      );
+      await uploadPhoto(family.id, uid, profile?.displayName ?? 'Unknown', uri, pct => setUploadProgress(pct));
     } catch (err: any) {
       Alert.alert('Upload failed', err?.message ?? 'Please try again.');
     } finally {
@@ -117,86 +119,105 @@ export default function GalleryScreen() {
     }
   }
 
-  function confirmDelete(photo: GalleryPhoto) {
-    if (!family) {
-      return;
-    }
-    Alert.alert('Delete Photo', 'Remove this photo from the family gallery?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          setSelected(null);
-          try {
-            await deletePhoto(family.id, photo.id, photo.storagePath);
-          } catch (err: any) {
-            Alert.alert('Error', err?.message ?? 'Could not delete photo.');
-          }
-        },
-      },
-    ]);
-  }
-
-  function renderItem({ item }: { item: GalleryPhoto }) {
+  function renderMemberCard(group: PhotoGroup) {
+    const cover = group.photos[0];
     return (
       <TouchableOpacity
-        style={styles.cell}
-        onPress={() => setSelected(item)}
+        key={group.uploaderUid}
+        style={styles.memberCard}
         activeOpacity={0.85}
+        onPress={() => goToGroup(group)}
       >
-        <Image
-          source={{ uri: item.downloadURL }}
-          style={styles.cellImage}
-          resizeMode="cover"
-        />
-        <View style={styles.cellOverlay}>
-          <Text style={styles.cellName} numberOfLines={1}>
-            {item.uploadedByName}
-          </Text>
+        {cover ? (
+          <Image source={{ uri: cover.downloadURL }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
+        )}
+        {/* Gradient simulation: faded overlay at bottom */}
+        <View style={styles.cardGradient} />
+        <View style={styles.cardMeta}>
+          <Text style={styles.cardMetaName} numberOfLines={1}>{group.groupName}</Text>
+          <Text style={styles.cardMetaCount}>{group.photos.length}</Text>
         </View>
       </TouchableOpacity>
     );
   }
 
+  const emptyCard = (
+    <View style={styles.emptyWrap}>
+      <View style={[styles.emptyCard, { backgroundColor: colors.surface }]}>
+        <Text style={styles.emptyEmoji}>📸</Text>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>No photos yet</Text>
+        <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+          Tap + to add the first photo to your family album.
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
-        data={photos}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        numColumns={COLUMNS}
-        columnWrapperStyle={styles.row}
-        ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <View
-              style={[styles.emptyCard, { backgroundColor: colors.surface }]}
-            >
-              <Text style={styles.emptyEmoji}>📸</Text>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                No photos yet
-              </Text>
-              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-                Tap + to add the first photo to your family album.
-              </Text>
+        data={memberRows}
+        keyExtractor={(_, i) => String(i)}
+        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
+        ListEmptyComponent={!heroGroup ? emptyCard : null}
+        ListHeaderComponent={
+          heroGroup ? (
+            <View style={styles.header}>
+              {/* Hero card — All Images */}
+              <TouchableOpacity
+                style={styles.heroCard}
+                activeOpacity={0.85}
+                onPress={() => goToGroup(heroGroup)}
+              >
+                {heroGroup.photos[0] ? (
+                  <Image
+                    source={{ uri: heroGroup.photos[0].downloadURL }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }]} />
+                )}
+                <View style={styles.heroGradient} />
+                <View style={styles.heroMeta}>
+                  <View>
+                    <Text style={styles.heroLabel}>All Images</Text>
+                    <Text style={styles.heroCount}>
+                      {heroGroup.photos.length} {heroGroup.photos.length === 1 ? 'photo' : 'photos'}
+                    </Text>
+                  </View>
+                  <View style={[styles.heroBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                    <Text style={styles.heroBadgeText}>›</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {memberGroups.length > 0 && (
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                  By Member
+                </Text>
+              )}
             </View>
-          </View>
+          ) : null
         }
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        renderItem={({ item: row }) => (
+          <View style={styles.memberRow}>
+            {row.map(renderMemberCard)}
+            {/* Empty spacer if odd count */}
+            {row.length === 1 && <View style={styles.memberCard} />}
+          </View>
+        )}
       />
 
-      {/* Upload progress overlay */}
+      {/* Upload progress */}
       {uploading && (
         <View style={styles.uploadOverlay}>
-          <View
-            style={[styles.uploadCard, { backgroundColor: colors.surface }]}
-          >
+          <View style={[styles.uploadCard, { backgroundColor: colors.surface }]}>
             <ActivityIndicator color={ACCENT} size="large" />
             <Text style={[styles.uploadText, { color: colors.text }]}>
-              Uploading…
-              {uploadProgress > 0
-                ? ` ${Math.round(uploadProgress * 100)}%`
-                : ''}
+              Uploading…{uploadProgress > 0 ? ` ${Math.round(uploadProgress * 100)}%` : ''}
             </Text>
           </View>
         </View>
@@ -204,94 +225,116 @@ export default function GalleryScreen() {
 
       {/* FAB */}
       <TouchableOpacity
-        style={[
-          styles.fab,
-          { backgroundColor: ACCENT, bottom: insets.bottom + 30 },
-        ]}
+        style={[styles.fab, { backgroundColor: ACCENT, bottom: insets.bottom + 30 }]}
         onPress={pickSource}
         disabled={uploading}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-      {/* Full-screen viewer */}
-      <Modal
-        visible={!!selected}
-        animationType="fade"
-        transparent={false}
-        statusBarTranslucent
-        onRequestClose={() => setSelected(null)}
-      >
-        {selected && (
-          <View style={styles.viewer}>
-            {/* Close */}
-            <TouchableOpacity
-              style={[styles.viewerClose, { top: insets.top + 12 }]}
-              onPress={() => setSelected(null)}
-            >
-              <Text style={styles.viewerCloseText}>✕</Text>
-            </TouchableOpacity>
-
-            {/* Photo */}
-            <Image
-              source={{ uri: selected.downloadURL }}
-              style={styles.viewerImage}
-              resizeMode="contain"
-            />
-
-            {/* Info + delete bar */}
-            <View
-              style={[styles.viewerBar, { paddingBottom: insets.bottom + 12 }]}
-            >
-              <View>
-                <Text style={styles.viewerName}>{selected.uploadedByName}</Text>
-                <Text style={styles.viewerDate}>
-                  {formatDate(selected.createdAt)}
-                </Text>
-              </View>
-              {(isAdmin || selected.uploadedBy === uid) && (
-                <TouchableOpacity
-                  style={[styles.deleteBtn, { backgroundColor: colors.danger }]}
-                  onPress={() => confirmDelete(selected)}
-                >
-                  <Text style={styles.deleteBtnText}>Delete</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        )}
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  listContent: { paddingHorizontal: H_PAD, paddingTop: H_PAD },
 
-  row: { gap: GAP, paddingHorizontal: GAP, marginBottom: GAP },
-  cell: { width: CELL_SIZE, height: CELL_SIZE },
-  cellImage: { width: '100%', height: '100%' },
-  cellOverlay: {
+  // Header
+  header: { marginBottom: 4 },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+
+  // Hero card
+  heroCard: {
+    width: '100%',
+    height: 220,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  heroGradient: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 4,
-    paddingVertical: 3,
+    bottom: 0,
+    height: '60%',
+    backgroundColor: 'rgba(0,0,0,0.55)',
   },
-  cellName: { color: '#fff', fontSize: 10, fontWeight: '600' },
-
-  emptyWrap: { padding: 16, marginTop: 40 },
-  emptyCard: {
+  heroMeta: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  heroLabel: { color: '#fff', fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  heroCount: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 },
+  heroBadge: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    padding: 32,
     alignItems: 'center',
+    justifyContent: 'center',
   },
+  heroBadgeText: { color: '#fff', fontSize: 20, fontWeight: '300', lineHeight: 24 },
+
+  // Member grid
+  memberRow: {
+    flexDirection: 'row',
+    gap: COL_GAP,
+    marginBottom: COL_GAP,
+  },
+  memberCard: {
+    width: MEMBER_CARD_SIZE,
+    height: MEMBER_CARD_SIZE,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '50%',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  cardMeta: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  cardMetaName: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    flexShrink: 1,
+    marginRight: 4,
+  },
+  cardMetaCount: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Empty
+  emptyWrap: { padding: 16, marginTop: 40 },
+  emptyCard: { borderRadius: 16, padding: 32, alignItems: 'center' },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
 
+  // Upload overlay
   uploadOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -307,6 +350,7 @@ const styles = StyleSheet.create({
   },
   uploadText: { fontSize: 16, fontWeight: '600' },
 
+  // FAB
   fab: {
     position: 'absolute',
     right: 20,
@@ -322,47 +366,4 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
-
-  // Full-screen viewer
-  viewer: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-  },
-  viewerClose: {
-    position: 'absolute',
-    right: 16,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  viewerCloseText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  viewerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  viewerBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  viewerName: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  viewerDate: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 2 },
-  deleteBtn: {
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  deleteBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

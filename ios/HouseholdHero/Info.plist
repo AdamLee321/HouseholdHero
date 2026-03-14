@@ -41,6 +41,8 @@
 	<string>HouseholdHero uses your location to share it with your family members.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>HouseholdHero accesses your photo library to add photos to the family gallery.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HouseholdHero saves photos to your photo library.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

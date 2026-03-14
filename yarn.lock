@@ -2944,6 +2944,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-camera-roll/camera-roll@npm:^7.10.2":
+  version: 7.10.2
+  resolution: "@react-native-camera-roll/camera-roll@npm:7.10.2"
+  peerDependencies:
+    react-native: ">=0.59"
+  checksum: e2d79f302d55e4ec33c91dd861c9cd7ad04dc551796f95037d295a474910c6985315b1ea19897e1c1ba21fa5453d322319804f7206a7cc4eb2dc251fc29ebe08
+  languageName: node
+  linkType: hard
+
 "@react-native-community/cli-clean@npm:20.1.0":
   version: 20.1.0
   resolution: "@react-native-community/cli-clean@npm:20.1.0"
@@ -3994,6 +4003,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@notifee/react-native": ^9.1.8
     "@react-native-async-storage/async-storage": ^2.2.0
+    "@react-native-camera-roll/camera-roll": ^7.10.2
     "@react-native-community/cli": 20.1.0
     "@react-native-community/cli-platform-android": 20.1.0
     "@react-native-community/cli-platform-ios": 20.1.0
@@ -4028,6 +4038,7 @@ __metadata:
     react-native-bootsplash: ^7.1.0
     react-native-calendar-events: ^2.2.0
     react-native-calendars: ^1.1314.0
+    react-native-fs: ^2.20.0
     react-native-gesture-handler: ^2.30.0
     react-native-image-picker: ^8.2.1
     react-native-maps: ^1.27.2
@@ -4498,6 +4509,13 @@ __metadata:
   version: 4.0.4
   resolution: "balanced-match@npm:4.0.4"
   checksum: fb07bb66a0959c2843fc055838047e2a95ccebb837c519614afb067ebfdf2fa967ca8d712c35ced07f2cd26fc6f07964230b094891315ad74f11eba3d53178a0
+  languageName: node
+  linkType: hard
+
+"base-64@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "base-64@npm:0.1.0"
+  checksum: 5a42938f82372ab5392cbacc85a5a78115cbbd9dbef9f7540fa47d78763a3a8bd7d598475f0d92341f66285afd377509851a9bb5c67bbecb89686e9255d5b3eb
   languageName: node
   linkType: hard
 
@@ -9197,6 +9215,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-fs@npm:^2.20.0":
+  version: 2.20.0
+  resolution: "react-native-fs@npm:2.20.0"
+  dependencies:
+    base-64: ^0.1.0
+    utf8: ^3.0.0
+  peerDependencies:
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    react-native-windows:
+      optional: true
+  checksum: 0be9bb9a5c13b501d0a3006efc3aa5c0b5b211456ee04718297f4e522532f3527f1daa220bd67d3b82d819ed8fdab8f64b7d6e0d7b768c1fd1d8ec9122d94316
+  languageName: node
+  linkType: hard
+
 "react-native-gesture-handler@npm:^2.30.0":
   version: 2.30.0
   resolution: "react-native-gesture-handler@npm:2.30.0"
@@ -10746,6 +10780,13 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 61a62e910713adfaf91bdb72ff2cd30e5ba83687accaf3b6e75a903b45bf635f5722e3694af30d83a03e92cb533c0a5c699298d2fef639a03ffc86b469f4eee2
+  languageName: node
+  linkType: hard
+
+"utf8@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "utf8@npm:3.0.0"
+  checksum: cb89a69ad9ab393e3eae9b25305b3ff08bebca9adc839191a34f90777eb2942f86a96369d2839925fea58f8f722f7e27031d697f10f5f39690f8c5047303e62d
   languageName: node
   linkType: hard
 

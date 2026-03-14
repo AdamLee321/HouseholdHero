@@ -57,5 +57,6 @@ export type HomeStackParamList = {
   MyFamily: undefined;
   Budget: undefined;
   Gallery: undefined;
+  GalleryGroup: { groupName: string; uploaderUid: string | null };
   Recipes: undefined;
 };
