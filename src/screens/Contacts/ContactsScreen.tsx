@@ -20,7 +20,7 @@ import {
   updateContact,
   deleteContact,
 } from '../../services/contactService';
-import AddContactModal from './components/AddContactModal';
+import { SheetManager } from 'react-native-actions-sheet';
 import Lucide from '@react-native-vector-icons/lucide';
 import Feather from '@react-native-vector-icons/feather';
 
@@ -132,7 +132,6 @@ export default function ContactsScreen() {
   const isAdmin = uid === family?.createdBy;
 
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(
     null,
   );
@@ -258,7 +257,7 @@ export default function ContactsScreen() {
                   colors={colors}
                   onEdit={() => {
                     setEditingContact(c);
-                    setModalVisible(true);
+                    SheetManager.show('add-contact', { payload: { isAdmin, editContact: c, onAdd: handleAdd, onEdit: handleEdit } });
                   }}
                   onDelete={() => handleDelete(c)}
                 />
@@ -300,7 +299,7 @@ export default function ContactsScreen() {
                   colors={colors}
                   onEdit={() => {
                     setEditingContact(c);
-                    setModalVisible(true);
+                    SheetManager.show('add-contact', { payload: { isAdmin, editContact: c, onAdd: handleAdd, onEdit: handleEdit } });
                   }}
                   onDelete={() => handleDelete(c)}
                 />
@@ -325,23 +324,12 @@ export default function ContactsScreen() {
         ]}
         onPress={() => {
           setEditingContact(null);
-          setModalVisible(true);
+          SheetManager.show('add-contact', { payload: { isAdmin, editContact: null, onAdd: handleAdd, onEdit: handleEdit } });
         }}
       >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
 
-      <AddContactModal
-        visible={modalVisible}
-        isAdmin={isAdmin}
-        editContact={editingContact}
-        onClose={() => {
-          setModalVisible(false);
-          setEditingContact(null);
-        }}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-      />
     </View>
   );
 }

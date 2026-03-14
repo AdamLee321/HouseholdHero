@@ -27,7 +27,7 @@ import {
   markChatAsRead,
   getChatDisplayName,
 } from '../../services/chatService';
-import ChatInfoSheet from './ChatInfoSheet';
+import { SheetManager } from 'react-native-actions-sheet';
 
 type NavProp = import('@react-navigation/native-stack').NativeStackNavigationProp<HomeStackParamList, 'Chat'>;
 type RoutePropType = RouteProp<HomeStackParamList, 'Chat'>;
@@ -134,7 +134,6 @@ export default function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [infoVisible, setInfoVisible] = useState(false);
   const inputRef = useRef<any>(null);
 
   const chatName = chat ? getChatDisplayName(chat, uid) : '...';
@@ -212,7 +211,7 @@ export default function ChatScreen() {
       {/* Custom header info button */}
       <TouchableOpacity
         style={styles.infoBtn}
-        onPress={() => setInfoVisible(true)}
+        onPress={() => chat && SheetManager.show('chat-info', { payload: { chat, currentUid: uid, isAdmin, isFamilyAdmin: profile?.role === 'admin' } })}
       >
         <LucideIcon name="info" size={22} color={colors.primary} />
       </TouchableOpacity>
@@ -277,16 +276,6 @@ export default function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {chat && (
-        <ChatInfoSheet
-          visible={infoVisible}
-          chat={chat}
-          currentUid={uid}
-          isAdmin={isAdmin}
-          isFamilyAdmin={profile?.role === 'admin'}
-          onClose={() => setInfoVisible(false)}
-        />
-      )}
     </>
   );
 }

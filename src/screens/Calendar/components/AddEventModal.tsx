@@ -1,14 +1,12 @@
 import React, {useState} from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
   Switch,
   Platform,
-  ScrollView,
-  KeyboardAvoidingView,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps, ScrollView} from 'react-native-actions-sheet';
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -31,18 +29,7 @@ function formatTime(d: Date): string {
   });
 }
 
-interface Props {
-  visible: boolean;
-  onClose: () => void;
-  onAdd: (params: {
-    title: string;
-    description: string;
-    startDate: number;
-    allDay: boolean;
-  }) => Promise<void>;
-}
-
-export default function AddEventModal({visible, onClose, onAdd}: Props) {
+export default function AddEventModal(props: SheetProps<'add-event'>) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.calendar.icon;
 
@@ -90,14 +77,14 @@ export default function AddEventModal({visible, onClose, onAdd}: Props) {
     }
     setSaving(true);
     try {
-      await onAdd({
+      await props.payload!.onAdd({
         title: title.trim(),
         description: description.trim(),
         startDate: buildTimestamp(),
         allDay,
       });
       reset();
-      onClose();
+      SheetManager.hide(props.sheetId);
     } finally {
       setSaving(false);
     }
@@ -105,70 +92,114 @@ export default function AddEventModal({visible, onClose, onAdd}: Props) {
 
   function handleClose() {
     reset();
-    onClose();
+    SheetManager.hide(props.sheetId);
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View
-          style={[styles.sheet, {backgroundColor: colors.surface}]}>
-          {/* Handle */}
-          <View
-            style={[styles.handle, {backgroundColor: colors.border}]}
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 20,
+      }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={[styles.sheetTitle, {color: colors.text}]}>
+          New Event
+        </Text>
+
+        {/* Title */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Title *
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="Event title"
+          placeholderTextColor={colors.textTertiary}
+          value={title}
+          onChangeText={setTitle}
+        />
+
+        {/* All Day toggle */}
+        <View style={styles.row}>
+          <Text style={[styles.label, {color: colors.textSecondary, marginBottom: 0}]}>
+            All Day
+          </Text>
+          <Switch
+            value={allDay}
+            onValueChange={v => {
+              setAllDay(v);
+              if (v) {
+                setShowTimePicker(false);
+              }
+            }}
+            trackColor={{false: colors.border, true: ACCENT}}
+            thumbColor="#fff"
           />
+        </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={[styles.sheetTitle, {color: colors.text}]}>
-              New Event
-            </Text>
-
-            {/* Title */}
-            <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Title *
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="Event title"
-              placeholderTextColor={colors.textTertiary}
-              value={title}
-              onChangeText={setTitle}
+        {/* Date */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Date
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.pickerBtn,
+            {
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+            },
+          ]}
+          onPress={() => {
+            setShowTimePicker(false);
+            setShowDatePicker(v => !v);
+          }}>
+          <Text style={[styles.pickerBtnText, {color: colors.text}]}>
+            📅 {formatDate(date)}
+          </Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <View>
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(_, selected) => {
+                if (Platform.OS === 'android') {
+                  setShowDatePicker(false);
+                }
+                if (selected) {
+                  setDate(selected);
+                }
+              }}
             />
+            {Platform.OS === 'ios' && (
+              <TouchableOpacity
+                style={[styles.doneBtn, {borderColor: colors.border}]}
+                onPress={() => setShowDatePicker(false)}>
+                <Text style={[styles.doneBtnText, {color: ACCENT}]}>
+                  Done
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
-            {/* All Day toggle */}
-            <View style={styles.row}>
-              <Text style={[styles.label, {color: colors.textSecondary, marginBottom: 0}]}>
-                All Day
-              </Text>
-              <Switch
-                value={allDay}
-                onValueChange={v => {
-                  setAllDay(v);
-                  if (v) {
-                    setShowTimePicker(false);
-                  }
-                }}
-                trackColor={{false: colors.border, true: ACCENT}}
-                thumbColor="#fff"
-              />
-            </View>
-
-            {/* Date */}
+        {/* Time — only if not all day */}
+        {!allDay && (
+          <>
             <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Date
+              Time
             </Text>
             <TouchableOpacity
               style={[
@@ -179,32 +210,32 @@ export default function AddEventModal({visible, onClose, onAdd}: Props) {
                 },
               ]}
               onPress={() => {
-                setShowTimePicker(false);
-                setShowDatePicker(v => !v);
+                setShowDatePicker(false);
+                setShowTimePicker(v => !v);
               }}>
               <Text style={[styles.pickerBtnText, {color: colors.text}]}>
-                📅 {formatDate(date)}
+                🕐 {formatTime(time)}
               </Text>
             </TouchableOpacity>
-            {showDatePicker && (
+            {showTimePicker && (
               <View>
                 <DateTimePicker
-                  value={date}
-                  mode="date"
+                  value={time}
+                  mode="time"
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   onChange={(_, selected) => {
                     if (Platform.OS === 'android') {
-                      setShowDatePicker(false);
+                      setShowTimePicker(false);
                     }
                     if (selected) {
-                      setDate(selected);
+                      setTime(selected);
                     }
                   }}
                 />
                 {Platform.OS === 'ios' && (
                   <TouchableOpacity
                     style={[styles.doneBtn, {borderColor: colors.border}]}
-                    onPress={() => setShowDatePicker(false)}>
+                    onPress={() => setShowTimePicker(false)}>
                     <Text style={[styles.doneBtnText, {color: ACCENT}]}>
                       Done
                     </Text>
@@ -212,119 +243,59 @@ export default function AddEventModal({visible, onClose, onAdd}: Props) {
                 )}
               </View>
             )}
+          </>
+        )}
 
-            {/* Time — only if not all day */}
-            {!allDay && (
-              <>
-                <Text style={[styles.label, {color: colors.textSecondary}]}>
-                  Time
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.pickerBtn,
-                    {
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setShowDatePicker(false);
-                    setShowTimePicker(v => !v);
-                  }}>
-                  <Text style={[styles.pickerBtnText, {color: colors.text}]}>
-                    🕐 {formatTime(time)}
-                  </Text>
-                </TouchableOpacity>
-                {showTimePicker && (
-                  <View>
-                    <DateTimePicker
-                      value={time}
-                      mode="time"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={(_, selected) => {
-                        if (Platform.OS === 'android') {
-                          setShowTimePicker(false);
-                        }
-                        if (selected) {
-                          setTime(selected);
-                        }
-                      }}
-                    />
-                    {Platform.OS === 'ios' && (
-                      <TouchableOpacity
-                        style={[styles.doneBtn, {borderColor: colors.border}]}
-                        onPress={() => setShowTimePicker(false)}>
-                        <Text style={[styles.doneBtnText, {color: ACCENT}]}>
-                          Done
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              </>
-            )}
+        {/* Description */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Description (optional)
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            styles.inputMulti,
+            {
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="Add a note..."
+          placeholderTextColor={colors.textTertiary}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+        />
 
-            {/* Description */}
-            <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Description (optional)
+        {/* Actions */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.btnCancel, {borderColor: colors.border}]}
+            onPress={handleClose}>
+            <Text style={[styles.btnCancelText, {color: colors.textSecondary}]}>
+              Cancel
             </Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.inputMulti,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="Add a note..."
-              placeholderTextColor={colors.textTertiary}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-            {/* Actions */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.btnCancel, {borderColor: colors.border}]}
-                onPress={handleClose}>
-                <Text style={[styles.btnCancelText, {color: colors.textSecondary}]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.btnAdd,
-                  {backgroundColor: ACCENT, opacity: !title.trim() || saving ? 0.5 : 1},
-                ]}
-                onPress={handleAdd}
-                disabled={!title.trim() || saving}>
-                <Text style={styles.btnAddText}>
-                  {saving ? 'Saving...' : 'Add Event'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.btnAdd,
+              {backgroundColor: ACCENT, opacity: !title.trim() || saving ? 0.5 : 1},
+            ]}
+            onPress={handleAdd}
+            disabled={!title.trim() || saving}>
+            <Text style={styles.btnAddText}>
+              {saving ? 'Saving...' : 'Add Event'}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </ScrollView>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)'},
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 40,
-    maxHeight: '90%',
-  },
-  handle: {width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16},
   sheetTitle: {fontSize: 18, fontWeight: '700', marginBottom: 20},
   label: {fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6},
   input: {

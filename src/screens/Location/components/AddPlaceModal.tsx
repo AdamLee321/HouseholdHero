@@ -1,16 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ActionSheet, {SheetManager, SheetProps} from 'react-native-actions-sheet';
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
 import { useTheme } from '../../../theme/useTheme';
@@ -25,27 +22,10 @@ interface GeoResult {
   lon: string;
 }
 
-interface Props {
-  visible: boolean;
-  familyId: string;
-  uid: string;
-  coord: { lat: number; lng: number } | null;
-  preselectedType?: PlaceType;
-  editingPlace?: FamilyPlace;
-  onClose: () => void;
-}
-
-export default function AddPlaceModal({
-  visible,
-  familyId,
-  uid,
-  coord,
-  preselectedType,
-  editingPlace,
-  onClose,
-}: Props) {
+export default function AddPlaceModal(props: SheetProps<'add-place'>) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
+
+  const { familyId, uid, coord, preselectedType, editingPlace } = props.payload!;
 
   const [selectedType, setSelectedType] = useState<PlaceType>(preselectedType ?? 'home');
   const [name, setName] = useState(PLACE_CONFIG[preselectedType ?? 'home'].label);
@@ -59,37 +39,36 @@ export default function AddPlaceModal({
   const [resolvedAddress, setResolvedAddress] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync prop coord and reset when modal opens
+  // Sync payload when sheet opens
   useEffect(() => {
-    if (visible) {
-      if (editingPlace) {
-        setSelectedType(editingPlace.type);
-        setName(editingPlace.name);
-        setResolvedCoord({ lat: editingPlace.lat, lng: editingPlace.lng });
-        setResolvedAddress(null);
-        setAddressQuery('');
-      } else {
-        setSelectedType(preselectedType ?? 'home');
-        setName(PLACE_CONFIG[preselectedType ?? 'home'].label);
-        setResolvedCoord(coord);
-        setResolvedAddress(null);
-        setAddressQuery('');
-      }
-      setSearchResults([]);
+    if (editingPlace) {
+      setSelectedType(editingPlace.type);
+      setName(editingPlace.name);
+      setResolvedCoord({ lat: editingPlace.lat, lng: editingPlace.lng });
+      setResolvedAddress(null);
+      setAddressQuery('');
+    } else {
+      setSelectedType(preselectedType ?? 'home');
+      setName(PLACE_CONFIG[preselectedType ?? 'home'].label);
+      setResolvedCoord(coord);
+      setResolvedAddress(null);
+      setAddressQuery('');
     }
-  }, [visible, preselectedType, coord, editingPlace]);
+    setSearchResults([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleTypeSelect(type: PlaceType) {
     setSelectedType(type);
-    if (!editingPlace) setName(PLACE_CONFIG[type].label);
+    if (!editingPlace) {setName(PLACE_CONFIG[type].label);}
   }
 
   // Debounced Nominatim search
   function handleAddressChange(text: string) {
     setAddressQuery(text);
     setSearchResults([]);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (text.trim().length < 3) return;
+    if (debounceRef.current) {clearTimeout(debounceRef.current);}
+    if (text.trim().length < 3) {return;}
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
@@ -98,7 +77,7 @@ export default function AddPlaceModal({
           `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=5&addressdetails=1`,
           { headers: { 'User-Agent': 'HouseholdHeroApp/1.0' } },
         );
-        const json: GeoResult[] = await res.json();
+        const json = await res.json() as GeoResult[];
         setSearchResults(json);
       } catch {
         // silently ignore network errors
@@ -145,7 +124,7 @@ export default function AddPlaceModal({
         };
         await addPlace(familyId, place);
       }
-      onClose();
+      SheetManager.hide(props.sheetId);
     } finally {
       setSaving(false);
     }
@@ -156,147 +135,137 @@ export default function AddPlaceModal({
   const isEditing = !!editingPlace;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 20,
+        paddingTop: 12,
+      }}>
+      <Text style={[styles.title, { color: colors.text }]}>
+        {isEditing ? 'Edit Place' : 'Add Family Place'}
+      </Text>
+
+      {/* Type selector */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.typeRow}
       >
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
-          {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
-
-          <Text style={[styles.title, { color: colors.text }]}>
-            {isEditing ? 'Edit Place' : 'Add Family Place'}
-          </Text>
-
-          {/* Type selector */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.typeRow}
-          >
-            {TYPE_ORDER.map(type => {
-              const c = PLACE_CONFIG[type];
-              const isSelected = selectedType === type;
-              return (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => handleTypeSelect(type)}
-                  style={[
-                    styles.typePill,
-                    {
-                      backgroundColor: isSelected ? c.color : colors.background,
-                      borderColor: isSelected ? c.color : colors.border,
-                    },
-                  ]}
-                >
-                  <Text style={styles.typeEmoji}>{c.emoji}</Text>
-                  <Text style={[styles.typeLabel, { color: isSelected ? '#fff' : colors.text }]}>
-                    {c.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Address search */}
-          <View style={styles.searchWrap}>
-            <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                value={addressQuery}
-                onChangeText={handleAddressChange}
-                placeholder={isEditing ? 'Search new address…' : 'Search address…'}
-                placeholderTextColor={colors.textSecondary}
-                returnKeyType="search"
-                autoCorrect={false}
-              />
-              {searching && <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 10 }} />}
-            </View>
-
-            {searchResults.length > 0 && (
-              <View style={[styles.resultsList, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                {searchResults.map((r, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    onPress={() => handleSelectResult(r)}
-                    style={[
-                      styles.resultRow,
-                      i < searchResults.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-                    ]}
-                  >
-                    <Text style={[styles.resultText, { color: colors.text }]} numberOfLines={2}>
-                      {r.display_name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          {/* Resolved location confirmation */}
-          {hasCoord && (
-            <View style={[styles.locationConfirm, { backgroundColor: cfg.color + '15' }]}>
-              <View style={[styles.previewPin, { backgroundColor: cfg.color }]}>
-                <Text style={styles.previewEmoji}>{cfg.emoji}</Text>
-              </View>
-              <Text style={[styles.locationConfirmText, { color: colors.text }]} numberOfLines={2}>
-                {resolvedAddress ?? `${resolvedCoord!.lat.toFixed(5)}, ${resolvedCoord!.lng.toFixed(5)}`}
+        {TYPE_ORDER.map(type => {
+          const c = PLACE_CONFIG[type];
+          const isSelected = selectedType === type;
+          return (
+            <TouchableOpacity
+              key={type}
+              onPress={() => handleTypeSelect(type)}
+              style={[
+                styles.typePill,
+                {
+                  backgroundColor: isSelected ? c.color : colors.background,
+                  borderColor: isSelected ? c.color : colors.border,
+                },
+              ]}
+            >
+              <Text style={styles.typeEmoji}>{c.emoji}</Text>
+              <Text style={[styles.typeLabel, { color: isSelected ? '#fff' : colors.text }]}>
+                {c.label}
               </Text>
-            </View>
-          )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
-          {!hasCoord && (
-            <Text style={[styles.noCoordHint, { color: colors.textSecondary }]}>
-              Search above or long-press the map to place a pin
-            </Text>
-          )}
-
-          {/* Name input */}
+      {/* Address search */}
+      <View style={styles.searchWrap}>
+        <View style={[styles.searchRow, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-            value={name}
-            onChangeText={setName}
-            placeholder="Place name"
+            style={[styles.searchInput, { color: colors.text }]}
+            value={addressQuery}
+            onChangeText={handleAddressChange}
+            placeholder={isEditing ? 'Search new address…' : 'Search address…'}
             placeholderTextColor={colors.textSecondary}
+            returnKeyType="search"
+            autoCorrect={false}
           />
-
-          {/* Actions */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: colors.background }]}
-              onPress={onClose}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: hasCoord ? cfg.color : colors.border, opacity: saving ? 0.6 : 1 }]}
-              onPress={handleSave}
-              disabled={saving || !hasCoord}
-            >
-              <Text style={[styles.btnText, { color: '#fff' }]}>
-                {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Place'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {searching && <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 10 }} />}
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        {searchResults.length > 0 && (
+          <View style={[styles.resultsList, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {searchResults.map((r, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => handleSelectResult(r)}
+                style={[
+                  styles.resultRow,
+                  i < searchResults.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.resultText, { color: colors.text }]} numberOfLines={2}>
+                  {r.display_name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+
+      {/* Resolved location confirmation */}
+      {hasCoord && (
+        <View style={[styles.locationConfirm, { backgroundColor: cfg.color + '15' }]}>
+          <View style={[styles.previewPin, { backgroundColor: cfg.color }]}>
+            <Text style={styles.previewEmoji}>{cfg.emoji}</Text>
+          </View>
+          <Text style={[styles.locationConfirmText, { color: colors.text }]} numberOfLines={2}>
+            {resolvedAddress ?? `${resolvedCoord!.lat.toFixed(5)}, ${resolvedCoord!.lng.toFixed(5)}`}
+          </Text>
+        </View>
+      )}
+
+      {!hasCoord && (
+        <Text style={[styles.noCoordHint, { color: colors.textSecondary }]}>
+          Search above or long-press the map to place a pin
+        </Text>
+      )}
+
+      {/* Name input */}
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+        value={name}
+        onChangeText={setName}
+        placeholder="Place name"
+        placeholderTextColor={colors.textSecondary}
+      />
+
+      {/* Actions */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: colors.background }]}
+          onPress={() => SheetManager.hide(props.sheetId)}
+        >
+          <Text style={[styles.btnText, { color: colors.text }]}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: hasCoord ? cfg.color : colors.border, opacity: saving ? 0.6 : 1 }]}
+          onPress={handleSave}
+          disabled={saving || !hasCoord}
+        >
+          <Text style={[styles.btnText, { color: '#fff' }]}>
+            {saving ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Place'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
-  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
 
   typeRow: { gap: 8, paddingVertical: 4, marginBottom: 16 },

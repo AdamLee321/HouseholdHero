@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Modal,
   Alert,
-  ActivityIndicator,
   Dimensions,
   Share,
   Platform,
@@ -17,8 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import RNFS from 'react-native-fs';
-import LucideIcon from '@react-native-vector-icons/lucide';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+import { SheetManager } from 'react-native-actions-sheet';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import {
@@ -63,7 +62,6 @@ export default function GalleryGroupScreen() {
   const [allPhotos, setAllPhotos] = useState<GalleryPhoto[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
-  const [showSheet, setShowSheet] = useState(false);
 
   const pagerRef = useRef<FlatList>(null);
 
@@ -81,12 +79,10 @@ export default function GalleryGroupScreen() {
 
   function openViewer(index: number) {
     setSelectedIndex(index);
-    setShowSheet(false);
   }
 
   function closeViewer() {
     setSelectedIndex(null);
-    setShowSheet(false);
   }
 
   function onPagerScroll(e: any) {
@@ -252,7 +248,7 @@ export default function GalleryGroupScreen() {
               </Text>
             )}
 
-            <TouchableOpacity style={styles.topBtn} onPress={() => setShowSheet(true)}>
+            <TouchableOpacity style={styles.topBtn} onPress={() => selectedPhoto && SheetManager.show('photo-actions', { payload: { photo: selectedPhoto, isAdmin, uid, onDownload: handleDownload, onShare: handleShare, onDelete: confirmDelete } })}>
               <Text style={styles.topBtnMore}>•••</Text>
             </TouchableOpacity>
           </View>
@@ -263,65 +259,6 @@ export default function GalleryGroupScreen() {
               <Text style={styles.viewerName}>{selectedPhoto.uploadedByName}</Text>
               <Text style={styles.viewerDate}>{formatDate(selectedPhoto.createdAt)}</Text>
             </View>
-          )}
-          {/* ── Action sheet ────────────────────────────────────────────── */}
-          {showSheet && selectedPhoto && (
-            <TouchableOpacity
-              style={styles.sheetBackdrop}
-              activeOpacity={1}
-              onPress={() => setShowSheet(false)}
-            >
-              <TouchableOpacity activeOpacity={1}>
-                <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 8 }]}>
-                  {/* Download */}
-                  <TouchableOpacity
-                    style={styles.sheetRow}
-                    onPress={() => { setShowSheet(false); handleDownload(); }}
-                    disabled={actionBusy}
-                  >
-                    <LucideIcon name="download" size={22} color={colors.text} />
-                    <Text style={[styles.sheetLabel, { color: colors.text }]}>Save to Camera Roll</Text>
-                    {actionBusy && <ActivityIndicator size="small" color={ACCENT} />}
-                  </TouchableOpacity>
-
-                  <View style={[styles.sheetDivider, { backgroundColor: colors.border ?? colors.background }]} />
-
-                  {/* Share */}
-                  <TouchableOpacity
-                    style={styles.sheetRow}
-                    onPress={() => { setShowSheet(false); handleShare(); }}
-                    disabled={actionBusy}
-                  >
-                    <LucideIcon name="share-2" size={22} color={colors.text} />
-                    <Text style={[styles.sheetLabel, { color: colors.text }]}>Share Photo</Text>
-                  </TouchableOpacity>
-
-                  {/* Delete — admin or own photo only */}
-                  {(isAdmin || selectedPhoto.uploadedBy === uid) && (
-                    <>
-                      <View style={[styles.sheetDivider, { backgroundColor: colors.border ?? colors.background }]} />
-                      <TouchableOpacity
-                        style={styles.sheetRow}
-                        onPress={() => { setShowSheet(false); confirmDelete(selectedPhoto); }}
-                      >
-                        <LucideIcon name="trash-2" size={22} color={colors.danger} />
-                        <Text style={[styles.sheetLabel, { color: colors.danger }]}>Delete Photo</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-
-                  <View style={[styles.sheetDivider, { backgroundColor: colors.border ?? colors.background, marginTop: 8 }]} />
-
-                  {/* Cancel */}
-                  <TouchableOpacity
-                    style={[styles.sheetRow, { justifyContent: 'center' }]}
-                    onPress={() => setShowSheet(false)}
-                  >
-                    <Text style={[styles.sheetLabel, { color: colors.textSecondary, fontWeight: '600' }]}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            </TouchableOpacity>
           )}
         </View>
       </Modal>
@@ -405,24 +342,4 @@ const styles = StyleSheet.create({
   viewerName: { color: '#fff', fontSize: 15, fontWeight: '700' },
   viewerDate: { color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 2 },
 
-  // Action sheet
-  sheetBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 8,
-  },
-  sheetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 14,
-  },
-  sheetLabel: { fontSize: 16, flex: 1 },
-  sheetDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
 });

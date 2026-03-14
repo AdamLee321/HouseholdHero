@@ -1,41 +1,31 @@
 import React, { useState } from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   Alert,
   TextInput as RNTextInput,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps, ScrollView} from 'react-native-actions-sheet';
 import Text from '../../components/Text';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import LucideIcon from '@react-native-vector-icons/lucide';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import {
-  Chat,
   deleteChat,
   updateChatName,
   removeChatMember,
   reassignChatAdmin,
 } from '../../services/chatService';
 
-interface Props {
-  visible: boolean;
-  chat: Chat;
-  currentUid: string;
-  isAdmin: boolean;
-  isFamilyAdmin: boolean;
-  onClose: () => void;
-}
-
-export default function ChatInfoSheet({ visible, chat, currentUid, isAdmin, isFamilyAdmin, onClose }: Props) {
+export default function ChatInfoSheet(props: SheetProps<'chat-info'>) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { family } = useFamilyStore();
+
+  const { chat, currentUid, isAdmin, isFamilyAdmin } = props.payload!;
+
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(chat.name ?? '');
 
@@ -79,7 +69,7 @@ export default function ChatInfoSheet({ visible, chat, currentUid, isAdmin, isFa
         text: 'Leave', style: 'destructive',
         onPress: async () => {
           await removeChatMember(family.id, chat.id, currentUid);
-          onClose();
+          SheetManager.hide(props.sheetId);
           navigation.goBack();
         },
       },
@@ -94,7 +84,7 @@ export default function ChatInfoSheet({ visible, chat, currentUid, isAdmin, isFa
         text: 'Delete', style: 'destructive',
         onPress: async () => {
           await deleteChat(family.id, chat.id);
-          onClose();
+          SheetManager.hide(props.sheetId);
           navigation.goBack();
         },
       },
@@ -102,139 +92,141 @@ export default function ChatInfoSheet({ visible, chat, currentUid, isAdmin, isFa
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
-        <View style={[styles.handle, { backgroundColor: colors.border }]} />
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 16,
+        maxHeight: '80%',
+      }}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {chat.type === 'family' ? 'Family Chat' : chat.type === 'group' ? 'Group Info' : 'Chat Info'}
+        </Text>
+        <TouchableOpacity onPress={() => SheetManager.hide(props.sheetId)}>
+          <LucideIcon name="x" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            {chat.type === 'family' ? 'Family Chat' : chat.type === 'group' ? 'Group Info' : 'Chat Info'}
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <LucideIcon name="x" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Chat name */}
-          {chat.type !== 'direct' && (
-            <>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>CHAT NAME</Text>
-              <View style={[styles.card, { backgroundColor: colors.background }]}>
-                {editingName ? (
-                  <View style={styles.nameEditRow}>
-                    <RNTextInput
-                      style={[styles.nameInput, { color: colors.text, borderColor: colors.border }]}
-                      value={nameValue}
-                      onChangeText={setNameValue}
-                      autoFocus
-                    />
-                    <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
-                      <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Chat name */}
+        {chat.type !== 'direct' && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>CHAT NAME</Text>
+            <View style={[styles.card, { backgroundColor: colors.background }]}>
+              {editingName ? (
+                <View style={styles.nameEditRow}>
+                  <RNTextInput
+                    style={[styles.nameInput, { color: colors.text, borderColor: colors.border }]}
+                    value={nameValue}
+                    onChangeText={setNameValue}
+                    autoFocus
+                  />
+                  <TouchableOpacity onPress={handleSaveName} style={styles.saveBtn}>
+                    <Text style={[styles.saveBtnText, { color: colors.primary }]}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.nameRow}>
+                  <Text style={[styles.chatName, { color: colors.text }]}>{chat.name}</Text>
+                  {canManage && (
+                    <TouchableOpacity onPress={() => { setNameValue(chat.name ?? ''); setEditingName(true); }}>
+                      <LucideIcon name="pencil" size={16} color={colors.textSecondary} />
                     </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={styles.nameRow}>
-                    <Text style={[styles.chatName, { color: colors.text }]}>{chat.name}</Text>
-                    {canManage && (
-                      <TouchableOpacity onPress={() => { setNameValue(chat.name ?? ''); setEditingName(true); }}>
-                        <LucideIcon name="pencil" size={16} color={colors.textSecondary} />
+                  )}
+                </View>
+              )}
+            </View>
+          </>
+        )}
+
+        {/* Members */}
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+          MEMBERS ({chat.members.length})
+        </Text>
+        <View style={[styles.card, { backgroundColor: colors.background }]}>
+          {chat.members.map((memberUid, index) => {
+            const name = chat.memberNames[memberUid] ?? memberUid;
+            const memberIsAdmin = chat.adminUids.includes(memberUid);
+            const isLast = index === chat.members.length - 1;
+            return (
+              <View
+                key={memberUid}
+                style={[
+                  styles.memberRow,
+                  { borderBottomColor: colors.border },
+                  isLast && styles.memberRowLast,
+                ]}
+              >
+                <View style={[styles.memberAvatar, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
+                    {name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.memberInfo}>
+                  <Text style={[styles.memberName, { color: colors.text }]}>
+                    {name}{memberUid === currentUid ? ' (you)' : ''}
+                  </Text>
+                  {memberIsAdmin && (
+                    <Text style={[styles.adminBadge, { color: colors.primary }]}>Admin</Text>
+                  )}
+                </View>
+                {canManage && memberUid !== currentUid && (
+                  <View style={styles.memberActions}>
+                    {!memberIsAdmin && (
+                      <TouchableOpacity
+                        style={styles.memberActionBtn}
+                        onPress={() => handleMakeAdmin(memberUid, name)}
+                      >
+                        <LucideIcon name="shield" size={16} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    )}
+                    {chat.type !== 'family' && (
+                      <TouchableOpacity
+                        style={styles.memberActionBtn}
+                        onPress={() => handleRemoveMember(memberUid, name)}
+                      >
+                        <LucideIcon name="user-minus" size={16} color={colors.danger} />
                       </TouchableOpacity>
                     )}
                   </View>
                 )}
               </View>
-            </>
-          )}
+            );
+          })}
+        </View>
 
-          {/* Members */}
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-            MEMBERS ({chat.members.length})
-          </Text>
-          <View style={[styles.card, { backgroundColor: colors.background }]}>
-            {chat.members.map((memberUid, index) => {
-              const name = chat.memberNames[memberUid] ?? memberUid;
-              const memberIsAdmin = chat.adminUids.includes(memberUid);
-              const isLast = index === chat.members.length - 1;
-              return (
-                <View
-                  key={memberUid}
-                  style={[
-                    styles.memberRow,
-                    { borderBottomColor: colors.border },
-                    isLast && styles.memberRowLast,
-                  ]}
-                >
-                  <View style={[styles.memberAvatar, { backgroundColor: colors.primaryLight }]}>
-                    <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
-                      {name.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.memberInfo}>
-                    <Text style={[styles.memberName, { color: colors.text }]}>
-                      {name}{memberUid === currentUid ? ' (you)' : ''}
-                    </Text>
-                    {memberIsAdmin && (
-                      <Text style={[styles.adminBadge, { color: colors.primary }]}>Admin</Text>
-                    )}
-                  </View>
-                  {canManage && memberUid !== currentUid && (
-                    <View style={styles.memberActions}>
-                      {!memberIsAdmin && (
-                        <TouchableOpacity
-                          style={styles.memberActionBtn}
-                          onPress={() => handleMakeAdmin(memberUid, name)}
-                        >
-                          <LucideIcon name="shield" size={16} color={colors.textSecondary} />
-                        </TouchableOpacity>
-                      )}
-                      {chat.type !== 'family' && (
-                        <TouchableOpacity
-                          style={styles.memberActionBtn}
-                          onPress={() => handleRemoveMember(memberUid, name)}
-                        >
-                          <LucideIcon name="user-minus" size={16} color={colors.danger} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Actions */}
-          {(canLeave || canDelete) && (
-            <>
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>ACTIONS</Text>
-              <View style={[styles.card, { backgroundColor: colors.background }]}>
-                {canLeave && !canDelete && (
-                  <TouchableOpacity style={styles.actionRow} onPress={handleLeave}>
-                    <LucideIcon name="log-out" size={18} color={colors.danger} />
-                    <Text style={[styles.actionText, { color: colors.danger }]}>Leave Chat</Text>
-                  </TouchableOpacity>
-                )}
-                {canDelete && (
-                  <TouchableOpacity style={styles.actionRow} onPress={handleDelete}>
-                    <LucideIcon name="trash-2" size={18} color={colors.danger} />
-                    <Text style={[styles.actionText, { color: colors.danger }]}>Delete Chat</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </>
-          )}
-        </ScrollView>
-      </View>
-    </Modal>
+        {/* Actions */}
+        {(canLeave || canDelete) && (
+          <>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>ACTIONS</Text>
+            <View style={[styles.card, { backgroundColor: colors.background }]}>
+              {canLeave && !canDelete && (
+                <TouchableOpacity style={styles.actionRow} onPress={handleLeave}>
+                  <LucideIcon name="log-out" size={18} color={colors.danger} />
+                  <Text style={[styles.actionText, { color: colors.danger }]}>Leave Chat</Text>
+                </TouchableOpacity>
+              )}
+              {canDelete && (
+                <TouchableOpacity style={styles.actionRow} onPress={handleDelete}>
+                  <LucideIcon name="trash-2" size={18} color={colors.danger} />
+                  <Text style={[styles.actionText, { color: colors.danger }]}>Delete Chat</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, maxHeight: '80%' },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   title: { fontSize: 18, fontWeight: '700' },
   sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, marginBottom: 8, marginTop: 4 },

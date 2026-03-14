@@ -3,11 +3,8 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  FlatList,
 } from 'react-native';
 import Text from '../../components/Text';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import { useTheme } from '../../theme/useTheme';
@@ -28,8 +25,7 @@ import {
 import SummaryTab from './tabs/SummaryTab';
 import TransactionsTab from './tabs/TransactionsTab';
 import CategoriesTab from './tabs/CategoriesTab';
-import AddTransactionModal from './components/AddTransactionModal';
-import AddCategoryModal from './components/AddCategoryModal';
+import { SheetManager } from 'react-native-actions-sheet';
 
 type Tab = 'summary' | 'transactions' | 'categories';
 
@@ -166,7 +162,6 @@ function currentMonth(): string {
 
 export default function BudgetScreen() {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { family, profile } = useFamilyStore();
   const uid = auth().currentUser?.uid ?? '';
@@ -177,9 +172,6 @@ export default function BudgetScreen() {
   const [month, setMonth] = useState(currentMonth());
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [showAddTxn, setShowAddTxn] = useState(false);
-  const [showAddCat, setShowAddCat] = useState(false);
-  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [currencyCode, setCurrencyCode] = useState<string>(
     family?.currencyCode ?? detectLocaleCurrency(),
   );
@@ -215,7 +207,7 @@ export default function BudgetScreen() {
       headerRight: isAdmin
         ? () => (
             <TouchableOpacity
-              onPress={() => setShowCurrencyPicker(true)}
+              onPress={() => SheetManager.show('budget-currency', { payload: { currencyCode, currencies: CURRENCIES, onChange: handleSelectCurrency } })}
               style={styles.headerCurrencyBtn}
             >
               <Text style={[styles.headerCurrencyText, { color: ACCENT }]}>
@@ -285,7 +277,6 @@ export default function BudgetScreen() {
     if (!family) {
       return;
     }
-    setShowCurrencyPicker(false);
     await updateBudgetCurrency(family.id, code);
   }
 
@@ -361,7 +352,7 @@ export default function BudgetScreen() {
             uid={uid}
             isAdmin={isAdmin}
             onDelete={handleDeleteTransaction}
-            onAdd={() => setShowAddTxn(true)}
+            onAdd={() => SheetManager.show('add-transaction', { payload: { categories, currencyCode, onAdd: handleAddTransaction } })}
             formatAmount={fmt}
           />
         )}
@@ -372,107 +363,12 @@ export default function BudgetScreen() {
             isAdmin={isAdmin}
             onDelete={handleDeleteCategory}
             onUpdateLimit={handleUpdateLimit}
-            onAdd={() => setShowAddCat(true)}
+            onAdd={() => SheetManager.show('add-category', { payload: { currencyCode, onAdd: handleAddCategory } })}
             formatAmount={fmt}
           />
         )}
       </View>
 
-      <AddTransactionModal
-        visible={showAddTxn}
-        categories={categories}
-        currencyCode={currencyCode}
-        onClose={() => setShowAddTxn(false)}
-        onAdd={handleAddTransaction}
-      />
-
-      <AddCategoryModal
-        visible={showAddCat}
-        currencyCode={currencyCode}
-        onClose={() => setShowAddCat(false)}
-        onAdd={handleAddCategory}
-      />
-
-      {/* Currency picker modal */}
-      <Modal
-        visible={showCurrencyPicker}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowCurrencyPicker(false)}
-      >
-        <View style={styles.pickerOverlay}>
-          <View
-            style={[
-              styles.pickerSheet,
-              {
-                backgroundColor: colors.surface,
-                paddingBottom: insets.bottom + 16,
-              },
-            ]}
-          >
-            <View style={styles.pickerHeader}>
-              <Text style={[styles.pickerTitle, { color: colors.text }]}>
-                Budget Currency
-              </Text>
-              <TouchableOpacity onPress={() => setShowCurrencyPicker(false)}>
-                <Text
-                  style={[styles.pickerClose, { color: colors.textSecondary }]}
-                >
-                  Done
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={CURRENCIES}
-              keyExtractor={item => item.code}
-              renderItem={({ item }) => {
-                const selected = item.code === currencyCode;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.currencyRow,
-                      { borderBottomColor: colors.border },
-                    ]}
-                    onPress={() => handleSelectCurrency(item.code)}
-                  >
-                    <View style={styles.currencyInfo}>
-                      <Text
-                        style={[
-                          styles.currencyCode,
-                          { color: selected ? ACCENT : colors.text },
-                        ]}
-                      >
-                        {item.code}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.currencyName,
-                          { color: colors.textSecondary },
-                        ]}
-                      >
-                        {item.name}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.currencyFormatted,
-                        { color: colors.textSecondary },
-                      ]}
-                    >
-                      {formatAmount(123456, item.code)}
-                    </Text>
-                    {selected && (
-                      <Text style={[styles.currencyCheck, { color: ACCENT }]}>
-                        ✓
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -515,37 +411,4 @@ const styles = StyleSheet.create({
   tabLabel: { fontSize: 12, fontWeight: '600' },
 
   content: { flex: 1 },
-
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  pickerSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
-  },
-  pickerTitle: { fontSize: 17, fontWeight: '700' },
-  pickerClose: { fontSize: 15, fontWeight: '600' },
-  currencyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  currencyInfo: { flex: 1 },
-  currencyCode: { fontSize: 15, fontWeight: '700' },
-  currencyName: { fontSize: 12, marginTop: 1 },
-  currencyFormatted: { fontSize: 13, marginRight: 12 },
-  currencyCheck: { fontSize: 18, fontWeight: '700' },
 });

@@ -4034,6 +4034,7 @@ __metadata:
     prettier: 2.8.8
     react: 19.2.3
     react-native: 0.84.1
+    react-native-actions-sheet: ^10.1.2
     react-native-biometrics: ^3.0.1
     react-native-bootsplash: ^7.1.0
     react-native-calendar-events: ^2.2.0
@@ -9154,6 +9155,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-actions-sheet@npm:^10.1.2":
+  version: 10.1.2
+  resolution: "react-native-actions-sheet@npm:10.1.2"
+  dependencies:
+    react-native-worklets: ^0.7.1
+  peerDependencies:
+    react-native: "*"
+    react-native-gesture-handler: "*"
+    react-native-reanimated: "*"
+    react-native-safe-area-context: "*"
+  checksum: f7246035e6b3d534d05ea5309b109ace280f4cfa1ef00eef5c36cc37405834d11c0cd9b13ae9d83f30c9571bb24b46112d8f8e3a260431180a8a65559aa31186
+  languageName: node
+  linkType: hard
+
 "react-native-biometrics@npm:^3.0.1":
   version: 3.0.1
   resolution: "react-native-biometrics@npm:3.0.1"
@@ -9336,7 +9351,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-worklets@npm:^0.7.4":
+"react-native-worklets@npm:^0.7.1, react-native-worklets@npm:^0.7.4":
   version: 0.7.4
   resolution: "react-native-worklets@npm:0.7.4"
   dependencies:

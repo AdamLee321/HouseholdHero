@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps, ScrollView} from 'react-native-actions-sheet';
 import Text from '../../components/Text';
 import TextInput from '../../components/TextInput';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import LucideIcon from '@react-native-vector-icons/lucide';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
-import { Chat, createDirectChat, createGroupChat } from '../../services/chatService';
+import { createDirectChat, createGroupChat } from '../../services/chatService';
 
 interface Member {
   uid: string;
@@ -24,19 +22,13 @@ interface Member {
   role: string;
 }
 
-interface Props {
-  visible: boolean;
-  chats: Chat[];
-  onClose: () => void;
-  onChatCreated: (chatId: string, chatType: string) => void;
-}
-
-export default function NewChatSheet({ visible, chats, onClose, onChatCreated }: Props) {
+export default function NewChatSheet(props: SheetProps<'new-chat'>) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { family } = useFamilyStore();
   const uid = auth().currentUser?.uid ?? '';
   const currentName = auth().currentUser?.displayName ?? 'Unknown';
+
+  const { chats, onChatCreated } = props.payload!;
 
   const [mode, setMode] = useState<'direct' | 'group'>('direct');
   const [members, setMembers] = useState<Member[]>([]);
@@ -46,7 +38,7 @@ export default function NewChatSheet({ visible, chats, onClose, onChatCreated }:
   const [membersLoading, setMembersLoading] = useState(true);
 
   useEffect(() => {
-    if (!visible || !family) { return; }
+    if (!family) { return; }
     setSelected(new Set());
     setGroupName('');
     setMode('direct');
@@ -63,7 +55,8 @@ export default function NewChatSheet({ visible, chats, onClose, onChatCreated }:
         setMembersLoading(false);
       })
       .catch(() => setMembersLoading(false));
-  }, [visible, family]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggleMember(memberId: string) {
     if (mode === 'direct') {
@@ -108,111 +101,107 @@ export default function NewChatSheet({ visible, chats, onClose, onChatCreated }:
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 16 }]}>
-        {/* Handle */}
-        <View style={[styles.handle, { backgroundColor: colors.border }]} />
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>New Message</Text>
-          <TouchableOpacity onPress={onClose}>
-            <LucideIcon name="x" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Mode toggle */}
-        <View style={[styles.modeToggle, { backgroundColor: colors.background }]}>
-          {(['direct', 'group'] as const).map(m => (
-            <TouchableOpacity
-              key={m}
-              style={[styles.modeBtn, mode === m && { backgroundColor: colors.primary }]}
-              onPress={() => { setMode(m); setSelected(new Set()); }}
-            >
-              <Text style={[styles.modeBtnText, { color: mode === m ? '#fff' : colors.textSecondary }]}>
-                {m === 'direct' ? 'Direct Message' : 'Group Chat'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Group name input */}
-        {mode === 'group' && (
-          <TextInput
-            style={[styles.groupNameInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-            placeholder="Group name..."
-            placeholderTextColor={colors.textTertiary}
-            value={groupName}
-            onChangeText={setGroupName}
-          />
-        )}
-
-        {/* Member list */}
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-          {mode === 'direct' ? 'SELECT MEMBER' : 'ADD MEMBERS'}
-        </Text>
-        {membersLoading ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
-        ) : (
-          <ScrollView style={styles.memberList} showsVerticalScrollIndicator={false}>
-            {members.map(member => {
-              const isSelected = selected.has(member.uid);
-              return (
-                <TouchableOpacity
-                  key={member.uid}
-                  style={[styles.memberRow, { borderBottomColor: colors.border }]}
-                  onPress={() => toggleMember(member.uid)}
-                >
-                  <View style={[styles.memberAvatar, { backgroundColor: colors.primaryLight }]}>
-                    <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
-                      {member.displayName.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text style={[styles.memberName, { color: colors.text }]}>{member.displayName}</Text>
-                  <View style={[
-                    styles.checkbox,
-                    { borderColor: isSelected ? colors.primary : colors.border },
-                    isSelected && { backgroundColor: colors.primary },
-                  ]}>
-                    {isSelected && <LucideIcon name="check" size={14} color="#fff" />}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
-
-        {/* Create button */}
-        <TouchableOpacity
-          style={[
-            styles.createBtn,
-            { backgroundColor: selected.size > 0 ? colors.primary : colors.border },
-          ]}
-          onPress={handleCreate}
-          disabled={selected.size === 0 || loading}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.createBtnText}>
-                {mode === 'direct' ? 'Open Chat' : `Create Group (${selected.size + 1})`}
-              </Text>
-          }
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 16,
+        maxHeight: '80%',
+      }}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>New Message</Text>
+        <TouchableOpacity onPress={() => SheetManager.hide(props.sheetId)}>
+          <LucideIcon name="x" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
-    </Modal>
+
+      {/* Mode toggle */}
+      <View style={[styles.modeToggle, { backgroundColor: colors.background }]}>
+        {(['direct', 'group'] as const).map(m => (
+          <TouchableOpacity
+            key={m}
+            style={[styles.modeBtn, mode === m && { backgroundColor: colors.primary }]}
+            onPress={() => { setMode(m); setSelected(new Set()); }}
+          >
+            <Text style={[styles.modeBtnText, { color: mode === m ? '#fff' : colors.textSecondary }]}>
+              {m === 'direct' ? 'Direct Message' : 'Group Chat'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Group name input */}
+      {mode === 'group' && (
+        <TextInput
+          style={[styles.groupNameInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+          placeholder="Group name..."
+          placeholderTextColor={colors.textTertiary}
+          value={groupName}
+          onChangeText={setGroupName}
+        />
+      )}
+
+      {/* Member list */}
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+        {mode === 'direct' ? 'SELECT MEMBER' : 'ADD MEMBERS'}
+      </Text>
+      {membersLoading ? (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+      ) : (
+        <ScrollView style={styles.memberList} showsVerticalScrollIndicator={false}>
+          {members.map(member => {
+            const isSelected = selected.has(member.uid);
+            return (
+              <TouchableOpacity
+                key={member.uid}
+                style={[styles.memberRow, { borderBottomColor: colors.border }]}
+                onPress={() => toggleMember(member.uid)}
+              >
+                <View style={[styles.memberAvatar, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.memberAvatarText, { color: colors.primary }]}>
+                    {member.displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={[styles.memberName, { color: colors.text }]}>{member.displayName}</Text>
+                <View style={[
+                  styles.checkbox,
+                  { borderColor: isSelected ? colors.primary : colors.border },
+                  isSelected && { backgroundColor: colors.primary },
+                ]}>
+                  {isSelected && <LucideIcon name="check" size={14} color="#fff" />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      {/* Create button */}
+      <TouchableOpacity
+        style={[
+          styles.createBtn,
+          { backgroundColor: selected.size > 0 ? colors.primary : colors.border },
+        ]}
+        onPress={handleCreate}
+        disabled={selected.size === 0 || loading}
+      >
+        {loading
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.createBtnText}>
+              {mode === 'direct' ? 'Open Chat' : `Create Group (${selected.size + 1})`}
+            </Text>
+        }
+      </TouchableOpacity>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 16,
-    maxHeight: '80%',
-  },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 18, fontWeight: '700' },
   modeToggle: { flexDirection: 'row', borderRadius: 12, padding: 4, marginBottom: 16 },

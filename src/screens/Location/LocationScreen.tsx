@@ -27,7 +27,7 @@ import {
   PLACE_CONFIG,
 } from '../../services/placesService';
 import { FamilyPlace, PlaceType } from '../../types';
-import AddPlaceModal from './components/AddPlaceModal';
+import { SheetManager } from 'react-native-actions-sheet';
 
 Geolocation.setRNConfiguration({
   skipPermissionRequests: false,
@@ -155,7 +155,6 @@ export default function LocationScreen() {
     lat: number;
     lng: number;
   } | null>(null);
-  const [showAddPlace, setShowAddPlace] = useState(false);
   const [preselectedType, setPreselectedType] = useState<PlaceType | undefined>(
     undefined,
   );
@@ -267,14 +266,14 @@ export default function LocationScreen() {
   function openAddPlace(type?: PlaceType) {
     setEditingPlace(undefined);
     setPreselectedType(type);
-    setShowAddPlace(true);
+    SheetManager.show('add-place', { payload: { familyId: family?.id ?? '', uid, coord: pendingCoord, preselectedType: type, editingPlace: undefined } });
   }
 
   function openEditPlace(place: FamilyPlace) {
     setPendingCoord(null);
     setEditingPlace(place);
     setPreselectedType(undefined);
-    setShowAddPlace(true);
+    SheetManager.show('add-place', { payload: { familyId: family?.id ?? '', uid, coord: null, preselectedType: undefined, editingPlace: place } });
   }
 
   function handlePlaceLongPress(place: FamilyPlace) {
@@ -303,7 +302,6 @@ export default function LocationScreen() {
   }
 
   function handleModalClose() {
-    setShowAddPlace(false);
     setPendingCoord(null);
     setPreselectedType(undefined);
     setEditingPlace(undefined);
@@ -321,10 +319,11 @@ export default function LocationScreen() {
         userInterfaceStyle={Platform.OS === 'ios' ? (isDark ? 'dark' : 'light') : undefined}
         onLongPress={e => {
           const { latitude, longitude } = e.nativeEvent.coordinate;
-          setPendingCoord({ lat: latitude, lng: longitude });
+          const coord = { lat: latitude, lng: longitude };
+          setPendingCoord(coord);
           setEditingPlace(undefined);
           setPreselectedType(undefined);
-          setShowAddPlace(true);
+          SheetManager.show('add-place', { payload: { familyId: family?.id ?? '', uid, coord, preselectedType: undefined, editingPlace: undefined } });
         }}
       >
         {/* Member markers */}
@@ -510,16 +509,6 @@ export default function LocationScreen() {
         )}
       </View>
 
-      {/* Add / Edit Place Modal */}
-      <AddPlaceModal
-        visible={showAddPlace}
-        familyId={family?.id ?? ''}
-        uid={uid}
-        coord={pendingCoord}
-        preselectedType={preselectedType}
-        editingPlace={editingPlace}
-        onClose={handleModalClose}
-      />
     </View>
   );
 }

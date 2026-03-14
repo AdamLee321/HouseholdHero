@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
-  Modal,
 } from 'react-native';
 import Text from '../../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +25,7 @@ import {
   updateFolder,
   deleteFolder,
 } from '../../services/documentService';
-import AddFolderModal from './components/AddFolderModal';
+import { SheetManager } from 'react-native-actions-sheet';
 import { HomeStackParamList } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -169,11 +168,9 @@ export default function DocumentsScreen() {
 
   const [folders, setFolders] = useState<DocumentFolder[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const [showAddFolder, setShowAddFolder] = useState(false);
   const [editingFolder, setEditingFolder] = useState<
     DocumentFolder | undefined
   >();
-  const [showOptions, setShowOptions] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>('oldest');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
@@ -201,14 +198,14 @@ export default function DocumentsScreen() {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          onPress={() => setShowOptions(true)}
+          onPress={() => SheetManager.show('doc-options', { payload: { sortBy, viewMode, onSortChange: (s: string) => setSortBy(s as SortBy), onViewChange: setViewMode } })}
           style={styles.headerBtn}
         >
           <Text style={[styles.headerMoreText, { color: ACCENT }]}>•••</Text>
         </TouchableOpacity>
       ),
     });
-  }, [navigation, ACCENT]);
+  }, [navigation, ACCENT, sortBy, viewMode]);
 
   // Seed defaults then subscribe
   useEffect(() => {
@@ -266,7 +263,7 @@ export default function DocumentsScreen() {
         text: 'Edit',
         onPress: () => {
           setEditingFolder(folder);
-          setShowAddFolder(true);
+          SheetManager.show('add-folder', { payload: { familyId: family?.id ?? '', uid, editingFolder: folder, onSave: handleSaveFolder } });
         },
       },
     ];
@@ -316,13 +313,6 @@ export default function DocumentsScreen() {
       await addFolder(family.id, uid, data);
     }
   }
-
-  const SORT_OPTIONS: { key: SortBy; label: string }[] = [
-    { key: 'az', label: 'A → Z' },
-    { key: 'za', label: 'Z → A' },
-    { key: 'newest', label: 'Newest first' },
-    { key: 'oldest', label: 'Oldest first' },
-  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -379,117 +369,13 @@ export default function DocumentsScreen() {
           ]}
           onPress={() => {
             setEditingFolder(undefined);
-            setShowAddFolder(true);
+            SheetManager.show('add-folder', { payload: { familyId: family?.id ?? '', uid, editingFolder: undefined, onSave: handleSaveFolder } });
           }}
         >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
 
-      {/* Add / Edit Folder Modal */}
-      <AddFolderModal
-        visible={showAddFolder}
-        familyId={family?.id ?? ''}
-        uid={uid}
-        editingFolder={editingFolder}
-        onClose={() => {
-          setShowAddFolder(false);
-          setEditingFolder(undefined);
-        }}
-        onSave={handleSaveFolder}
-      />
-
-      {/* Options sheet */}
-      <Modal
-        visible={showOptions}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowOptions(false)}
-      >
-        <TouchableOpacity
-          style={styles.optionsOverlay}
-          activeOpacity={1}
-          onPress={() => setShowOptions(false)}
-        >
-          <View
-            style={[
-              styles.optionsSheet,
-              {
-                backgroundColor: colors.surface,
-                paddingBottom: insets.bottom + 16,
-              },
-            ]}
-          >
-            <View
-              style={[styles.optionsHandle, { backgroundColor: colors.border }]}
-            />
-
-            {/* View mode */}
-            <Text
-              style={[styles.optionsSection, { color: colors.textSecondary }]}
-            >
-              View
-            </Text>
-            <View style={styles.viewToggleRow}>
-              {(['grid', 'list'] as ViewMode[]).map(v => (
-                <TouchableOpacity
-                  key={v}
-                  style={[
-                    styles.viewToggleBtn,
-                    {
-                      backgroundColor:
-                        viewMode === v ? ACCENT : colors.surfaceSecondary,
-                      borderColor: viewMode === v ? ACCENT : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setViewMode(v);
-                    AsyncStorage.setItem('docs_view_mode', v);
-                    setShowOptions(false);
-                  }}
-                >
-                  <Text style={styles.viewToggleEmoji}>
-                    {v === 'grid' ? '⊞' : '≡'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.viewToggleLabel,
-                      { color: viewMode === v ? '#fff' : colors.text },
-                    ]}
-                  >
-                    {v === 'grid' ? 'Grid' : 'List'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Sort */}
-            <Text
-              style={[styles.optionsSection, { color: colors.textSecondary }]}
-            >
-              Sort by
-            </Text>
-            {SORT_OPTIONS.map(opt => (
-              <TouchableOpacity
-                key={opt.key}
-                style={[styles.optionRow, { borderBottomColor: colors.border }]}
-                onPress={() => {
-                  setSortBy(opt.key);
-                  AsyncStorage.setItem('docs_sort_by', opt.key);
-                  setShowOptions(false);
-                }}
-              >
-                <Text style={[styles.optionLabel, { color: colors.text }]}>
-                  {opt.label}
-                </Text>
-                {sortBy === opt.key && (
-                  <Text style={[styles.optionCheck, { color: ACCENT }]}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 }
@@ -574,55 +460,4 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
-
-  // Options sheet
-  optionsOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  optionsSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 12,
-    paddingHorizontal: 20,
-  },
-  optionsHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  optionsSection: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 12,
-    marginTop: 4,
-  },
-
-  viewToggleRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
-  viewToggleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-  },
-  viewToggleEmoji: { fontSize: 18 },
-  viewToggleLabel: { fontSize: 15, fontWeight: '600' },
-
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  optionLabel: { flex: 1, fontSize: 16 },
-  optionCheck: { fontSize: 18, fontWeight: '700' },
 });

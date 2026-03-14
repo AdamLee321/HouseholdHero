@@ -1,4 +1,5 @@
 import 'react-native-reanimated';
+import './src/sheets/index';
 import React, { useEffect } from 'react';
 import { StatusBar } from 'react-native';
 import {
@@ -8,6 +9,7 @@ import {
 } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SheetProvider } from 'react-native-actions-sheet';
 import BootSplash from 'react-native-bootsplash';
 import RootNavigator from './src/navigation/RootNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -34,7 +36,9 @@ export default function App() {
           backgroundColor={isDark ? '#000000' : '#F2F2F7'}
         />
         <NavigationContainer ref={navigationRef} theme={isDark ? DarkTheme : DefaultTheme}>
-          <RootNavigator />
+          <SheetProvider>
+            <RootNavigator />
+          </SheetProvider>
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>

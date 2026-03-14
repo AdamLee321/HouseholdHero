@@ -17,7 +17,7 @@ import { FamilyMember } from '../../services/familyService';
 import RoomsTab from './tabs/RoomsTab';
 import LeaderboardTab from './tabs/LeaderboardTab';
 import ScheduleTab from './tabs/ScheduleTab';
-import AddChoreModal from './components/AddChoreModal';
+import { SheetManager } from 'react-native-actions-sheet';
 
 type Tab = 'rooms' | 'leaderboard' | 'schedule';
 
@@ -37,7 +37,6 @@ export default function ChoresScreen() {
   const [chores, setChores] = useState<Chore[]>([]);
   const [board, setBoard] = useState<ChorePoints[]>([]);
   const [members, setMembers] = useState<FamilyMember[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (!family) {
@@ -119,18 +118,12 @@ export default function ChoresScreen() {
             styles.fab,
             { backgroundColor: colors.primary, bottom: insets.bottom + 30 },
           ]}
-          onPress={() => setModalVisible(true)}
+          onPress={() => SheetManager.show('add-chore', { payload: { rooms, members } })}
         >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
 
-      <AddChoreModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        rooms={rooms}
-        members={members}
-      />
     </View>
   );
 }

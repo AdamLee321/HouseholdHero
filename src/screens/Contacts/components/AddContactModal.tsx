@@ -1,49 +1,20 @@
 import React, {useEffect, useState} from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
   Switch,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps, ScrollView} from 'react-native-actions-sheet';
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
 import {useTheme} from '../../../theme/useTheme';
-import {EmergencyContact} from '../../../services/contactService';
 
-interface Props {
-  visible: boolean;
-  isAdmin: boolean;
-  editContact?: EmergencyContact | null;
-  onClose: () => void;
-  onAdd: (params: {
-    name: string;
-    phone: string;
-    relation: string;
-    type: 'shared' | 'personal';
-    locked: boolean;
-  }) => Promise<void>;
-  onEdit: (fields: {
-    name: string;
-    phone: string;
-    relation: string;
-    locked: boolean;
-  }) => Promise<void>;
-}
-
-export default function AddContactModal({
-  visible,
-  isAdmin,
-  editContact,
-  onClose,
-  onAdd,
-  onEdit,
-}: Props) {
+export default function AddContactModal(props: SheetProps<'add-contact'>) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.contacts.icon;
+
+  const {isAdmin, editContact, onAdd, onEdit} = props.payload!;
   const isEditing = !!editContact;
 
   const [name, setName] = useState('');
@@ -63,7 +34,8 @@ export default function AddContactModal({
     } else {
       reset();
     }
-  }, [editContact, visible]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editContact]);
 
   function reset() {
     setName('');
@@ -96,7 +68,7 @@ export default function AddContactModal({
         });
       }
       reset();
-      onClose();
+      SheetManager.hide(props.sheetId);
     } finally {
       setSaving(false);
     }
@@ -104,199 +76,177 @@ export default function AddContactModal({
 
   function handleClose() {
     reset();
-    onClose();
+    SheetManager.hide(props.sheetId);
   }
 
   const canSave = !!name.trim() && !!phone.trim() && !saving;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.sheet, {backgroundColor: colors.surface}]}>
-          <View style={[styles.handle, {backgroundColor: colors.border}]} />
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 20,
+      }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Text style={[styles.title, {color: colors.text}]}>
+          {isEditing ? 'Edit Contact' : 'New Emergency Contact'}
+        </Text>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={[styles.title, {color: colors.text}]}>
-              {isEditing ? 'Edit Contact' : 'New Emergency Contact'}
+        {/* Type selector — admins only, add mode only */}
+        {isAdmin && !isEditing && (
+          <>
+            <Text style={[styles.label, {color: colors.textSecondary}]}>
+              Type
             </Text>
-
-            {/* Type selector — admins only, add mode only */}
-            {isAdmin && !isEditing && (
-              <>
-                <Text style={[styles.label, {color: colors.textSecondary}]}>
-                  Type
-                </Text>
-                <View
+            <View
+              style={[
+                styles.segmentRow,
+                {backgroundColor: colors.background, borderColor: colors.border},
+              ]}>
+              {(['shared', 'personal'] as const).map(t => (
+                <TouchableOpacity
+                  key={t}
                   style={[
-                    styles.segmentRow,
-                    {backgroundColor: colors.background, borderColor: colors.border},
-                  ]}>
-                  {(['shared', 'personal'] as const).map(t => (
-                    <TouchableOpacity
-                      key={t}
-                      style={[
-                        styles.segment,
-                        type === t && {backgroundColor: ACCENT},
-                      ]}
-                      onPress={() => {
-                        setType(t);
-                        if (t === 'personal') {
-                          setLocked(false);
-                        }
-                      }}>
-                      <Text
-                        style={[
-                          styles.segmentText,
-                          {color: type === t ? '#fff' : colors.textSecondary},
-                        ]}>
-                        {t === 'shared' ? '👨‍👩‍👧 Family' : '👤 Personal'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Name */}
-            <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Name *
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="Contact name"
-              placeholderTextColor={colors.textTertiary}
-              value={name}
-              onChangeText={setName}
-            />
-
-            {/* Phone */}
-            <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Phone *
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="+353 87 123 4567"
-              placeholderTextColor={colors.textTertiary}
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-
-            {/* Relation */}
-            <Text style={[styles.label, {color: colors.textSecondary}]}>
-              Label (optional)
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.border,
-                },
-              ]}
-              placeholder="e.g. Doctor, School, Friend"
-              placeholderTextColor={colors.textTertiary}
-              value={relation}
-              onChangeText={setRelation}
-            />
-
-            {/* Locked toggle — shared contacts, admins only */}
-            {isAdmin && (isEditing ? editContact!.type === 'shared' : type === 'shared') && (
-              <View style={styles.toggleRow}>
-                <View style={styles.toggleInfo}>
-                  <Text style={[styles.toggleTitle, {color: colors.text}]}>
-                    🔒 Pin contact
-                  </Text>
+                    styles.segment,
+                    type === t && {backgroundColor: ACCENT},
+                  ]}
+                  onPress={() => {
+                    setType(t);
+                    if (t === 'personal') {
+                      setLocked(false);
+                    }
+                  }}>
                   <Text
                     style={[
-                      styles.toggleDesc,
-                      {color: colors.textSecondary},
+                      styles.segmentText,
+                      {color: type === t ? '#fff' : colors.textSecondary},
                     ]}>
-                    Pinned contacts can't be deleted
+                    {t === 'shared' ? '👨‍👩‍👧 Family' : '👤 Personal'}
                   </Text>
-                </View>
-                <Switch
-                  value={locked}
-                  onValueChange={setLocked}
-                  trackColor={{false: colors.border, true: ACCENT}}
-                  thumbColor="#fff"
-                />
-              </View>
-            )}
-
-            {/* Actions */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.btnCancel, {borderColor: colors.border}]}
-                onPress={handleClose}>
-                <Text
-                  style={[
-                    styles.btnCancelText,
-                    {color: colors.textSecondary},
-                  ]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.btnAdd,
-                  {backgroundColor: ACCENT, opacity: canSave ? 1 : 0.5},
-                ]}
-                onPress={handleSave}
-                disabled={!canSave}>
-                <Text style={styles.btnAddText}>
-                  {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Contact'}
-                </Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
             </View>
-          </ScrollView>
+          </>
+        )}
+
+        {/* Name */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Name *
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="Contact name"
+          placeholderTextColor={colors.textTertiary}
+          value={name}
+          onChangeText={setName}
+        />
+
+        {/* Phone */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Phone *
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="+353 87 123 4567"
+          placeholderTextColor={colors.textTertiary}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
+
+        {/* Relation */}
+        <Text style={[styles.label, {color: colors.textSecondary}]}>
+          Label (optional)
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.background,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
+          placeholder="e.g. Doctor, School, Friend"
+          placeholderTextColor={colors.textTertiary}
+          value={relation}
+          onChangeText={setRelation}
+        />
+
+        {/* Locked toggle — shared contacts, admins only */}
+        {isAdmin && (isEditing ? editContact!.type === 'shared' : type === 'shared') && (
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Text style={[styles.toggleTitle, {color: colors.text}]}>
+                🔒 Pin contact
+              </Text>
+              <Text
+                style={[
+                  styles.toggleDesc,
+                  {color: colors.textSecondary},
+                ]}>
+                Pinned contacts can't be deleted
+              </Text>
+            </View>
+            <Switch
+              value={locked}
+              onValueChange={setLocked}
+              trackColor={{false: colors.border, true: ACCENT}}
+              thumbColor="#fff"
+            />
+          </View>
+        )}
+
+        {/* Actions */}
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={[styles.btnCancel, {borderColor: colors.border}]}
+            onPress={handleClose}>
+            <Text
+              style={[
+                styles.btnCancelText,
+                {color: colors.textSecondary},
+              ]}>
+              Cancel
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.btnAdd,
+              {backgroundColor: ACCENT, opacity: canSave ? 1 : 0.5},
+            ]}
+            onPress={handleSave}
+            disabled={!canSave}>
+            <Text style={styles.btnAddText}>
+              {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Contact'}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </ScrollView>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 40,
-    maxHeight: '90%',
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
   title: {fontSize: 18, fontWeight: '700', marginBottom: 20},
   label: {
     fontSize: 12,

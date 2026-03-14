@@ -1,24 +1,15 @@
 import React, { useState } from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps} from 'react-native-actions-sheet';
 import Text from '../../components/Text';
 import { useTheme } from '../../theme/useTheme';
 import { MemberRole } from '../../services/familyService';
-
-interface Props {
-  visible: boolean;
-  memberName: string;
-  currentRole: MemberRole;
-  onClose: () => void;
-  onSelect: (role: MemberRole) => Promise<void>;
-  onRemove: () => void;
-}
 
 const ROLES: { role: MemberRole; label: string; description: string; color: string; bg: string }[] = [
   { role: 'admin',    label: 'Admin',    description: 'Full family management access',    color: '#4F6EF7', bg: '#EEF1FE' },
@@ -27,23 +18,25 @@ const ROLES: { role: MemberRole; label: string; description: string; color: stri
   { role: 'child',    label: 'Child',    description: 'For children in the family',       color: '#7c3aed', bg: '#f3e8ff' },
 ];
 
-export default function ChangeRoleSheet({ visible, memberName, currentRole, onClose, onSelect, onRemove }: Props) {
+export default function ChangeRoleSheet(props: SheetProps<'change-role'>) {
   const { colors } = useTheme();
   const [saving, setSaving] = useState<MemberRole | null>(null);
+
+  const { memberName, currentRole, onSelect, onRemove } = props.payload!;
 
   async function handleSelect(role: MemberRole) {
     if (role === currentRole || saving) { return; }
     setSaving(role);
     try {
       await onSelect(role);
-      onClose();
+      SheetManager.hide(props.sheetId);
     } finally {
       setSaving(null);
     }
   }
 
   function handleRemove() {
-    onClose();
+    SheetManager.hide(props.sheetId);
     setTimeout(() => {
       Alert.alert(
         'Remove Member',
@@ -57,94 +50,81 @@ export default function ChangeRoleSheet({ visible, memberName, currentRole, onCl
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose} />
-      <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
-        <View style={[styles.handle, { backgroundColor: colors.border }]} />
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingHorizontal: 20,
+        paddingBottom: 36,
+        paddingTop: 12,
+      }}>
+      <Text style={[styles.title, { color: colors.text }]}>{memberName}</Text>
 
-        <Text style={[styles.title, { color: colors.text }]}>{memberName}</Text>
-
-        {/* Remove */}
-        <TouchableOpacity
-          style={[styles.removeBtn, { borderColor: colors.danger + '40', backgroundColor: colors.danger + '12' }]}
-          onPress={handleRemove}>
-          <Text style={[styles.removeText, { color: colors.danger }]}>
-            Remove from Family
-          </Text>
-        </TouchableOpacity>
-
-        {/* Role list */}
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
-          CHANGE ROLE
+      {/* Remove */}
+      <TouchableOpacity
+        style={[styles.removeBtn, { borderColor: colors.danger + '40', backgroundColor: colors.danger + '12' }]}
+        onPress={handleRemove}>
+        <Text style={[styles.removeText, { color: colors.danger }]}>
+          Remove from Family
         </Text>
-        <View style={[styles.list, { borderColor: colors.border }]}>
-          {ROLES.map((item, index) => {
-            const isSelected = item.role === currentRole;
-            const isLoading = saving === item.role;
-            return (
-              <TouchableOpacity
-                key={item.role}
-                style={[
-                  styles.row,
-                  { borderTopColor: colors.border },
-                  index === 0 && styles.rowFirst,
-                  isSelected && { backgroundColor: item.bg + '80' },
-                ]}
-                onPress={() => handleSelect(item.role)}
-                disabled={!!saving}>
-                <View style={[styles.roleIcon, { backgroundColor: item.bg }]}>
-                  <Text style={[styles.roleIconText, { color: item.color }]}>
-                    {item.label.charAt(0)}
-                  </Text>
-                </View>
-                <View style={styles.roleInfo}>
-                  <Text style={[styles.roleLabel, { color: colors.text, fontWeight: isSelected ? '700' : '600' }]}>
-                    {item.label}
-                  </Text>
-                  <Text style={[styles.roleDesc, { color: colors.textSecondary }]}>
-                    {item.description}
-                  </Text>
-                </View>
-                {isLoading ? (
-                  <ActivityIndicator size="small" color={item.color} />
-                ) : isSelected ? (
-                  <View style={[styles.selectedDot, { backgroundColor: item.color }]} />
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.cancelBtn, { borderColor: colors.border }]}
-          onPress={onClose}>
-          <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
-        </TouchableOpacity>
+      {/* Role list */}
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>
+        CHANGE ROLE
+      </Text>
+      <View style={[styles.list, { borderColor: colors.border }]}>
+        {ROLES.map((item, index) => {
+          const isSelected = item.role === currentRole;
+          const isLoading = saving === item.role;
+          return (
+            <TouchableOpacity
+              key={item.role}
+              style={[
+                styles.row,
+                { borderTopColor: colors.border },
+                index === 0 && styles.rowFirst,
+                isSelected && { backgroundColor: item.bg + '80' },
+              ]}
+              onPress={() => handleSelect(item.role)}
+              disabled={!!saving}>
+              <View style={[styles.roleIcon, { backgroundColor: item.bg }]}>
+                <Text style={[styles.roleIconText, { color: item.color }]}>
+                  {item.label.charAt(0)}
+                </Text>
+              </View>
+              <View style={styles.roleInfo}>
+                <Text style={[styles.roleLabel, { color: colors.text, fontWeight: isSelected ? '700' : '600' }]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.roleDesc, { color: colors.textSecondary }]}>
+                  {item.description}
+                </Text>
+              </View>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={item.color} />
+              ) : isSelected ? (
+                <View style={[styles.selectedDot, { backgroundColor: item.color }]} />
+              ) : null}
+            </TouchableOpacity>
+          );
+        })}
       </View>
-    </Modal>
+
+      <TouchableOpacity
+        style={[styles.cancelBtn, { borderColor: colors.border }]}
+        onPress={() => SheetManager.hide(props.sheetId)}>
+        <Text style={[styles.cancelText, { color: colors.textSecondary }]}>Cancel</Text>
+      </TouchableOpacity>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 36,
-    paddingTop: 12,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
   removeBtn: {
     borderRadius: 12,

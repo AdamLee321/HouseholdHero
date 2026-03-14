@@ -24,7 +24,7 @@ import {
   getChatDisplayName,
   isUnread,
 } from '../../services/chatService';
-import NewChatSheet from './NewChatSheet';
+import { SheetManager } from 'react-native-actions-sheet';
 
 type NavProp = NativeStackNavigationProp<HomeStackParamList, 'Messages'>;
 
@@ -165,7 +165,6 @@ export default function ChatsScreen() {
 
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newChatVisible, setNewChatVisible] = useState(false);
   const ensuredRef = useRef(false);
 
   useEffect(() => {
@@ -239,20 +238,11 @@ export default function ChatsScreen() {
       {/* FAB */}
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: colors.primary }]}
-        onPress={() => setNewChatVisible(true)}
+        onPress={() => SheetManager.show('new-chat', { payload: { chats, onChatCreated: (chatId, chatType) => { navigation.navigate('Chat', { chatId, chatType }); } } })}
       >
         <LucideIcon name="pencil" size={22} color="#fff" />
       </TouchableOpacity>
 
-      <NewChatSheet
-        visible={newChatVisible}
-        chats={chats}
-        onClose={() => setNewChatVisible(false)}
-        onChatCreated={chatId => {
-          setNewChatVisible(false);
-          navigation.navigate('Chat', { chatId, chatType: 'direct' });
-        }}
-      />
     </View>
   );
 }

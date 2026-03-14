@@ -14,7 +14,7 @@ import {
 import MonthTab from './tabs/MonthTab';
 import UpcomingTab from './tabs/UpcomingTab';
 import PastTab from './tabs/PastTab';
-import AddEventModal from './components/AddEventModal';
+import { SheetManager } from 'react-native-actions-sheet';
 
 type Tab = 'month' | 'upcoming' | 'past';
 
@@ -31,7 +31,6 @@ export default function CalendarScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>('month');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (!family) {
@@ -125,17 +124,12 @@ export default function CalendarScreen() {
               bottom: insets.bottom + 30,
             },
           ]}
-          onPress={() => setModalVisible(true)}
+          onPress={() => SheetManager.show('add-event', { payload: { onAdd: handleAdd } })}
         >
           <Text style={styles.fabText}>+</Text>
         </TouchableOpacity>
       )}
 
-      <AddEventModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onAdd={handleAdd}
-      />
     </View>
   );
 }

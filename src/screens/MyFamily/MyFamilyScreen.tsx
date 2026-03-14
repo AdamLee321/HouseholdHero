@@ -13,7 +13,7 @@ import auth from '@react-native-firebase/auth';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { MemberRole } from '../../services/familyService';
-import ChangeRoleSheet from './ChangeRoleSheet';
+import { SheetManager } from 'react-native-actions-sheet';
 
 interface Member {
   uid: string;
@@ -29,7 +29,6 @@ export default function MyFamilyScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [roleSheetMember, setRoleSheetMember] = useState<Member | null>(null);
   const currentUid = auth().currentUser?.uid;
 
   useEffect(() => {
@@ -63,22 +62,25 @@ export default function MyFamilyScreen() {
     return unsub;
   }, [family]);
 
-  async function handleChangeRole(role: MemberRole) {
-    if (!roleSheetMember || !family) { return; }
-    await firestore().collection('users').doc(roleSheetMember.uid).update({ role });
-  }
-
-  async function handleRemove() {
-    if (!roleSheetMember || !family) { return; }
-    await firestore()
-      .collection('families')
-      .doc(family.id)
-      .update({ members: firestore.FieldValue.arrayRemove(roleSheetMember.uid) });
-    await firestore()
-      .collection('users')
-      .doc(roleSheetMember.uid)
-      .update({ familyId: null, role: null });
-    setRoleSheetMember(null);
+  function openRoleSheet(member: Member) {
+    const onSelect = async (role: MemberRole) => {
+      if (!family) { return; }
+      await firestore().collection('users').doc(member.uid).update({ role });
+    };
+    const onRemove = async () => {
+      if (!family) { return; }
+      await firestore()
+        .collection('families')
+        .doc(family.id)
+        .update({ members: firestore.FieldValue.arrayRemove(member.uid) });
+      await firestore()
+        .collection('users')
+        .doc(member.uid)
+        .update({ familyId: null, role: null });
+    };
+    SheetManager.show('change-role', {
+      payload: { memberName: member.displayName, currentRole: member.role, onSelect, onRemove },
+    });
   }
 
   return (
@@ -169,7 +171,7 @@ export default function MyFamilyScreen() {
                 {isAdmin && member.uid !== currentUid && (
                   <TouchableOpacity
                     style={styles.moreBtn}
-                    onPress={() => setRoleSheetMember(member)}
+                    onPress={() => openRoleSheet(member)}
                   >
                     <Text style={[styles.moreBtnText, { color: colors.textTertiary }]}>
                       •••
@@ -182,14 +184,6 @@ export default function MyFamilyScreen() {
         )}
       </ScrollView>
 
-      <ChangeRoleSheet
-        visible={!!roleSheetMember}
-        memberName={roleSheetMember?.displayName ?? ''}
-        currentRole={roleSheetMember?.role ?? 'parent'}
-        onClose={() => setRoleSheetMember(null)}
-        onSelect={handleChangeRole}
-        onRemove={handleRemove}
-      />
     </>
   );
 }

@@ -1,38 +1,22 @@
 import React, {useState} from 'react';
 import {
-  Modal,
   View,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import ActionSheet, {SheetManager, SheetProps} from 'react-native-actions-sheet';
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useTheme} from '../../../theme/useTheme';
-import {BudgetCategory} from '../../../services/budgetService';
 
-interface Props {
-  visible: boolean;
-  categories: BudgetCategory[];
-  currencyCode: string;
-  onClose: () => void;
-  onAdd: (txn: {
-    categoryId: string;
-    categoryName: string;
-    categoryEmoji: string;
-    amount: number;
-    note: string;
-    date: number;
-    month: string;
-  }) => void;
-}
-
-export default function AddTransactionModal({visible, categories, currencyCode, onClose, onAdd}: Props) {
+export default function AddTransactionModal(props: SheetProps<'add-transaction'>) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.budget.icon;
+
+  const {categories, currencyCode, onAdd} = props.payload!;
 
   const [selectedCatId, setSelectedCatId] = useState('');
   const [amountStr, setAmountStr] = useState('');
@@ -50,7 +34,7 @@ export default function AddTransactionModal({visible, categories, currencyCode, 
 
   function handleClose() {
     reset();
-    onClose();
+    SheetManager.hide(props.sheetId);
   }
 
   function handleAdd() {
@@ -69,132 +53,133 @@ export default function AddTransactionModal({visible, categories, currencyCode, 
       month,
     });
     reset();
-    onClose();
+    SheetManager.hide(props.sheetId);
   }
 
   const canAdd = !!selectedCatId && parseFloat(amountStr || '0') > 0;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.sheet, {backgroundColor: colors.surface}]}>
-          <Text style={[styles.title, {color: colors.text}]}>Add Transaction</Text>
+    <ActionSheet
+      id={props.sheetId}
+      gestureEnabled
+      useBottomSafeAreaPadding
+      containerStyle={{
+        backgroundColor: colors.surface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 24,
+      }}>
+      <Text style={[styles.title, {color: colors.text}]}>Add Transaction</Text>
 
-          {/* Category picker */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Category</Text>
-          {categories.length === 0 ? (
-            <View style={[styles.noCatBox, {backgroundColor: colors.surfaceSecondary}]}>
-              <Text style={[styles.noCatText, {color: colors.textTertiary}]}>
-                Add a category first
-              </Text>
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.catRow}
-              contentContainerStyle={styles.catContent}>
-              {categories.map(cat => {
-                const selected = cat.id === selectedCatId;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[
-                      styles.catChip,
-                      {
-                        backgroundColor: selected
-                          ? ACCENT
-                          : colors.surfaceSecondary,
-                      },
-                    ]}
-                    onPress={() => setSelectedCatId(cat.id)}>
-                    <Text style={styles.catEmoji}>{cat.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.catLabel,
-                        {color: selected ? '#fff' : colors.text},
-                      ]}>
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          )}
-
-          {/* Amount */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Amount ({currencyCode})</Text>
-          <TextInput
-            style={[styles.amountInput, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
-            value={amountStr}
-            onChangeText={setAmountStr}
-            placeholder="0.00"
-            placeholderTextColor={colors.textTertiary}
-            keyboardType="decimal-pad"
-          />
-
-          {/* Note */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Note (optional)</Text>
-          <TextInput
-            style={[styles.input, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
-            value={note}
-            onChangeText={setNote}
-            placeholder="e.g. Weekly shop"
-            placeholderTextColor={colors.textTertiary}
-          />
-
-          {/* Date */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Date</Text>
-          <TouchableOpacity
-            style={[styles.datePicker, {backgroundColor: colors.surfaceSecondary}]}
-            onPress={() => setShowDatePicker(v => !v)}>
-            <Text style={[styles.dateText, {color: colors.text}]}>
-              📅{'  '}
-              {date.toLocaleDateString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Text>
-          </TouchableOpacity>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={(_, selected) => {
-                if (selected) {setDate(selected);}
-                if (Platform.OS === 'android') {setShowDatePicker(false);}
-              }}
-              maximumDate={new Date()}
-            />
-          )}
-
-          <View style={styles.buttons}>
-            <TouchableOpacity
-              style={[styles.cancelBtn, {borderColor: colors.border}]}
-              onPress={handleClose}>
-              <Text style={[styles.cancelText, {color: colors.textSecondary}]}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.addBtn, {backgroundColor: ACCENT, opacity: canAdd ? 1 : 0.4}]}
-              onPress={handleAdd}
-              disabled={!canAdd}>
-              <Text style={styles.addText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Category picker */}
+      <Text style={[styles.label, {color: colors.textSecondary}]}>Category</Text>
+      {categories.length === 0 ? (
+        <View style={[styles.noCatBox, {backgroundColor: colors.surfaceSecondary}]}>
+          <Text style={[styles.noCatText, {color: colors.textTertiary}]}>
+            Add a category first
+          </Text>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.catRow}
+          contentContainerStyle={styles.catContent}>
+          {categories.map(cat => {
+            const selected = cat.id === selectedCatId;
+            return (
+              <TouchableOpacity
+                key={cat.id}
+                style={[
+                  styles.catChip,
+                  {
+                    backgroundColor: selected
+                      ? ACCENT
+                      : colors.surfaceSecondary,
+                  },
+                ]}
+                onPress={() => setSelectedCatId(cat.id)}>
+                <Text style={styles.catEmoji}>{cat.emoji}</Text>
+                <Text
+                  style={[
+                    styles.catLabel,
+                    {color: selected ? '#fff' : colors.text},
+                  ]}>
+                  {cat.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
+      {/* Amount */}
+      <Text style={[styles.label, {color: colors.textSecondary}]}>Amount ({currencyCode})</Text>
+      <TextInput
+        style={[styles.amountInput, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
+        value={amountStr}
+        onChangeText={setAmountStr}
+        placeholder="0.00"
+        placeholderTextColor={colors.textTertiary}
+        keyboardType="decimal-pad"
+      />
+
+      {/* Note */}
+      <Text style={[styles.label, {color: colors.textSecondary}]}>Note (optional)</Text>
+      <TextInput
+        style={[styles.input, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
+        value={note}
+        onChangeText={setNote}
+        placeholder="e.g. Weekly shop"
+        placeholderTextColor={colors.textTertiary}
+      />
+
+      {/* Date */}
+      <Text style={[styles.label, {color: colors.textSecondary}]}>Date</Text>
+      <TouchableOpacity
+        style={[styles.datePicker, {backgroundColor: colors.surfaceSecondary}]}
+        onPress={() => setShowDatePicker(v => !v)}>
+        <Text style={[styles.dateText, {color: colors.text}]}>
+          📅{'  '}
+          {date.toLocaleDateString(undefined, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          })}
+        </Text>
+      </TouchableOpacity>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          onChange={(_, selected) => {
+            if (selected) {setDate(selected);}
+            if (Platform.OS === 'android') {setShowDatePicker(false);}
+          }}
+          maximumDate={new Date()}
+        />
+      )}
+
+      <View style={styles.buttons}>
+        <TouchableOpacity
+          style={[styles.cancelBtn, {borderColor: colors.border}]}
+          onPress={handleClose}>
+          <Text style={[styles.cancelText, {color: colors.textSecondary}]}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addBtn, {backgroundColor: ACCENT, opacity: canAdd ? 1 : 0.4}]}
+          onPress={handleAdd}
+          disabled={!canAdd}>
+          <Text style={styles.addText}>Add</Text>
+        </TouchableOpacity>
+      </View>
+    </ActionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)'},
-  sheet: {borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40},
   title: {fontSize: 18, fontWeight: '700', marginBottom: 16},
   label: {fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6},
   catRow: {marginBottom: 16},
