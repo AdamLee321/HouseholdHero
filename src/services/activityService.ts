@@ -12,6 +12,7 @@ export type ActivityType =
   | 'category_added'
   | 'category_deleted'
   | 'category_limit_updated'
+  | 'badge_earned'
   | 'member_joined';
 
 export interface ActivityItem {
@@ -77,6 +78,7 @@ export function activityLabel(item: ActivityItem): string {
     case 'category_added':         return `${actorName} added budget category "${payload.categoryName}"`;
     case 'category_deleted':       return `${actorName} deleted budget category "${payload.categoryName}"`;
     case 'category_limit_updated': return `${actorName} updated the limit for "${payload.categoryName}"`;
+    case 'badge_earned':           return `${actorName} earned the "${payload.badgeName}" badge ${payload.badgeEmoji}`;
     case 'member_joined':          return `${actorName} joined the family`;
   }
 }
@@ -94,6 +96,7 @@ export function activityEmoji(type: ActivityType): string {
     case 'category_added':         return '📂';
     case 'category_deleted':       return '🗑️';
     case 'category_limit_updated': return '✏️';
+    case 'badge_earned':           return '🏅';
     case 'member_joined':          return '👋';
   }
 }

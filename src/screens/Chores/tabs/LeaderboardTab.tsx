@@ -101,6 +101,9 @@ export default function LeaderboardTab({board}: Props) {
                 <Text style={[styles.completed, {color: colors.textTertiary}]}>
                   {entry.completedCount} done
                 </Text>
+                {(entry.currentStreak ?? 0) > 0 && (
+                  <Text style={styles.streak}>🔥 {entry.currentStreak}</Text>
+                )}
               </View>
             </View>
           );
@@ -141,4 +144,5 @@ const styles = StyleSheet.create({
   points: {fontSize: 20, fontWeight: '800'},
   ptLabel: {fontSize: 11},
   completed: {fontSize: 11, marginTop: 2},
+  streak: {fontSize: 11, marginTop: 2},
 });

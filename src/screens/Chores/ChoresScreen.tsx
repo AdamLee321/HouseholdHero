@@ -17,14 +17,16 @@ import { FamilyMember } from '../../services/familyService';
 import RoomsTab from './tabs/RoomsTab';
 import LeaderboardTab from './tabs/LeaderboardTab';
 import ScheduleTab from './tabs/ScheduleTab';
+import BadgesTab from './tabs/BadgesTab';
 import { SheetManager } from 'react-native-actions-sheet';
 
-type Tab = 'rooms' | 'leaderboard' | 'schedule';
+type Tab = 'rooms' | 'leaderboard' | 'schedule' | 'badges';
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'rooms', label: 'Rooms', emoji: '🏠' },
   { key: 'leaderboard', label: 'Leaderboard', emoji: '🏆' },
   { key: 'schedule', label: 'Schedule', emoji: '📅' },
+  { key: 'badges', label: 'Badges', emoji: '🏅' },
 ];
 
 export default function ChoresScreen() {
@@ -109,6 +111,7 @@ export default function ChoresScreen() {
         {activeTab === 'rooms' && <RoomsTab rooms={rooms} chores={chores} />}
         {activeTab === 'leaderboard' && <LeaderboardTab board={board} />}
         {activeTab === 'schedule' && <ScheduleTab chores={chores} />}
+        {activeTab === 'badges' && <BadgesTab />}
       </View>
 
       {/* FAB — only on rooms tab */}

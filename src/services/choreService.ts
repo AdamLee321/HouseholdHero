@@ -1,5 +1,11 @@
 import firestore from '@react-native-firebase/firestore';
 import { logActivity } from './activityService';
+import {
+  BADGE_MAP,
+  computeNewStreak,
+  checkNewBadges,
+  todayString,
+} from './badgeService';
 
 export type ChoreFrequency = 'daily' | 'weekly' | 'monthly';
 export type ChoreEffort = 'easy' | 'medium' | 'hard';
@@ -39,6 +45,10 @@ export interface ChorePoints {
   displayName: string;
   points: number;
   completedCount: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastStreakDate: string;
+  badges: string[];
 }
 
 function isDue(chore: Chore): boolean {
@@ -94,6 +104,22 @@ export function subscribeToChores(
     .orderBy('createdAt', 'asc')
     .onSnapshot(snap => {
       onUpdate(snap.docs.map(d => ({ id: d.id, ...d.data() } as Chore)));
+    });
+}
+
+export function subscribeToMyPoints(
+  familyId: string,
+  uid: string,
+  onUpdate: (points: ChorePoints | null) => void,
+) {
+  return firestore()
+    .collection('families')
+    .doc(familyId)
+    .collection('chorePoints')
+    .doc(uid)
+    .onSnapshot(snap => {
+      const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+      onUpdate(exists ? ({ uid, ...snap.data() } as ChorePoints) : null);
     });
 }
 
@@ -173,16 +199,31 @@ export async function updateChoreStatus(
         .doc(uid);
       const snap = await pointsRef.get();
       const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
-      if (snapExists) {
-        await pointsRef.update({
-          points: firestore.FieldValue.increment(EFFORT_POINTS[chore.effort]),
-          completedCount: firestore.FieldValue.increment(1),
-        });
-      } else {
-        await pointsRef.set({
-          displayName,
-          points: EFFORT_POINTS[chore.effort],
-          completedCount: 1,
+      const prev = (snapExists ? snap.data() : {}) as Partial<ChorePoints>;
+
+      const newPoints = (prev.points ?? 0) + EFFORT_POINTS[chore.effort];
+      const newCompleted = (prev.completedCount ?? 0) + 1;
+      const newStreak = computeNewStreak(prev.lastStreakDate ?? '', prev.currentStreak ?? 0);
+      const newLongest = Math.max(prev.longestStreak ?? 0, newStreak);
+      const existingBadges = prev.badges ?? [];
+      const newBadgeIds = checkNewBadges(existingBadges, newCompleted, newStreak, chore.assignedTo, uid);
+
+      await pointsRef.set({
+        displayName,
+        points: newPoints,
+        completedCount: newCompleted,
+        currentStreak: newStreak,
+        longestStreak: newLongest,
+        lastStreakDate: todayString(),
+        badges: [...existingBadges, ...newBadgeIds],
+      }, { merge: true });
+
+      for (const badgeId of newBadgeIds) {
+        const def = BADGE_MAP[badgeId];
+        logActivity(familyId, 'badge_earned', uid, displayName, {
+          badgeId,
+          badgeName: def.name,
+          badgeEmoji: def.emoji,
         });
       }
     } else {
