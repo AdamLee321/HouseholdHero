@@ -154,33 +154,63 @@ export async function updateChoreStatus(
   uid: string,
   displayName: string,
 ) {
-  const update: Partial<Chore> = { status: newStatus };
+  const update: Record<string, any> = { status: newStatus };
 
   if (newStatus === 'done') {
-    update.lastCompletedAt = Date.now();
-    update.completedBy = uid;
-    update.completedByName = displayName;
+    // Only award points when the chore was genuinely due (frequency has lapsed).
+    // Re-marking within the same period does not award points again.
+    if (isDue(chore)) {
+      update.lastCompletedAt = Date.now();
+      update.completedBy = uid;
+      update.completedByName = displayName;
 
-    // Award points
-    const pointsRef = firestore()
-      .collection('families')
-      .doc(familyId)
-      .collection('chorePoints')
-      .doc(uid);
-    const snap = await pointsRef.get();
-    const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
-    if (snapExists) {
-      await pointsRef.update({
-        points: firestore.FieldValue.increment(EFFORT_POINTS[chore.effort]),
-        completedCount: firestore.FieldValue.increment(1),
-      });
+      const pointsRef = firestore()
+        .collection('families')
+        .doc(familyId)
+        .collection('chorePoints')
+        .doc(uid);
+      const snap = await pointsRef.get();
+      const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+      if (snapExists) {
+        await pointsRef.update({
+          points: firestore.FieldValue.increment(EFFORT_POINTS[chore.effort]),
+          completedCount: firestore.FieldValue.increment(1),
+        });
+      } else {
+        await pointsRef.set({
+          displayName,
+          points: EFFORT_POINTS[chore.effort],
+          completedCount: 1,
+        });
+      }
     } else {
-      await pointsRef.set({
-        displayName,
-        points: EFFORT_POINTS[chore.effort],
-        completedCount: 1,
-      });
+      // Completed this period but re-marked — just record who did it, no extra points.
+      update.completedBy = uid;
+      update.completedByName = displayName;
     }
+  } else if (newStatus === 'pending') {
+    // Unmarking a chore that was completed in the current period:
+    // reverse the points awarded and reset the completion timestamp so
+    // isDue() returns true again (the chore is "unclean" once more).
+    if (!isDue(chore) && chore.completedBy) {
+      const prevPointsRef = firestore()
+        .collection('families')
+        .doc(familyId)
+        .collection('chorePoints')
+        .doc(chore.completedBy);
+      const snap = await prevPointsRef.get();
+      const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+      if (snapExists) {
+        const data = snap.data() as { points: number; completedCount: number };
+        await prevPointsRef.update({
+          points: Math.max(0, (data.points ?? 0) - EFFORT_POINTS[chore.effort]),
+          completedCount: Math.max(0, (data.completedCount ?? 0) - 1),
+        });
+      }
+    }
+    update.lastCompletedAt = null;
+    update.completedBy = null;
+    update.completedByName = null;
   }
 
   await firestore()

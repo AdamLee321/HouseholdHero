@@ -1,36 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert,
 } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, Easing,
+} from 'react-native-reanimated';
 import {Swipeable} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import auth from '@react-native-firebase/auth';
 import {useTheme} from '../../../theme/useTheme';
 import {useFamilyStore} from '../../../store/familyStore';
 import {
-  Room, Chore, ChoreStatus, EFFORT_POINTS,
+  Room, Chore, EFFORT_POINTS,
   updateChoreStatus, deleteChore, deleteRoom, isDue,
 } from '../../../services/choreService';
 
-const STATUS_NEXT: Record<ChoreStatus, ChoreStatus> = {
-  pending: 'in_progress',
-  in_progress: 'done',
-  done: 'pending',
-};
-
-const STATUS_COLORS = {
-  pending: '#FF9500',
-  in_progress: '#4F6EF7',
-  done: '#34C759',
-};
-
-const STATUS_LABELS = {
-  pending: 'Pending',
-  in_progress: 'In Progress',
-  done: 'Done',
-};
-
 const EFFORT_COLORS = {easy: '#34C759', medium: '#FF9500', hard: '#FF3B30'};
+const DONE_COLOR = '#34C759';
+
+// ── Animated progress bar ────────────────────────────────────────────────────
+
+interface ProgressBarProps {
+  progress: number;
+  fillColor: string;
+  trackColor: string;
+}
+
+function ProgressBar({progress, fillColor, trackColor}: ProgressBarProps) {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const animWidth = useSharedValue(0);
+
+  useEffect(() => {
+    animWidth.value = withTiming(progress * trackWidth, {
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [progress, trackWidth]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    width: animWidth.value,
+  }));
+
+  return (
+    <View
+      style={[styles.progressTrack, {backgroundColor: trackColor}]}
+      onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}>
+      <Animated.View style={[styles.progressFill, animStyle, {backgroundColor: fillColor}]} />
+    </View>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
   rooms: Room[];
@@ -43,9 +63,11 @@ export default function RoomsTab({rooms, chores}: Props) {
   const {family, profile} = useFamilyStore();
   const uid = auth().currentUser?.uid ?? '';
 
-  async function handleToggleStatus(chore: Chore) {
+  async function handleToggleDone(chore: Chore, isDone: boolean) {
     if (!family) {return;}
-    const next = STATUS_NEXT[chore.status];
+    // Use the visual done state (status === 'done' AND not due again) so the
+    // action always matches what the broom button looks like on screen.
+    const next = isDone ? 'pending' : 'done';
     await updateChoreStatus(family.id, chore, next, uid, profile?.displayName ?? 'Someone');
   }
 
@@ -91,6 +113,7 @@ export default function RoomsTab({rooms, chores}: Props) {
         const doneCount = roomChores.filter(c => c.status === 'done' && !isDue(c)).length;
         const total = roomChores.length;
         const progress = total > 0 ? doneCount / total : 0;
+        const fillColor = progress === 1 ? colors.success : colors.primary;
 
         return (
           <Swipeable
@@ -111,74 +134,79 @@ export default function RoomsTab({rooms, chores}: Props) {
                 </Text>
               </View>
 
-              {/* Progress bar */}
-              <View style={[styles.progressTrack, {backgroundColor: colors.surfaceSecondary}]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${progress * 100}%`,
-                      backgroundColor: progress === 1 ? colors.success : colors.primary,
-                    },
-                  ]}
-                />
-              </View>
+              {/* Animated progress bar */}
+              <ProgressBar
+                progress={progress}
+                fillColor={fillColor}
+                trackColor={colors.surfaceSecondary}
+              />
 
               {/* Chores */}
               {roomChores.length === 0 ? (
                 <Text style={[styles.noChores, {color: colors.textTertiary}]}>No chores in this room</Text>
               ) : (
-                roomChores.map((chore, idx) => (
-                  <Swipeable
-                    key={chore.id}
-                    renderRightActions={() => (
-                      <TouchableOpacity
-                        style={[styles.deleteChoreAction, {backgroundColor: colors.danger}]}
-                        onPress={() => handleDeleteChore(chore)}>
-                        <Text style={styles.deleteActionText}>Delete</Text>
-                      </TouchableOpacity>
-                    )}>
-                    <TouchableOpacity
-                      style={[
-                        styles.choreRow,
-                        {borderTopColor: colors.border},
-                        idx === 0 && {borderTopWidth: StyleSheet.hairlineWidth},
-                      ]}
-                      onPress={() => handleToggleStatus(chore)}
-                      activeOpacity={0.7}>
-                      {/* Status indicator */}
-                      <View style={[styles.statusDot, {backgroundColor: STATUS_COLORS[chore.status]}]} />
-
-                      {/* Chore info */}
-                      <View style={styles.choreInfo}>
-                        <Text style={[styles.choreName, {color: colors.text}, chore.status === 'done' && {textDecorationLine: 'line-through', color: colors.textTertiary}]}>
-                          {chore.name}
-                        </Text>
-                        <View style={styles.choreMetaRow}>
-                          <View style={[styles.statusBadge, {backgroundColor: STATUS_COLORS[chore.status] + '22'}]}>
-                            <Text style={[styles.statusBadgeText, {color: STATUS_COLORS[chore.status]}]}>
-                              {STATUS_LABELS[chore.status]}
-                            </Text>
-                          </View>
-                          <View style={[styles.effortBadge, {backgroundColor: EFFORT_COLORS[chore.effort] + '22'}]}>
-                            <Text style={[styles.effortBadgeText, {color: EFFORT_COLORS[chore.effort]}]}>
-                              {chore.effort} +{EFFORT_POINTS[chore.effort]}pt
-                            </Text>
-                          </View>
-                          <Text style={[styles.frequency, {color: colors.textTertiary}]}>{chore.frequency}</Text>
-                        </View>
-                        {chore.assignedToName && (
-                          <Text style={[styles.assignee, {color: colors.textSecondary}]}>
-                            👤 {chore.assignedToName}
+                roomChores.map((chore, idx) => {
+                  const isDone = chore.status === 'done' && !isDue(chore);
+                  return (
+                    <Swipeable
+                      key={chore.id}
+                      renderRightActions={() => (
+                        <TouchableOpacity
+                          style={[styles.deleteChoreAction, {backgroundColor: colors.danger}]}
+                          onPress={() => handleDeleteChore(chore)}>
+                          <Text style={styles.deleteActionText}>Delete</Text>
+                        </TouchableOpacity>
+                      )}>
+                      <View
+                        style={[
+                          styles.choreRow,
+                          {borderTopColor: colors.border},
+                          idx === 0 && {borderTopWidth: StyleSheet.hairlineWidth},
+                        ]}>
+                        {/* Chore info */}
+                        <View style={styles.choreInfo}>
+                          <Text
+                            style={[
+                              styles.choreName,
+                              {color: isDone ? colors.textTertiary : colors.text},
+                              isDone && styles.choreNameDone,
+                            ]}>
+                            {chore.name}
                           </Text>
-                        )}
-                        {chore.note ? (
-                          <Text style={[styles.choreNote, {color: colors.textTertiary}]}>{chore.note}</Text>
-                        ) : null}
+                          <View style={styles.choreMetaRow}>
+                            <View style={[styles.effortBadge, {backgroundColor: EFFORT_COLORS[chore.effort] + '22'}]}>
+                              <Text style={[styles.effortBadgeText, {color: EFFORT_COLORS[chore.effort]}]}>
+                                {chore.effort} · +{EFFORT_POINTS[chore.effort]}pt
+                              </Text>
+                            </View>
+                            <Text style={[styles.frequency, {color: colors.textTertiary}]}>{chore.frequency}</Text>
+                          </View>
+                          {chore.assignedToName && (
+                            <Text style={[styles.assignee, {color: colors.textSecondary}]}>
+                              👤 {chore.assignedToName}
+                            </Text>
+                          )}
+                          {chore.note ? (
+                            <Text style={[styles.choreNote, {color: colors.textTertiary}]}>{chore.note}</Text>
+                          ) : null}
+                        </View>
+
+                        {/* Sweep button */}
+                        <TouchableOpacity
+                          style={[
+                            styles.sweepBtn,
+                            isDone
+                              ? {backgroundColor: DONE_COLOR, borderColor: DONE_COLOR}
+                              : {backgroundColor: colors.surfaceSecondary, borderColor: colors.border},
+                          ]}
+                          onPress={() => handleToggleDone(chore, isDone)}
+                          activeOpacity={0.7}>
+                          <Text style={styles.sweepIcon}>🧹</Text>
+                        </TouchableOpacity>
                       </View>
-                    </TouchableOpacity>
-                  </Swipeable>
-                ))
+                    </Swipeable>
+                  );
+                })
               )}
             </View>
           </Swipeable>
@@ -202,18 +230,32 @@ const styles = StyleSheet.create({
   progressTrack: {height: 6, borderRadius: 3, marginBottom: 12, overflow: 'hidden'},
   progressFill: {height: 6, borderRadius: 3},
   noChores: {fontSize: 13, paddingVertical: 8},
-  choreRow: {flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 12, gap: 12, borderTopWidth: StyleSheet.hairlineWidth},
-  statusDot: {width: 10, height: 10, borderRadius: 5, marginTop: 5, flexShrink: 0},
+  choreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   choreInfo: {flex: 1},
   choreName: {fontSize: 15, fontWeight: '600', marginBottom: 4},
+  choreNameDone: {textDecorationLine: 'line-through'},
   choreMetaRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 2},
-  statusBadge: {paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10},
-  statusBadgeText: {fontSize: 11, fontWeight: '700'},
   effortBadge: {paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10},
   effortBadgeText: {fontSize: 11, fontWeight: '700'},
   frequency: {fontSize: 11, alignSelf: 'center'},
   assignee: {fontSize: 12, marginTop: 2},
   choreNote: {fontSize: 12, marginTop: 2, fontStyle: 'italic'},
+  sweepBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  sweepIcon: {fontSize: 22},
   deleteRoomAction: {justifyContent: 'center', alignItems: 'center', width: 80, margin: 0},
   deleteChoreAction: {justifyContent: 'center', alignItems: 'center', width: 80},
   deleteActionText: {color: '#fff', fontWeight: '700', fontSize: 13, textAlign: 'center'},
