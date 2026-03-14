@@ -61,17 +61,25 @@ export default function SettingsScreen() {
         </Text>
       </View>
 
-      {/* Invite Members — admin only */}
+      {/* Admin-only family controls */}
       {family && profile?.role === 'admin' && (
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             FAMILY
           </Text>
           <TouchableOpacity
-            style={styles.row}
+            style={[styles.row, styles.rowDivider, { borderBottomColor: colors.border }]}
             onPress={() => navigation.navigate('Invite')}>
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               Invite Members
+            </Text>
+            <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('TileAccess')}>
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Tile Access
             </Text>
             <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
           </TouchableOpacity>

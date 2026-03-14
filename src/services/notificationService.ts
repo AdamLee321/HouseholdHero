@@ -3,6 +3,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { Platform, PermissionsAndroid } from 'react-native';
 import notifee, { AndroidImportance } from '@notifee/react-native';
+import { getCurrentScreenName } from '../navigation/navigationRef';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'ios') {
@@ -50,6 +51,10 @@ export async function bootstrapNotifications(): Promise<void> {
 
 export function setupForegroundNotifications(): () => void {
   return messaging().onMessage(async remoteMessage => {
+    // Suppress message notifications when the user is already on the Messages screen
+    const type = remoteMessage.data?.type as string | undefined;
+    if (type === 'new_message' && getCurrentScreenName() === 'Messages') { return; }
+
     const title = remoteMessage.notification?.title ?? (remoteMessage.data?.title as string | undefined);
     const body = remoteMessage.notification?.body ?? (remoteMessage.data?.body as string | undefined);
     if (!title && !body) { return; }

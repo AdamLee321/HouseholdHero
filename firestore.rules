@@ -63,6 +63,12 @@ service cloud.firestore {
          request.resource.data.members.hasAll(resource.data.members));
       allow delete: if false; // never delete a family doc from the client
 
+      // ── Settings (tileAccess, etc.) ───────────────────────────────────
+      match /settings/{doc} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if isFamilyAdmin(familyId);
+      }
+
       // ── Live locations ────────────────────────────────────────────────────
       match /locations/{uid} {
         // Any family member can read all locations

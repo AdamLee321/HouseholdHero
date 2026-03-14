@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BootSplash from 'react-native-bootsplash';
 import RootNavigator from './src/navigation/RootNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
 import { useAuthStore } from './src/store/authStore';
 import { useFamilyStore } from './src/store/familyStore';
 import { useTheme } from './src/theme/useTheme';
@@ -32,7 +33,7 @@ export default function App() {
           barStyle={isDark ? 'light-content' : 'dark-content'}
           backgroundColor={isDark ? '#000000' : '#F2F2F7'}
         />
-        <NavigationContainer theme={isDark ? DarkTheme : DefaultTheme}>
+        <NavigationContainer ref={navigationRef} theme={isDark ? DarkTheme : DefaultTheme}>
           <RootNavigator />
         </NavigationContainer>
       </SafeAreaProvider>

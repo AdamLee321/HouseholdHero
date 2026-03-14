@@ -13,6 +13,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList, TilePref } from '../../types';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
+import { NonAdminRole } from '../../services/tileAccessService';
 import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingList } from '../../services/shoppingService';
 import { subscribeToCalendarEvents } from '../../services/calendarService';
@@ -89,7 +90,7 @@ const TILES: Tile[] = [
 export default function HomeScreen() {
   const navigation = useNavigation<HomeNavProp>();
   const { colors, isDark } = useTheme();
-  const { family, profile } = useFamilyStore();
+  const { family, profile, tileAccess } = useFamilyStore();
   const insets = useSafeAreaInsets();
   const tabBarScroll = useTabBarScroll();
 
@@ -128,14 +129,21 @@ export default function HomeScreen() {
     };
   }, [family]);
 
+  const allowedTiles = useMemo(() => {
+    const role = profile?.role;
+    if (!role || role === 'admin') return TILES;
+    const allowed = tileAccess[role as NonAdminRole] ?? [];
+    return TILES.filter(t => allowed.includes(t.screen as any));
+  }, [profile?.role, tileAccess]);
+
   const orderedTiles = useMemo(() => {
-    if (!tilePrefs) return TILES;
-    const map = new Map(TILES.map(t => [t.screen, t]));
+    if (!tilePrefs) return allowedTiles;
+    const map = new Map(allowedTiles.map(t => [t.screen, t]));
     return tilePrefs.order
       .filter(key => !tilePrefs.hidden.includes(key))
       .map(key => map.get(key))
       .filter((t): t is Tile => t !== undefined);
-  }, [tilePrefs]);
+  }, [tilePrefs, allowedTiles]);
 
   function getSubtitle(tile: Tile): string | undefined {
     if (tile.screen === 'Shopping') {

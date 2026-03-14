@@ -11,14 +11,16 @@ import { useAuthStore } from '../store/authStore';
 import { useFamilyStore } from '../store/familyStore';
 import { loadFamily, UserProfile } from '../services/familyService';
 import { registerFCMToken, setupForegroundNotifications, bootstrapNotifications } from '../services/notificationService';
+import { subscribeTileAccess } from '../services/tileAccessService';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const { user, initialising, setUser, setInitialising } = useAuthStore();
-  const { family, loading: familyLoading, setFamily, setProfile, setLoading } = useFamilyStore();
+  const { family, loading: familyLoading, setFamily, setProfile, setTileAccess, setLoading } = useFamilyStore();
   const profileUnsubRef = useRef<(() => void) | null>(null);
   const foregroundUnsubRef = useRef<(() => void) | null>(null);
+  const tileAccessUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async u => {
@@ -38,6 +40,8 @@ export default function RootNavigator() {
           if (profile?.familyId) {
             const familyData = await loadFamily(profile.familyId);
             setFamily(familyData);
+            tileAccessUnsubRef.current?.();
+            tileAccessUnsubRef.current = subscribeTileAccess(profile.familyId, setTileAccess);
           }
 
           await bootstrapNotifications();
@@ -61,6 +65,8 @@ export default function RootNavigator() {
       } else {
         foregroundUnsubRef.current?.();
         foregroundUnsubRef.current = null;
+        tileAccessUnsubRef.current?.();
+        tileAccessUnsubRef.current = null;
         useFamilyStore.getState().reset();
         setInitialising(false);
       }
@@ -69,6 +75,7 @@ export default function RootNavigator() {
       unsubscribe();
       profileUnsubRef.current?.();
       foregroundUnsubRef.current?.();
+      tileAccessUnsubRef.current?.();
     };
   }, []);
 
