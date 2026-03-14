@@ -53,7 +53,8 @@ export function setupForegroundNotifications(): () => void {
   return messaging().onMessage(async remoteMessage => {
     // Suppress message notifications when the user is already on the Messages screen
     const type = remoteMessage.data?.type as string | undefined;
-    if (type === 'new_message' && getCurrentScreenName() === 'Messages') { return; }
+    const screen = getCurrentScreenName();
+    if (type === 'new_message' && (screen === 'Messages' || screen === 'Chat')) { return; }
 
     const title = remoteMessage.notification?.title ?? (remoteMessage.data?.title as string | undefined);
     const body = remoteMessage.notification?.body ?? (remoteMessage.data?.body as string | undefined);

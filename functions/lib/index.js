@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onNewMessage = exports.onUserRoleChanged = void 0;
+exports.onChatDeleted = exports.onNewMessage = exports.onUserRoleChanged = void 0;
 const admin = __importStar(require("firebase-admin"));
 const firestore_1 = require("firebase-functions/v2/firestore");
 admin.initializeApp();
@@ -92,7 +92,7 @@ exports.onUserRoleChanged = (0, firestore_1.onDocumentUpdated)({ document: 'user
         console.error('Failed to send role-change notification:', err);
     }
 });
-exports.onNewMessage = (0, firestore_1.onDocumentCreated)({ document: 'families/{familyId}/messages/{messageId}', region: 'europe-west2' }, async (event) => {
+exports.onNewMessage = (0, firestore_1.onDocumentCreated)({ document: 'families/{familyId}/chats/{chatId}/messages/{messageId}', region: 'europe-west2' }, async (event) => {
     var _a, _b, _c, _d, _e;
     const data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
     if (!data) {
@@ -102,12 +102,16 @@ exports.onNewMessage = (0, firestore_1.onDocumentCreated)({ document: 'families/
     const senderName = (_b = data.senderName) !== null && _b !== void 0 ? _b : 'Someone';
     const text = (_c = data.text) !== null && _c !== void 0 ? _c : '';
     const familyId = event.params.familyId;
-    // Get all family members
-    const familyDoc = await admin.firestore().collection('families').doc(familyId).get();
-    if (!familyDoc.exists) {
+    const chatId = event.params.chatId;
+    // Get chat members
+    const chatDoc = await admin.firestore()
+        .collection('families').doc(familyId)
+        .collection('chats').doc(chatId)
+        .get();
+    if (!chatDoc.exists) {
         return;
     }
-    const members = (_e = (_d = familyDoc.data()) === null || _d === void 0 ? void 0 : _d.members) !== null && _e !== void 0 ? _e : [];
+    const members = (_e = (_d = chatDoc.data()) === null || _d === void 0 ? void 0 : _d.members) !== null && _e !== void 0 ? _e : [];
     const recipients = members.filter(uid => uid !== senderUid);
     if (recipients.length === 0) {
         return;
@@ -124,18 +128,30 @@ exports.onNewMessage = (0, firestore_1.onDocumentCreated)({ document: 'families/
     await Promise.all(tokens.map(token => admin.messaging().send({
         token,
         notification: { title: senderName, body },
-        data: {
-            type: 'new_message',
-            familyId,
-            title: senderName,
-            body,
-        },
-        android: {
-            notification: { channelId: 'default', sound: 'default' },
-        },
-        apns: {
-            payload: { aps: { sound: 'default' } },
-        },
+        data: { type: 'new_message', familyId, chatId, title: senderName, body },
+        android: { notification: { channelId: 'default', sound: 'default' } },
+        apns: { payload: { aps: { sound: 'default' } } },
     }).catch(err => console.error(`Failed to send to ${token}:`, err))));
+});
+exports.onChatDeleted = (0, firestore_1.onDocumentDeleted)({ document: 'families/{familyId}/chats/{chatId}', region: 'europe-west2' }, async (event) => {
+    const { familyId, chatId } = event.params;
+    const messagesRef = admin.firestore()
+        .collection('families').doc(familyId)
+        .collection('chats').doc(chatId)
+        .collection('messages');
+    const snap = await messagesRef.get();
+    if (snap.empty) {
+        return;
+    }
+    const BATCH_SIZE = 500;
+    const chunks = [];
+    for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
+        chunks.push(snap.docs.slice(i, i + BATCH_SIZE));
+    }
+    await Promise.all(chunks.map(chunk => {
+        const batch = admin.firestore().batch();
+        chunk.forEach(doc => batch.delete(doc.ref));
+        return batch.commit();
+    }));
 });
 //# sourceMappingURL=index.js.map

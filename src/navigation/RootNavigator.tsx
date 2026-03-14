@@ -34,7 +34,8 @@ export default function RootNavigator() {
         try {
           // One-time fetch to get familyId for the family load
           const snap = await firestore().collection('users').doc(u.uid).get();
-          const profile = snap.exists ? ({ uid: u.uid, ...snap.data() } as UserProfile) : null;
+          const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+          const profile = snapExists ? ({ uid: u.uid, ...snap.data() } as UserProfile) : null;
           setProfile(profile);
 
           if (profile?.familyId) {
@@ -58,7 +59,8 @@ export default function RootNavigator() {
           .collection('users')
           .doc(u.uid)
           .onSnapshot(snap => {
-            if (snap.exists) {
+            const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+            if (exists) {
               setProfile({ uid: u.uid, ...snap.data() } as UserProfile);
             }
           });

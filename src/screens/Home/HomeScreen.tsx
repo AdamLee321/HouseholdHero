@@ -18,6 +18,7 @@ import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingList } from '../../services/shoppingService';
 import { subscribeToCalendarEvents } from '../../services/calendarService';
 import { subscribeTilePrefs } from '../../services/tilePrefsService';
+import { subscribeToChats, isUnread } from '../../services/chatService';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import auth from '@react-native-firebase/auth';
 
@@ -97,6 +98,7 @@ export default function HomeScreen() {
   const [todosCount, setTodosCount] = useState(0);
   const [shoppingCount, setShoppingCount] = useState(0);
   const [calendarCount, setCalendarCount] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
   const [tilePrefs, setTilePrefs] = useState<TilePref | null>(null);
   const uid = auth().currentUser?.uid ?? '';
 
@@ -122,10 +124,15 @@ export default function HomeScreen() {
         events.filter(e => e.startDate >= startOfToday.getTime()).length,
       );
     });
+    const unsubChats = subscribeToChats(family.id, uid, chats => {
+      setUnreadChats(chats.filter(c => isUnread(c, uid)).length);
+    });
+
     return () => {
       unsubTodos();
       unsubShopping();
       unsubCalendar();
+      unsubChats();
     };
   }, [family]);
 
@@ -159,6 +166,11 @@ export default function HomeScreen() {
     if (tile.screen === 'Calendar') {
       return calendarCount > 0
         ? `${calendarCount} upcoming event${calendarCount !== 1 ? 's' : ''}`
+        : undefined;
+    }
+    if (tile.screen === 'Messages') {
+      return unreadChats > 0
+        ? `${unreadChats} unread message${unreadChats !== 1 ? 's' : ''}`
         : undefined;
     }
     return tile.subtitle;

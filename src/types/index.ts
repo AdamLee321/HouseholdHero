@@ -42,6 +42,7 @@ export type HomeStackParamList = {
   Chores: undefined;
   Calendar: undefined;
   Messages: undefined;
+  Chat: { chatId: string; chatType: string };
   Contacts: undefined;
   Location: undefined;
   Documents: undefined;

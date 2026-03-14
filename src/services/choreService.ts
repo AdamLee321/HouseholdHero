@@ -168,7 +168,8 @@ export async function updateChoreStatus(
       .collection('chorePoints')
       .doc(uid);
     const snap = await pointsRef.get();
-    if (snap.exists) {
+    const snapExists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+    if (snapExists) {
       await pointsRef.update({
         points: firestore.FieldValue.increment(EFFORT_POINTS[chore.effort]),
         completedCount: firestore.FieldValue.increment(1),

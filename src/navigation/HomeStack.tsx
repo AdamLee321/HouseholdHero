@@ -11,7 +11,8 @@ import TodosScreen from '../screens/Todos/TodosScreen';
 import TodoListScreen from '../screens/Todos/TodoListScreen';
 import ChoresScreen from '../screens/Chores/ChoresScreen';
 import CalendarScreen from '../screens/Calendar/CalendarScreen';
-import MessagesScreen from '../screens/Messages/MessagesScreen';
+import ChatsScreen from '../screens/Messages/ChatsScreen';
+import ChatScreen from '../screens/Messages/ChatScreen';
 import ContactsScreen from '../screens/Contacts/ContactsScreen';
 import LocationScreen from '../screens/Location/LocationScreen';
 import DocumentsScreen from '../screens/Documents/DocumentsScreen';
@@ -80,8 +81,13 @@ export default function HomeStack() {
       />
       <Stack.Screen
         name="Messages"
-        component={MessagesScreen}
+        component={ChatsScreen}
         options={{ title: 'Messages' }}
+      />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ title: '' }}
       />
       <Stack.Screen
         name="Contacts"

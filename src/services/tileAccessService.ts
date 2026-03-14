@@ -38,7 +38,8 @@ export function subscribeTileAccess(
   return docRef(familyId).onSnapshot(
     snap => {
       if (!snap) { onChange(DEFAULT_TILE_ACCESS); return; }
-      if (snap.exists) {
+      const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+      if (exists) {
         onChange(snap.data() as TileAccess);
       } else {
         onChange(DEFAULT_TILE_ACCESS);

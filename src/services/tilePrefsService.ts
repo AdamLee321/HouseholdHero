@@ -22,7 +22,8 @@ export function subscribeTilePrefs(
   onUpdate: (prefs: TilePref) => void,
 ): () => void {
   return docRef(uid).onSnapshot(snap => {
-    if (!snap.exists) {
+    const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+    if (!exists) {
       onUpdate(DEFAULT_PREFS);
     } else {
       onUpdate(snap.data() as TilePref);

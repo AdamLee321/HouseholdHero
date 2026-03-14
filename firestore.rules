@@ -130,11 +130,19 @@ service cloud.firestore {
         allow write: if isFamilyMember(familyId) && isOwner(uid);
       }
 
-      // ── Messages ──────────────────────────────────────────────────────────
-      match /messages/{messageId} {
+      // ── Chats ─────────────────────────────────────────────────────────────
+      match /chats/{chatId} {
         allow read, create: if isFamilyMember(familyId);
-        // Messages are immutable once sent — no edits or deletes
-        allow update, delete: if false;
+        allow update: if isFamilyMember(familyId);
+        allow delete: if isFamilyMember(familyId) &&
+          request.auth.uid in resource.data.adminUids &&
+          resource.data.type != 'family';
+
+        match /messages/{messageId} {
+          allow read, create: if isFamilyMember(familyId);
+          allow delete: if isFamilyMember(familyId) &&
+            request.auth.uid == resource.data.senderId;
+        }
       }
 
       // ── Calendar ──────────────────────────────────────────────────────────

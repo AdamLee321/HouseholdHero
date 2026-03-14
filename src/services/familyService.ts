@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import { ensureFamilyChat } from './chatService';
 
 export type MemberRole = 'admin' | 'parent' | 'guardian' | 'child';
 
@@ -67,6 +68,9 @@ export async function createFamily(
       },
       { merge: true },
     );
+
+  // Create the default family group chat immediately
+  await ensureFamilyChat(familyRef.id, familyName.trim(), [user.uid]);
 
   return { id: familyRef.id, ...family };
 }
@@ -137,6 +141,9 @@ export async function joinFamily(
       { merge: true },
     );
 
+  // Add the new member to the family chat
+  await ensureFamilyChat(family.id, family.name, [...family.members, user.uid]);
+
   return family;
 }
 
@@ -161,16 +168,18 @@ export async function loadUserProfile(): Promise<UserProfile | null> {
   }
 
   const doc = await firestore().collection('users').doc(user.uid).get();
-  if (!doc.exists) {
+  const docExists = typeof doc.exists === 'function' ? doc.exists() : doc.exists;
+  if (!docExists) {
     return null;
   }
 
-  return doc.data() as UserProfile;
+  return { uid: user.uid, ...doc.data() } as UserProfile;
 }
 
 export async function loadFamily(familyId: string): Promise<Family | null> {
   const doc = await firestore().collection('families').doc(familyId).get();
-  if (!doc.exists) {
+  const docExists = typeof doc.exists === 'function' ? doc.exists() : doc.exists;
+  if (!docExists) {
     return null;
   }
 
@@ -186,5 +195,8 @@ export async function loadFamily(familyId: string): Promise<Family | null> {
     Object.assign(data, updates);
   }
 
-  return { id: doc.id, ...data } as Family;
+  const family = { id: doc.id, ...data } as Family;
+  // Ensure the family group chat exists (idempotent)
+  ensureFamilyChat(family.id, family.name, family.members).catch(e => console.warn('[ensureFamilyChat] failed:', e));
+  return family;
 }
