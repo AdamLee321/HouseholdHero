@@ -13,12 +13,13 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
+import { MemberRole } from '../../services/familyService';
 
 interface Member {
   uid: string;
   displayName: string;
   email: string | null;
-  role: 'admin' | 'member';
+  role: MemberRole;
 }
 
 export default function MyFamilyScreen() {
@@ -38,26 +39,34 @@ export default function MyFamilyScreen() {
       .collection('users')
       .where('familyId', '==', family.id)
       .onSnapshot(snap => {
+        if (!snap) {
+          setLoading(false);
+          return;
+        }
         const list: Member[] = snap.docs.map(doc => {
           const data = doc.data();
           return {
             uid: doc.id,
             displayName: data.displayName ?? 'Unknown',
             email: data.email ?? null,
-            role: data.uid === family.createdBy ? 'admin' : 'member',
+            role: (data.uid === family.createdBy
+              ? 'admin'
+              : data.role ?? 'parent') as MemberRole,
           };
         });
-        // Sort: admin first, then alphabetical
+        // Sort: admin first, then parents, then guardians, then alphabetical
+        const roleOrder: Record<MemberRole, number> = {
+          admin: 0,
+          parent: 1,
+          guardian: 2,
+        };
         list.sort((a, b) => {
-          if (a.role === 'admin') {
-            return -1;
-          }
-          if (b.role === 'admin') {
-            return 1;
-          }
-          return a.displayName.localeCompare(b.displayName);
+          const diff = roleOrder[a.role] - roleOrder[b.role];
+          return diff !== 0 ? diff : a.displayName.localeCompare(b.displayName);
         });
         setMembers(list);
+        setLoading(false);
+      }, () => {
         setLoading(false);
       });
     return unsub;
@@ -97,7 +106,7 @@ export default function MyFamilyScreen() {
     }
     Alert.alert(
       'Promote to Admin',
-      `Make ${member.displayName} the family admin? You will become a regular member.`,
+      `Make ${member.displayName} the family admin? You will become a parent member.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -106,10 +115,40 @@ export default function MyFamilyScreen() {
             await firestore().collection('families').doc(family!.id).update({
               createdBy: member.uid,
             });
+            await firestore()
+              .collection('users')
+              .doc(member.uid)
+              .update({ role: 'admin' });
+            if (currentUid) {
+              await firestore()
+                .collection('users')
+                .doc(currentUid)
+                .update({ role: 'parent' });
+            }
           },
         },
       ],
     );
+  }
+
+  async function handleChangeRole(member: Member) {
+    if (!isAdmin || member.role === 'admin') {
+      return;
+    }
+    const newRole = member.role === 'parent' ? 'guardian' : 'parent';
+    const newLabel = newRole === 'parent' ? 'Parent' : 'Guardian';
+    Alert.alert('Change Role', `Change ${member.displayName} to ${newLabel}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Change',
+        onPress: async () => {
+          await firestore()
+            .collection('users')
+            .doc(member.uid)
+            .update({ role: newRole });
+        },
+      },
+    ]);
   }
 
   return (
@@ -184,7 +223,9 @@ export default function MyFamilyScreen() {
                     backgroundColor:
                       member.role === 'admin'
                         ? colors.primaryLight
-                        : colors.surfaceSecondary,
+                        : member.role === 'parent'
+                        ? '#e8f5e9'
+                        : '#fff3e0',
                   },
                 ]}
               >
@@ -195,11 +236,17 @@ export default function MyFamilyScreen() {
                       color:
                         member.role === 'admin'
                           ? colors.primary
-                          : colors.textSecondary,
+                          : member.role === 'parent'
+                          ? '#2e7d32'
+                          : '#e65100',
                     },
                   ]}
                 >
-                  {member.role === 'admin' ? 'Admin' : 'Member'}
+                  {member.role === 'admin'
+                    ? 'Admin'
+                    : member.role === 'parent'
+                    ? 'Parent'
+                    : 'Guardian'}
                 </Text>
               </View>
 
@@ -213,12 +260,23 @@ export default function MyFamilyScreen() {
                         text: 'Promote to Admin',
                         onPress: () => handlePromote(member),
                       },
+                      ...(member.role !== 'admin'
+                        ? [
+                            {
+                              text:
+                                member.role === 'parent'
+                                  ? 'Change to Guardian'
+                                  : 'Change to Parent',
+                              onPress: () => handleChangeRole(member),
+                            },
+                          ]
+                        : []),
                       {
                         text: 'Remove from Family',
-                        style: 'destructive',
+                        style: 'destructive' as const,
                         onPress: () => handleRemove(member),
                       },
-                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Cancel', style: 'cancel' as const },
                     ])
                   }
                 >

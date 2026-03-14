@@ -1,11 +1,13 @@
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 
+export type MemberRole = 'admin' | 'parent' | 'guardian';
+
 export interface FamilyMember {
   uid: string;
   displayName: string;
   email: string | null;
-  role: 'admin' | 'member';
+  role: MemberRole;
 }
 
 export interface Family {
@@ -21,6 +23,7 @@ export interface UserProfile {
   displayName: string;
   email: string | null;
   familyId: string | null;
+  role?: MemberRole;
 }
 
 function generateInviteCode(): string {
@@ -57,6 +60,7 @@ export async function createFamily(
         displayName: displayName.trim(),
         email: user.email ?? null,
         familyId: familyRef.id,
+        role: 'admin',
       },
       { merge: true },
     );
@@ -67,6 +71,7 @@ export async function createFamily(
 export async function joinFamily(
   inviteCode: string,
   displayName: string,
+  role: 'parent' | 'guardian' = 'parent',
 ): Promise<Family> {
   const user = auth().currentUser;
   if (!user) {
@@ -99,6 +104,7 @@ export async function joinFamily(
         displayName: displayName.trim(),
         email: user.email ?? null,
         familyId: doc.id,
+        role,
       },
       { merge: true },
     );

@@ -1,6 +1,6 @@
 import 'react-native-reanimated';
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar } from 'react-native';
 import {
   NavigationContainer,
   DarkTheme,
@@ -12,10 +12,10 @@ import BootSplash from 'react-native-bootsplash';
 import RootNavigator from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/store/authStore';
 import { useFamilyStore } from './src/store/familyStore';
+import { useTheme } from './src/theme/useTheme';
 
 export default function App() {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const { isDark } = useTheme();
   const initialising = useAuthStore(s => s.initialising);
   const familyLoading = useFamilyStore(s => s.loading);
 
@@ -28,7 +28,10 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={isDark ? '#000000' : '#F2F2F7'}
+        />
         <NavigationContainer theme={isDark ? DarkTheme : DefaultTheme}>
           <RootNavigator />
         </NavigationContainer>

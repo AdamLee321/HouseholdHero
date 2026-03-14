@@ -57,7 +57,7 @@ export default function ChoresScreen() {
             uid: d.id,
             displayName: d.data().displayName ?? 'Unknown',
             email: d.data().email ?? null,
-            role: d.data().uid === family.createdBy ? 'admin' : 'member',
+            role: d.data().uid === family.createdBy ? 'admin' : (d.data().role ?? 'parent'),
           })),
         );
       });

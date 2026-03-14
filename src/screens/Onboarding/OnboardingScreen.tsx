@@ -16,6 +16,7 @@ import { useFamilyStore } from '../../store/familyStore';
 import { useTheme } from '../../theme/useTheme';
 
 type Mode = 'create' | 'join';
+type JoinRole = 'parent' | 'guardian';
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
@@ -23,6 +24,7 @@ export default function OnboardingScreen() {
   const [displayName, setDisplayName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
+  const [joinRole, setJoinRole] = useState<JoinRole>('parent');
   const [loading, setLoading] = useState(false);
   const { setFamily, setProfile } = useFamilyStore();
 
@@ -59,7 +61,7 @@ export default function OnboardingScreen() {
     }
     setLoading(true);
     try {
-      const family = await joinFamily(inviteCode, displayName);
+      const family = await joinFamily(inviteCode, displayName, joinRole);
       setFamily(family);
     } catch (e: any) {
       Alert.alert('Error', e.message);
@@ -158,6 +160,43 @@ export default function OnboardingScreen() {
           </>
         ) : (
           <>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              I am joining as
+            </Text>
+            <View
+              style={[styles.tabs, { backgroundColor: colors.surfaceSecondary }]}
+            >
+              {(['parent', 'guardian'] as JoinRole[]).map(r => (
+                <TouchableOpacity
+                  key={r}
+                  style={[
+                    styles.tab,
+                    joinRole === r && [
+                      styles.tabActive,
+                      { backgroundColor: colors.surface },
+                    ],
+                  ]}
+                  onPress={() => setJoinRole(r)}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      {
+                        color:
+                          joinRole === r ? colors.primary : colors.textTertiary,
+                      },
+                    ]}
+                  >
+                    {r === 'parent' ? 'Parent' : 'Guardian'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={[styles.hint, { color: colors.textTertiary }]}>
+              {joinRole === 'guardian'
+                ? 'For nannies, grandparents, aunts, babysitters, etc.'
+                : 'For parents or primary caregivers'}
+            </Text>
             <Text style={[styles.label, { color: colors.textSecondary }]}>
               Invite code
             </Text>
