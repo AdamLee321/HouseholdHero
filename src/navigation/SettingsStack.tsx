@@ -9,6 +9,7 @@ import OrganiseTilesScreen from '../screens/Settings/OrganiseTilesScreen';
 import AccountScreen from '../screens/Settings/AccountScreen';
 import InviteScreen from '../screens/Settings/InviteScreen';
 import TileAccessScreen from '../screens/Settings/TileAccessScreen';
+import NotificationSettingsScreen from '../screens/Settings/NotificationSettingsScreen';
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
@@ -16,6 +17,7 @@ export type SettingsStackParamList = {
   Account: undefined;
   Invite: undefined;
   TileAccess: undefined;
+  NotificationSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -66,6 +68,11 @@ export default function SettingsStack() {
         name="TileAccess"
         component={TileAccessScreen}
         options={{ title: 'Tile Access' }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{ title: 'Notifications' }}
       />
     </Stack.Navigator>
   );
