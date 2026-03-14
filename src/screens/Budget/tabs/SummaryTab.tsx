@@ -9,10 +9,7 @@ interface Props {
   categories: BudgetCategory[];
   transactions: Transaction[];
   month: string;
-}
-
-function cents(n: number): string {
-  return `$${(n / 100).toFixed(2)}`;
+  formatAmount: (cents: number) => string;
 }
 
 interface ProgressBarProps {
@@ -47,6 +44,7 @@ export default function SummaryTab({
   categories,
   transactions = [],
   month,
+  formatAmount,
 }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -80,11 +78,11 @@ export default function SummaryTab({
           {monthLabel}
         </Text>
         <Text style={[styles.overviewAmount, { color: colors.text }]}>
-          {cents(totalSpent)}
+          {formatAmount(totalSpent)}
         </Text>
         <Text style={[styles.overviewSub, { color: colors.textSecondary }]}>
           {totalLimit > 0
-            ? `of ${cents(totalLimit)} budget · ${cents(
+            ? `of ${formatAmount(totalLimit)} budget · ${formatAmount(
                 Math.max(totalLimit - totalSpent, 0),
               )} remaining`
             : `${transactions.length} transaction${
@@ -149,7 +147,7 @@ export default function SummaryTab({
                           { color: over ? colors.danger : colors.textTertiary },
                         ]}
                       >
-                        {over ? '⚠️ Over budget' : `Limit: ${cents(cat.limit)}`}
+                        {over ? '⚠️ Over budget' : `Limit: ${formatAmount(cat.limit)}`}
                       </Text>
                     )}
                   </View>
@@ -160,13 +158,13 @@ export default function SummaryTab({
                         { color: over ? colors.danger : colors.text },
                       ]}
                     >
-                      {cents(spent)}
+                      {formatAmount(spent)}
                     </Text>
                     {cat.limit > 0 && (
                       <Text
                         style={[styles.catOf, { color: colors.textTertiary }]}
                       >
-                        of {cents(cat.limit)}
+                        of {formatAmount(cat.limit)}
                       </Text>
                     )}
                   </View>

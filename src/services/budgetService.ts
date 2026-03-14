@@ -96,3 +96,19 @@ export async function addTransaction(
 export async function deleteTransaction(familyId: string, txnId: string) {
   await transactionsRef(familyId).doc(txnId).delete();
 }
+
+export async function updateBudgetCurrency(familyId: string, code: string) {
+  await firestore().collection('families').doc(familyId).update({ currencyCode: code });
+}
+
+export function subscribeToBudgetCurrency(
+  familyId: string,
+  onUpdate: (code: string | null) => void,
+) {
+  return firestore()
+    .collection('families')
+    .doc(familyId)
+    .onSnapshot(snap => {
+      onUpdate((snap?.data()?.currencyCode as string | undefined) ?? null);
+    });
+}

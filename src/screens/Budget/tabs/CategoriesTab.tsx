@@ -23,10 +23,7 @@ interface Props {
   onDelete: (cat: BudgetCategory) => void;
   onUpdateLimit: (cat: BudgetCategory, newLimit: number) => void;
   onAdd: () => void;
-}
-
-function cents(n: number): string {
-  return `$${(n / 100).toFixed(2)}`;
+  formatAmount: (cents: number) => string;
 }
 
 export default function CategoriesTab({
@@ -36,6 +33,7 @@ export default function CategoriesTab({
   onDelete,
   onUpdateLimit,
   onAdd,
+  formatAmount,
 }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -112,8 +110,8 @@ export default function CategoriesTab({
                   { color: over ? colors.danger : colors.textSecondary },
                 ]}
               >
-                {cents(spent)} spent
-                {item.limit > 0 ? ` · limit ${cents(item.limit)}` : ''}
+                {formatAmount(spent)} spent
+                {item.limit > 0 ? ` · limit ${formatAmount(item.limit)}` : ''}
               </Text>
             </View>
             {isAdmin && (
@@ -208,7 +206,7 @@ export default function CategoriesTab({
               ]}
               value={limitStr}
               onChangeText={setLimitStr}
-              placeholder="Monthly limit ($)"
+              placeholder="Monthly limit"
               placeholderTextColor={colors.textTertiary}
               keyboardType="decimal-pad"
               autoFocus

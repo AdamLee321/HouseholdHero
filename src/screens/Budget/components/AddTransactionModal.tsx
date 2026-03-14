@@ -17,6 +17,7 @@ import {BudgetCategory} from '../../../services/budgetService';
 interface Props {
   visible: boolean;
   categories: BudgetCategory[];
+  currencyCode: string;
   onClose: () => void;
   onAdd: (txn: {
     categoryId: string;
@@ -29,7 +30,7 @@ interface Props {
   }) => void;
 }
 
-export default function AddTransactionModal({visible, categories, onClose, onAdd}: Props) {
+export default function AddTransactionModal({visible, categories, currencyCode, onClose, onAdd}: Props) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.budget.icon;
 
@@ -124,7 +125,7 @@ export default function AddTransactionModal({visible, categories, onClose, onAdd
           )}
 
           {/* Amount */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Amount ($)</Text>
+          <Text style={[styles.label, {color: colors.textSecondary}]}>Amount ({currencyCode})</Text>
           <TextInput
             style={[styles.amountInput, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
             value={amountStr}

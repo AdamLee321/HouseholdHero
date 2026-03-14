@@ -48,7 +48,6 @@ export function subscribeToChats(
           onChange([]);
           return;
         }
-        console.log('[subscribeToChats] received', snap.docs.length, 'chats');
         const chats: Chat[] = snap.docs.map(
           doc => ({ id: doc.id, ...doc.data() } as Chat),
         );
@@ -64,7 +63,7 @@ export function subscribeToChats(
         onChange(chats);
       },
       e => {
-        console.warn('[subscribeToChats] error:', e);
+        console.warn('subscribeToChats error:', e);
         onChange([]);
       },
     );
@@ -214,21 +213,13 @@ export async function ensureFamilyChat(
   familyName: string,
   members: string[],
 ): Promise<void> {
-  console.log(
-    '[ensureFamilyChat] called for family:',
-    familyId,
-    'members:',
-    members.length,
-  );
   const ref = chatsRef(familyId).doc('family-chat');
   const snap = await ref.get();
   const exists =
     typeof snap.exists === 'function' ? snap.exists() : snap.exists;
-  console.log('[ensureFamilyChat] doc exists:', exists);
 
   if (exists) {
     await ref.update({ members, adminUids: members });
-    console.log('[ensureFamilyChat] updated existing chat');
     return;
   }
 
@@ -245,7 +236,6 @@ export async function ensureFamilyChat(
     lastMessageSenderName: null,
     readBy: {},
   });
-  console.log('[ensureFamilyChat] created new family chat');
 }
 
 // ── Manage chats ─────────────────────────────────────────────────────────────

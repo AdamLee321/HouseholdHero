@@ -19,6 +19,7 @@ export interface Family {
   childInviteCode: string;
   createdBy: string;
   members: string[];
+  currencyCode?: string;
 }
 
 export interface UserProfile {

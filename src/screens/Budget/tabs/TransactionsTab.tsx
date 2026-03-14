@@ -18,6 +18,7 @@ interface Props {
   isAdmin: boolean;
   onDelete: (txn: Transaction) => void;
   onAdd: () => void;
+  formatAmount: (cents: number) => string;
 }
 
 function formatDate(ts: number): string {
@@ -27,16 +28,13 @@ function formatDate(ts: number): string {
   });
 }
 
-function cents(n: number): string {
-  return `$${(n / 100).toFixed(2)}`;
-}
-
 export default function TransactionsTab({
   transactions,
   uid,
   isAdmin,
   onDelete,
   onAdd,
+  formatAmount,
 }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -45,7 +43,7 @@ export default function TransactionsTab({
   function confirmDelete(txn: Transaction) {
     Alert.alert(
       'Delete Transaction',
-      `Remove "${txn.note || txn.categoryName}" — ${cents(txn.amount)}?`,
+      `Remove "${txn.note || txn.categoryName}" — ${formatAmount(txn.amount)}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Delete', style: 'destructive', onPress: () => onDelete(txn) },
@@ -88,7 +86,7 @@ export default function TransactionsTab({
             </Text>
           </View>
           <Text style={[styles.txnAmount, { color: colors.text }]}>
-            {cents(item.amount)}
+            {formatAmount(item.amount)}
           </Text>
         </View>
       </Swipeable>

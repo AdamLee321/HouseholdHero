@@ -14,13 +14,14 @@ import {useTheme} from '../../../theme/useTheme';
 
 interface Props {
   visible: boolean;
+  currencyCode: string;
   onClose: () => void;
   onAdd: (cat: {name: string; emoji: string; limit: number}) => void;
 }
 
 const PRESET_EMOJIS = ['🛒', '🍔', '🏠', '🚗', '💊', '👕', '🎬', '✈️', '📚', '🐾', '🎁', '🔧'];
 
-export default function AddCategoryModal({visible, onClose, onAdd}: Props) {
+export default function AddCategoryModal({visible, currencyCode, onClose, onAdd}: Props) {
   const {colors} = useTheme();
   const ACCENT = colors.tiles.budget.icon;
 
@@ -106,7 +107,7 @@ export default function AddCategoryModal({visible, onClose, onAdd}: Props) {
           />
 
           <Text style={[styles.label, {color: colors.textSecondary}]}>
-            Monthly limit (leave blank for none)
+            Monthly limit in {currencyCode} (leave blank for none)
           </Text>
           <TextInput
             style={[styles.input, {backgroundColor: colors.surfaceSecondary, color: colors.text}]}
