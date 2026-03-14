@@ -86,6 +86,13 @@ const TILES: Tile[] = [
     screen: 'Recipes',
     colorKey: 'recipes',
   },
+  {
+    label: 'Activity',
+    subtitle: 'Family activity feed',
+    emoji: '📋',
+    screen: 'Activity',
+    colorKey: 'activity',
+  },
 ];
 
 export default function HomeScreen() {
@@ -127,7 +134,6 @@ export default function HomeScreen() {
     const unsubChats = subscribeToChats(family.id, uid, chats => {
       setUnreadChats(chats.filter(c => isUnread(c, uid)).length);
     });
-
     return () => {
       unsubTodos();
       unsubShopping();
@@ -146,10 +152,14 @@ export default function HomeScreen() {
   const orderedTiles = useMemo(() => {
     if (!tilePrefs) return allowedTiles;
     const map = new Map(allowedTiles.map(t => [t.screen, t]));
-    return tilePrefs.order
+    const ordered = tilePrefs.order
       .filter(key => !tilePrefs.hidden.includes(key))
       .map(key => map.get(key))
       .filter((t): t is Tile => t !== undefined);
+    // Append any new tiles not yet in saved prefs
+    const seen = new Set(tilePrefs.order);
+    const newTiles = allowedTiles.filter(t => !seen.has(t.screen) && !tilePrefs.hidden.includes(t.screen));
+    return [...ordered, ...newTiles];
   }, [tilePrefs, allowedTiles]);
 
   function getSubtitle(tile: Tile): string | undefined {
@@ -253,6 +263,7 @@ export default function HomeScreen() {
           );
         })}
       </View>
+
     </ScrollView>
   );
 }

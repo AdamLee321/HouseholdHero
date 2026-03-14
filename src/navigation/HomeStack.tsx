@@ -22,6 +22,7 @@ import FolderScreen from '../screens/Documents/FolderScreen';
 import GalleryScreen from '../screens/Gallery/GalleryScreen';
 import GalleryGroupScreen from '../screens/Gallery/GalleryGroupScreen';
 import RecipesScreen from '../screens/Recipes/RecipesScreen';
+import ActivityFeedScreen from '../screens/Home/ActivityFeedScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -141,6 +142,11 @@ export default function HomeStack() {
         name="Recipes"
         component={RecipesScreen}
         options={{ title: 'Recipes' }}
+      />
+      <Stack.Screen
+        name="Activity"
+        component={ActivityFeedScreen}
+        options={{ title: 'Family Activity' }}
       />
     </Stack.Navigator>
   );

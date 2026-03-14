@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import { logActivity } from './activityService';
 
 export interface ShoppingItem {
   id: string;
@@ -47,6 +48,7 @@ export async function addShoppingItem(
       addedByName: displayName,
       createdAt: Date.now(),
     });
+  logActivity(familyId, 'shopping_added', uid, displayName, { itemName: name.trim() });
 }
 
 export async function toggleShoppingItem(familyId: string, itemId: string, checked: boolean) {

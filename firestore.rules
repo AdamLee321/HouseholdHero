@@ -28,6 +28,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    // Is the signed-in user an admin or parent of this family?
+    function isFamilyAdminOrParent(familyId) {
+      return isAuth() &&
+        isFamilyMember(familyId) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'parent'];
+    }
+
     // ── Users ─────────────────────────────────────────────────────────────────
 
     match /users/{uid} {
@@ -126,8 +133,8 @@ service cloud.firestore {
 
       match /chorePoints/{uid} {
         allow read: if isFamilyMember(familyId);
-        // Only the owner can update their own points
-        allow write: if isFamilyMember(familyId) && isOwner(uid);
+        // Any family member can write points (needed for point reversal when unmarking chores)
+        allow write: if isFamilyMember(familyId);
       }
 
       // ── Chats ─────────────────────────────────────────────────────────────
@@ -178,8 +185,10 @@ service cloud.firestore {
 
       match /transactions/{txnId} {
         allow read, create: if isFamilyMember(familyId);
-        allow update, delete: if isFamilyMember(familyId) &&
-          request.auth.uid == resource.data.createdBy;
+        allow update: if isFamilyMember(familyId) &&
+          request.auth.uid == resource.data.addedBy;
+        allow delete: if isFamilyAdminOrParent(familyId) ||
+          (isFamilyMember(familyId) && request.auth.uid == resource.data.addedBy);
       }
 
       // ── Gallery ───────────────────────────────────────────────────────────
@@ -195,6 +204,14 @@ service cloud.firestore {
         allow read, create: if isFamilyMember(familyId);
         allow update, delete: if isFamilyMember(familyId) &&
           request.auth.uid == resource.data.createdBy;
+      }
+
+      // ── Activity feed ─────────────────────────────────────────────────────
+      match /activity/{activityId} {
+        allow read: if isFamilyMember(familyId);
+        allow create: if isFamilyMember(familyId);
+        allow delete: if isFamilyAdminOrParent(familyId);
+        allow update: if false;
       }
     }
 

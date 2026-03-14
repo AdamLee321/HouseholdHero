@@ -59,4 +59,5 @@ export type HomeStackParamList = {
   Gallery: undefined;
   GalleryGroup: { groupName: string; uploaderUid: string | null };
   Recipes: undefined;
+  Activity: undefined;
 };

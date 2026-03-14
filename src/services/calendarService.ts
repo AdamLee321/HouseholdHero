@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import { logActivity } from './activityService';
 
 export interface CalendarEvent {
   id: string;
@@ -41,6 +42,7 @@ export async function addCalendarEvent(
       ...event,
       createdAt: Date.now(),
     });
+  logActivity(familyId, 'event_added', event.addedBy, event.addedByName, { eventTitle: event.title });
 }
 
 export async function deleteCalendarEvent(familyId: string, eventId: string) {

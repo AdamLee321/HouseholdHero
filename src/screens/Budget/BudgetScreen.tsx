@@ -22,6 +22,7 @@ import {
   deleteTransaction,
   updateBudgetCurrency,
 } from '../../services/budgetService';
+import { logActivity } from '../../services/activityService';
 import SummaryTab from './tabs/SummaryTab';
 import TransactionsTab from './tabs/TransactionsTab';
 import CategoriesTab from './tabs/CategoriesTab';
@@ -166,6 +167,7 @@ export default function BudgetScreen() {
   const { family, profile } = useFamilyStore();
   const uid = auth().currentUser?.uid ?? '';
   const isAdmin = uid === family?.createdBy || profile?.role === 'admin';
+  const canDeleteAny = isAdmin || profile?.role === 'parent';
   const ACCENT = colors.tiles.budget.icon;
 
   const [activeTab, setActiveTab] = useState<Tab>('summary');
@@ -246,31 +248,31 @@ export default function BudgetScreen() {
     emoji: string;
     limit: number;
   }) {
-    if (!family) {
-      return;
-    }
+    if (!family) { return; }
+    const name = profile?.displayName ?? 'Someone';
     await addCategory(family.id, { ...cat, createdBy: uid });
+    logActivity(family.id, 'category_added', uid, name, { categoryName: cat.name });
   }
 
   async function handleDeleteTransaction(txn: Transaction) {
-    if (!family) {
-      return;
-    }
+    if (!family) { return; }
+    const name = profile?.displayName ?? 'Someone';
     await deleteTransaction(family.id, txn.id);
+    logActivity(family.id, 'transaction_deleted', uid, name, { categoryName: txn.categoryName });
   }
 
   async function handleDeleteCategory(cat: BudgetCategory) {
-    if (!family) {
-      return;
-    }
+    if (!family) { return; }
+    const name = profile?.displayName ?? 'Someone';
     await deleteCategory(family.id, cat.id);
+    logActivity(family.id, 'category_deleted', uid, name, { categoryName: cat.name });
   }
 
   async function handleUpdateLimit(cat: BudgetCategory, limit: number) {
-    if (!family) {
-      return;
-    }
+    if (!family) { return; }
+    const name = profile?.displayName ?? 'Someone';
     await updateCategoryLimit(family.id, cat.id, limit);
+    logActivity(family.id, 'category_limit_updated', uid, name, { categoryName: cat.name });
   }
 
   async function handleSelectCurrency(code: string) {
@@ -350,7 +352,7 @@ export default function BudgetScreen() {
           <TransactionsTab
             transactions={transactions}
             uid={uid}
-            isAdmin={isAdmin}
+            isAdmin={canDeleteAny}
             onDelete={handleDeleteTransaction}
             onAdd={() => SheetManager.show('add-transaction', { payload: { categories, currencyCode, onAdd: handleAddTransaction } })}
             formatAmount={fmt}

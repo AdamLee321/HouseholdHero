@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import { logActivity } from './activityService';
 
 export type ChoreFrequency = 'daily' | 'weekly' | 'monthly';
 export type ChoreEffort = 'easy' | 'medium' | 'hard';
@@ -157,6 +158,7 @@ export async function updateChoreStatus(
   const update: Record<string, any> = { status: newStatus };
 
   if (newStatus === 'done') {
+    logActivity(familyId, 'chore_done', uid, displayName, { choreName: chore.name });
     // Only award points when the chore was genuinely due (frequency has lapsed).
     // Re-marking within the same period does not award points again.
     if (isDue(chore)) {
@@ -189,6 +191,7 @@ export async function updateChoreStatus(
       update.completedByName = displayName;
     }
   } else if (newStatus === 'pending') {
+    logActivity(familyId, 'chore_undone', uid, displayName, { choreName: chore.name });
     // Unmarking a chore that was completed in the current period:
     // reverse the points awarded and reset the completion timestamp so
     // isDue() returns true again (the chore is "unclean" once more).

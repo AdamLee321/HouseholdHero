@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import { logActivity } from './activityService';
 
 export interface GalleryPhoto {
   id: string;
@@ -62,6 +63,7 @@ export async function uploadPhoto(
     uploadedByName: userName,
     createdAt: Date.now(),
   });
+  logActivity(familyId, 'photo_uploaded', uid, userName);
 }
 
 export async function deletePhoto(

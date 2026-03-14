@@ -3,7 +3,7 @@ import firestore from '@react-native-firebase/firestore';
 export type TileKey =
   | 'Shopping' | 'Todos' | 'Chores' | 'Calendar' | 'Messages'
   | 'Contacts' | 'Location' | 'Documents' | 'MyFamily' | 'Budget'
-  | 'Gallery' | 'Recipes';
+  | 'Gallery' | 'Recipes' | 'Activity';
 
 export type NonAdminRole = 'parent' | 'guardian' | 'child';
 
@@ -16,13 +16,13 @@ export interface TileAccess {
 export const ALL_TILES: TileKey[] = [
   'Shopping', 'Todos', 'Chores', 'Calendar', 'Messages',
   'Contacts', 'Location', 'Documents', 'MyFamily', 'Budget',
-  'Gallery', 'Recipes',
+  'Gallery', 'Recipes', 'Activity',
 ];
 
 export const DEFAULT_TILE_ACCESS: TileAccess = {
-  parent:   ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Contacts', 'Location', 'Documents', 'MyFamily', 'Budget', 'Gallery', 'Recipes'],
-  guardian: ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Contacts', 'Location', 'Documents', 'Gallery', 'Recipes'],
-  child:    ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Gallery', 'Recipes'],
+  parent:   ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Contacts', 'Location', 'Documents', 'MyFamily', 'Budget', 'Gallery', 'Recipes', 'Activity'],
+  guardian: ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Contacts', 'Location', 'Documents', 'Gallery', 'Recipes', 'Activity'],
+  child:    ['Shopping', 'Todos', 'Chores', 'Calendar', 'Messages', 'Gallery', 'Recipes', 'Activity'],
 };
 
 function docRef(familyId: string) {

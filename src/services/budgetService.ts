@@ -1,4 +1,5 @@
 import firestore from '@react-native-firebase/firestore';
+import { logActivity } from './activityService';
 
 export interface BudgetCategory {
   id: string;
@@ -91,6 +92,10 @@ export async function addTransaction(
   txn: Omit<Transaction, 'id'>,
 ) {
   await transactionsRef(familyId).add(txn);
+  logActivity(familyId, 'transaction_added', txn.addedBy, txn.addedByName, {
+    amount: (txn.amount / 100).toFixed(2),
+    categoryName: txn.categoryName,
+  });
 }
 
 export async function deleteTransaction(familyId: string, txnId: string) {

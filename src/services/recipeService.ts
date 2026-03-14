@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import { logActivity } from './activityService';
 
 export interface RecipeIngredient {
   amount: string;
@@ -51,6 +52,7 @@ export async function addRecipe(
   recipe: Omit<Recipe, 'id' | 'createdAt'>,
 ) {
   await recipesRef(familyId).add({...recipe, createdAt: Date.now()});
+  logActivity(familyId, 'recipe_added', recipe.addedBy, recipe.addedByName, { recipeTitle: recipe.title });
 }
 
 export async function updateRecipe(

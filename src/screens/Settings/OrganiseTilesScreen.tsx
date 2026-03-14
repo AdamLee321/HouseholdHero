@@ -56,7 +56,8 @@ const TILE_META: Record<
   MyFamily: { label: 'My Family', emoji: '👨‍👩‍👧‍👦', colorKey: 'family' },
   Budget: { label: 'Budget', emoji: '💰', colorKey: 'budget' },
   Gallery: { label: 'Gallery', emoji: '📸', colorKey: 'gallery' },
-  Recipes: { label: 'Recipes', emoji: '🍳', colorKey: 'recipes' },
+  Recipes:  { label: 'Recipes', emoji: '🍳', colorKey: 'recipes' },
+  Activity: { label: 'Activity Feed', emoji: '📋', colorKey: 'activity' },
 };
 
 function buildItems(prefs: TilePref): TileItem[] {

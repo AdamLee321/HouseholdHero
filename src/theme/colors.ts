@@ -27,6 +27,7 @@ export const lightColors = {
     budget:    { bg: '#E8F6EE', icon: '#30B050' },
     gallery:   { bg: '#FEE8F5', icon: '#FF2D9B' },
     recipes:   { bg: '#FFF0E8', icon: '#FF6B35' },
+    activity:  { bg: '#EEF6FF', icon: '#007AFF' },
   },
 };
 
@@ -58,6 +59,7 @@ export const darkColors: typeof lightColors = {
     budget:    { bg: '#0D2B1A', icon: '#30D158' },
     gallery:   { bg: '#2B0D1E', icon: '#FF375F' },
     recipes:   { bg: '#2B1A0D', icon: '#FF9F0A' },
+    activity:  { bg: '#0D1F2B', icon: '#0A84FF' },
   },
 };
 
