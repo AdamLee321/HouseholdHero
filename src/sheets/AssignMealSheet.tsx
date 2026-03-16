@@ -15,7 +15,7 @@ import { setMealSlot, MEAL_LABELS, MEAL_EMOJIS, DAY_LABELS } from '../services/m
 export default function AssignMealSheet(props: SheetProps<'assign-meal'>) {
   const { colors } = useTheme();
   const ACCENT = colors.tiles.mealPlanner.icon;
-  const { familyId, weekStart, day, mealType, current, recipes } = props.payload!;
+  const { familyId, weekStart, day, mealType, current, recipes, uid, displayName } = props.payload!;
 
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
@@ -28,10 +28,12 @@ export default function AssignMealSheet(props: SheetProps<'assign-meal'>) {
 
   const showFreeText = query.trim() && !recipes.find(r => r.title.toLowerCase() === query.trim().toLowerCase());
 
+  const updatedBy = uid && displayName ? { uid, displayName } : undefined;
+
   async function handleSelect(name: string, recipeId?: string) {
     setSaving(true);
     try {
-      await setMealSlot(familyId, weekStart, day, mealType, { name, recipeId });
+      await setMealSlot(familyId, weekStart, day, mealType, { name, recipeId }, updatedBy);
       await SheetManager.hide(props.sheetId);
     } finally {
       setSaving(false);
@@ -41,7 +43,7 @@ export default function AssignMealSheet(props: SheetProps<'assign-meal'>) {
   async function handleClear() {
     setSaving(true);
     try {
-      await setMealSlot(familyId, weekStart, day, mealType, null);
+      await setMealSlot(familyId, weekStart, day, mealType, null, updatedBy);
       await SheetManager.hide(props.sheetId);
     } finally {
       setSaving(false);

@@ -183,6 +183,30 @@ export async function showActivityNotification(body: string): Promise<void> {
   }
 }
 
+export async function showMealPlannerNotification(
+  updatedByName: string,
+  action: 'added' | 'changed' | 'removed',
+  mealName: string,
+  dayLabel: string,
+  mealLabel: string,
+): Promise<void> {
+  const actionText = action === 'added' ? 'added' : action === 'changed' ? 'updated' : 'removed';
+  const body = action === 'removed'
+    ? `${updatedByName} removed ${mealLabel} on ${dayLabel}`
+    : `${updatedByName} ${actionText} "${mealName}" for ${mealLabel} on ${dayLabel}`;
+  try {
+    await notifee.displayNotification({
+      id: 'meal_planner',
+      title: '🍽️ Meal Plan Updated',
+      body,
+      android: { channelId: 'general', pressAction: { id: 'default' } },
+      ios: { sound: 'default' },
+    });
+  } catch (e) {
+    console.warn('showMealPlannerNotification failed:', e);
+  }
+}
+
 export async function showLocationNotification(memberName: string): Promise<void> {
   try {
     await notifee.displayNotification({

@@ -83,6 +83,8 @@ export default function MealPlannerScreen() {
         mealType,
         current: days[day]?.[mealType] ?? null,
         recipes,
+        uid,
+        displayName: profile?.displayName ?? '',
       },
     });
   }

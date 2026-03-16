@@ -16,9 +16,19 @@ export interface MealSlot {
 export type DayPlan = Partial<Record<MealType, MealSlot | null>>;
 export type WeekPlan = Partial<Record<DayOfWeek, DayPlan>>;
 
+export interface MealPlanUpdate {
+  uid: string;
+  displayName: string;
+  day: DayOfWeek;
+  mealType: MealType;
+  slotName: string | null; // null = removed
+  updatedAt: number;
+}
+
 export interface MealPlan {
   weekStart: string; // "YYYY-MM-DD" of the Monday
   days: WeekPlan;
+  lastUpdate?: MealPlanUpdate;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -110,9 +120,24 @@ export async function setMealSlot(
   day: DayOfWeek,
   mealType: MealType,
   slot: MealSlot | null,
+  updatedBy?: { uid: string; displayName: string },
 ) {
+  const lastUpdate: MealPlanUpdate | undefined = updatedBy
+    ? {
+        uid: updatedBy.uid,
+        displayName: updatedBy.displayName,
+        day,
+        mealType,
+        slotName: slot?.name ?? null,
+        updatedAt: Date.now(),
+      }
+    : undefined;
+
   await planRef(familyId, weekStart).set(
-    { days: { [day]: { [mealType]: slot ?? firestore.FieldValue.delete() } } },
+    {
+      days: { [day]: { [mealType]: slot ?? firestore.FieldValue.delete() } },
+      ...(lastUpdate ? { lastUpdate } : {}),
+    },
     { merge: true },
   );
 }

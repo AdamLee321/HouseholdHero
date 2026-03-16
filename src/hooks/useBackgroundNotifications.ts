@@ -14,6 +14,7 @@ import {
   showContactsNotification,
   showActivityNotification,
   showLocationNotification,
+  showMealPlannerNotification,
   scheduleChoreReminder,
   scheduleEventReminder,
 } from '../services/notificationService';
@@ -25,6 +26,7 @@ import { subscribeToActivity, activityLabel } from '../services/activityService'
 import { subscribeToLocations } from '../services/locationService';
 import { subscribeToChores } from '../services/choreService';
 import { subscribeToCalendarEvents } from '../services/calendarService';
+import { subscribeMealPlan, getMondayOfWeek, toWeekKey, DAY_LABELS, MEAL_LABELS } from '../services/mealPlanService';
 import { getCurrentScreenName } from '../navigation/navigationRef';
 
 export function useBackgroundNotifications(): void {
@@ -229,4 +231,30 @@ export function useBackgroundNotifications(): void {
       }
     });
   }, [familyId, uid, prefs.calendarReminders]);
+
+  // ── Meal planner updates ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!familyId || !uid || !prefs.mealPlannerUpdates) { return; }
+    const weekStart = toWeekKey(getMondayOfWeek(new Date()));
+    let lastUpdateAt: number | null = null;
+    return subscribeMealPlan(familyId, weekStart, plan => {
+      const update = plan.lastUpdate;
+      if (!update) { return; }
+      if (lastUpdateAt === null) {
+        lastUpdateAt = update.updatedAt;
+        return;
+      }
+      if (update.updatedAt <= lastUpdateAt) { return; }
+      lastUpdateAt = update.updatedAt;
+      if (update.uid === uid) { return; }
+      const action = update.slotName === null ? 'removed' : 'changed';
+      showMealPlannerNotification(
+        update.displayName,
+        action,
+        update.slotName ?? '',
+        DAY_LABELS[update.day],
+        MEAL_LABELS[update.mealType],
+      );
+    });
+  }, [familyId, uid, prefs.mealPlannerUpdates]);
 }

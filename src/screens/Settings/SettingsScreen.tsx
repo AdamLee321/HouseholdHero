@@ -150,6 +150,26 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Notifications */}
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            NOTIFICATIONS
+          </Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('NotificationSettings')}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Notification Settings
+            </Text>
+            <LucideIcon
+              name="chevron-right"
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
+
         {/* Account */}
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -181,26 +201,6 @@ export default function SettingsScreen() {
           >
             <Text style={[styles.rowLabel, { color: colors.text }]}>
               Organise Tiles
-            </Text>
-            <LucideIcon
-              name="chevron-right"
-              size={18}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {/* Notifications */}
-        <View style={[styles.section, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            NOTIFICATIONS
-          </Text>
-          <TouchableOpacity
-            style={styles.row}
-            onPress={() => navigation.navigate('NotificationSettings')}
-          >
-            <Text style={[styles.rowLabel, { color: colors.text }]}>
-              Notification Settings
             </Text>
             <LucideIcon
               name="chevron-right"

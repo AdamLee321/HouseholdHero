@@ -12,6 +12,7 @@ export interface NotificationPrefs {
   galleryUploads: boolean;
   emergencyContactsUpdates: boolean;
   locationUpdates: boolean;
+  mealPlannerUpdates: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -26,6 +27,7 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   galleryUploads: true,
   emergencyContactsUpdates: true,
   locationUpdates: false,
+  mealPlannerUpdates: true,
 };
 
 function docRef(uid: string) {

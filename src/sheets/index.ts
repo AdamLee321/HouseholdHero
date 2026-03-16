@@ -169,6 +169,8 @@ declare module 'react-native-actions-sheet' {
         mealType: MealType;
         current: MealSlot | null;
         recipes: Recipe[];
+        uid?: string;
+        displayName?: string;
       };
     }>;
   }

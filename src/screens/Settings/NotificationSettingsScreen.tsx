@@ -87,6 +87,16 @@ const SECTIONS: { title: string; rows: NotifRow[] }[] = [
     ],
   },
   {
+    title: 'MEAL PLANNER',
+    rows: [
+      {
+        key: 'mealPlannerUpdates',
+        label: 'Meal Plan Changes',
+        description: 'Notify when a family member updates the meal plan',
+      },
+    ],
+  },
+  {
     title: 'OTHER',
     rows: [
       {
