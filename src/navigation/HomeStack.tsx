@@ -26,6 +26,8 @@ import GalleryGroupScreen from '../screens/Gallery/GalleryGroupScreen';
 import RecipesScreen from '../screens/Recipes/RecipesScreen';
 import ActivityFeedScreen from '../screens/Home/ActivityFeedScreen';
 import MealPlannerScreen from '../screens/MealPlanner/MealPlannerScreen';
+import TimetableScreen from '../screens/Timetable/TimetableScreen';
+import SpecialDaysScreen from '../screens/SpecialDays/SpecialDaysScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -168,6 +170,16 @@ export default function HomeStack() {
         name="MealPlanner"
         component={MealPlannerScreen}
         options={{ title: 'Meal Planner' }}
+      />
+      <Stack.Screen
+        name="Timetable"
+        component={TimetableScreen}
+        options={{ title: 'Timetable' }}
+      />
+      <Stack.Screen
+        name="SpecialDays"
+        component={SpecialDaysScreen}
+        options={{ title: 'Special Days' }}
       />
     </Stack.Navigator>
   );

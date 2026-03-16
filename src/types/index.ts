@@ -63,4 +63,6 @@ export type HomeStackParamList = {
   Recipes: undefined;
   Activity: undefined;
   MealPlanner: undefined;
+  Timetable: undefined;
+  SpecialDays: undefined;
 };

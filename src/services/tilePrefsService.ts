@@ -4,7 +4,7 @@ import { TilePref } from '../types';
 export const DEFAULT_TILE_ORDER: string[] = [
   'Shopping', 'Todos', 'Chores', 'Calendar', 'Messages',
   'Contacts', 'Location', 'Documents', 'MyFamily', 'Budget',
-  'Gallery', 'Recipes', 'Activity', 'MealPlanner',
+  'Gallery', 'Recipes', 'Activity', 'MealPlanner', 'Timetable', 'SpecialDays',
 ];
 
 const DEFAULT_PREFS: TilePref = { order: DEFAULT_TILE_ORDER, hidden: [] };

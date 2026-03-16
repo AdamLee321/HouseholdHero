@@ -13,7 +13,9 @@ export type ActivityType =
   | 'category_deleted'
   | 'category_limit_updated'
   | 'badge_earned'
-  | 'member_joined';
+  | 'member_joined'
+  | 'timetable_event_added'
+  | 'special_day_added';
 
 export interface ActivityItem {
   id: string;

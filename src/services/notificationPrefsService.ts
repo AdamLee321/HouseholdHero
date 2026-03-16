@@ -5,6 +5,8 @@ export interface NotificationPrefs {
   choresOverdue: boolean;
   badgeEarned: boolean;
   calendarReminders: boolean;
+  timetableReminders: boolean;
+  specialDayReminders: boolean;
   chatMessages: boolean;
   shoppingListUpdates: boolean;
   budgetLimitWarning: boolean;
@@ -20,6 +22,8 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   choresOverdue: true,
   badgeEarned: true,
   calendarReminders: true,
+  timetableReminders: true,
+  specialDayReminders: true,
   chatMessages: true,
   shoppingListUpdates: false,
   budgetLimitWarning: true,

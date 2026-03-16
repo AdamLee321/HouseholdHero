@@ -56,6 +56,26 @@ const SECTIONS: { title: string; rows: NotifRow[] }[] = [
     ],
   },
   {
+    title: 'TIMETABLE',
+    rows: [
+      {
+        key: 'timetableReminders',
+        label: 'Timetable Reminders',
+        description: 'Notify before scheduled timetable events',
+      },
+    ],
+  },
+  {
+    title: 'SPECIAL DAYS',
+    rows: [
+      {
+        key: 'specialDayReminders',
+        label: 'Special Day Reminders',
+        description: 'Notify for birthdays, anniversaries and other special days',
+      },
+    ],
+  },
+  {
     title: 'MESSAGES',
     rows: [
       {

@@ -226,6 +226,18 @@ service cloud.firestore {
           request.auth.uid == resource.data.createdBy;
       }
 
+      // ── Special days ──────────────────────────────────────────────────────
+      match /specialDays/{dayId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      // ── Timetable ─────────────────────────────────────────────────────────
+      match /timetableEvents/{eventId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
       // ── Activity feed ─────────────────────────────────────────────────────
       match /activity/{activityId} {
         allow read: if isFamilyMember(familyId);

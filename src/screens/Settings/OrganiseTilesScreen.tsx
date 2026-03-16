@@ -59,6 +59,8 @@ const TILE_META: Record<
   Recipes:  { label: 'Recipes', emoji: '🍳', colorKey: 'recipes' },
   Activity:    { label: 'Activity Feed', emoji: '📋', colorKey: 'activity' },
   MealPlanner: { label: 'Meal Planner',  emoji: '🍽️', colorKey: 'mealPlanner' },
+  Timetable:   { label: 'Timetable',     emoji: '🗓',  colorKey: 'timetable' },
+  SpecialDays: { label: 'Special Days',  emoji: '🎉',  colorKey: 'specialDays' },
 };
 
 function buildItems(prefs: TilePref): TileItem[] {

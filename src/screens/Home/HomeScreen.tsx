@@ -17,6 +17,7 @@ import { NonAdminRole } from '../../services/tileAccessService';
 import { subscribeToTodoLists } from '../../services/todoService';
 import { subscribeToShoppingLists } from '../../services/shoppingService';
 import { subscribeToCalendarEvents } from '../../services/calendarService';
+import { subscribeToSpecialDays, daysUntil, countdownLabel } from '../../services/specialDaysService';
 import { subscribeTilePrefs } from '../../services/tilePrefsService';
 import { subscribeToChats, isUnread } from '../../services/chatService';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
@@ -101,6 +102,20 @@ const TILES: Tile[] = [
     screen: 'MealPlanner',
     colorKey: 'mealPlanner',
   },
+  {
+    label: 'Timetable',
+    subtitle: 'Weekly schedule & events',
+    emoji: '🗓',
+    screen: 'Timetable',
+    colorKey: 'timetable',
+  },
+  {
+    label: 'Special Days',
+    subtitle: 'Birthdays & anniversaries',
+    emoji: '🎉',
+    screen: 'SpecialDays',
+    colorKey: 'specialDays',
+  },
 ];
 
 export default function HomeScreen() {
@@ -114,6 +129,7 @@ export default function HomeScreen() {
   const [shoppingCount, setShoppingCount] = useState(0);
   const [calendarCount, setCalendarCount] = useState(0);
   const [unreadChats, setUnreadChats] = useState(0);
+  const [nextSpecialDay, setNextSpecialDay] = useState<string | undefined>();
   const [tilePrefs, setTilePrefs] = useState<TilePref | null>(null);
   const uid = auth().currentUser?.uid ?? '';
 
@@ -145,6 +161,18 @@ export default function HomeScreen() {
     const unsubChats = subscribeToChats(family.id, uid, chats => {
       setUnreadChats(chats.filter(c => isUnread(c, uid)).length);
     });
+    const unsubSpecialDays = subscribeToSpecialDays(family.id, items => {
+      const next = [...items]
+        .map(d => ({ d, n: daysUntil(d.day, d.month, d.year) }))
+        .filter(({ n, d }) => d.year === null || n >= 0)
+        .sort((a, b) => a.n - b.n)[0];
+      if (next) {
+        const label = countdownLabel(next.n);
+        setNextSpecialDay(`${next.d.title} · ${label}`);
+      } else {
+        setNextSpecialDay(undefined);
+      }
+    });
     refreshWidgetChoresFromFirestore(family.id);
 
     return () => {
@@ -152,6 +180,7 @@ export default function HomeScreen() {
       unsubShopping();
       unsubCalendar();
       unsubChats();
+      unsubSpecialDays();
     };
   }, [family]);
 
@@ -195,6 +224,9 @@ export default function HomeScreen() {
       return unreadChats > 0
         ? `${unreadChats} unread message${unreadChats !== 1 ? 's' : ''}`
         : undefined;
+    }
+    if (tile.screen === 'SpecialDays') {
+      return nextSpecialDay;
     }
     return tile.subtitle;
   }

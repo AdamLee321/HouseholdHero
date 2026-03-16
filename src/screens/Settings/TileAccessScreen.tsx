@@ -34,6 +34,8 @@ const TILE_LABELS: Record<TileKey, string> = {
   Recipes:   'Recipes',
   Activity:    'Activity Feed',
   MealPlanner: 'Meal Planner',
+  Timetable:   'Timetable',
+  SpecialDays: 'Special Days',
 };
 
 const ROLES: { role: NonAdminRole; label: string; color: string }[] = [

@@ -29,6 +29,8 @@ export const lightColors = {
     recipes:     { bg: '#FFF0E8', icon: '#FF6B35' },
     activity:    { bg: '#EEF6FF', icon: '#007AFF' },
     mealPlanner: { bg: '#F0FEF4', icon: '#00B374' },
+    timetable:   { bg: '#F0EFFE', icon: '#7C5CBF' },
+    specialDays: { bg: '#E8F8EE', icon: '#28A745' },
   },
 };
 
@@ -62,6 +64,8 @@ export const darkColors: typeof lightColors = {
     recipes:     { bg: '#2B1A0D', icon: '#FF9F0A' },
     activity:    { bg: '#0D1F2B', icon: '#0A84FF' },
     mealPlanner: { bg: '#0D2B1F', icon: '#30D98A' },
+    timetable:   { bg: '#1A0D2B', icon: '#A385E0' },
+    specialDays: { bg: '#0D2B17', icon: '#34C759' },
   },
 };
 

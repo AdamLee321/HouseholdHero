@@ -18,6 +18,8 @@ import AddShoppingItemSheet from './AddShoppingItemSheet';
 import AssignMealSheet from './AssignMealSheet';
 import SelectShoppingListSheet from './SelectShoppingListSheet';
 import EditShoppingListSheet from './EditShoppingListSheet';
+import AddTimetableEventSheet from './AddTimetableEventSheet';
+import AddSpecialDaySheet from './AddSpecialDaySheet';
 
 registerSheet('add-event', AddEventModal);
 registerSheet('add-chore', AddChoreModal);
@@ -37,6 +39,8 @@ registerSheet('add-shopping-item', AddShoppingItemSheet);
 registerSheet('assign-meal', AssignMealSheet);
 registerSheet('select-shopping-list', SelectShoppingListSheet);
 registerSheet('edit-shopping-list', EditShoppingListSheet);
+registerSheet('add-timetable-event', AddTimetableEventSheet);
+registerSheet('add-special-day', AddSpecialDaySheet);
 
 export {};
 
@@ -53,6 +57,8 @@ import type { ShoppingCategory, ShoppingList } from '../services/shoppingService
 // ShoppingList also used by edit-shopping-list sheet below
 import type { DayOfWeek, MealType, MealSlot } from '../services/mealPlanService';
 import type { Recipe } from '../services/recipeService';
+import type { TimetableEvent } from '../services/timetableService';
+import type { SpecialDay } from '../services/specialDaysService';
 
 declare module 'react-native-actions-sheet' {
   interface Sheets {
@@ -191,6 +197,23 @@ declare module 'react-native-actions-sheet' {
         recipes: Recipe[];
         uid?: string;
         displayName?: string;
+      };
+    }>;
+    'add-timetable-event': SheetDefinition<{
+      payload: {
+        familyId: string;
+        uid: string;
+        displayName: string;
+        editEvent?: TimetableEvent;
+      };
+    }>;
+    'add-special-day': SheetDefinition<{
+      payload: {
+        familyId: string;
+        uid: string;
+        displayName: string;
+        members: import('../services/familyService').FamilyMember[];
+        editDay?: SpecialDay;
       };
     }>;
   }
