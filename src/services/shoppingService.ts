@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { logActivity } from './activityService';
+import { refreshWidgetShoppingFromFirestore } from './widgetDataService';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -299,6 +300,7 @@ export async function toggleShoppingItem(
     uncheckedCount: firestore.FieldValue.increment(checked ? 1 : -1),
   });
   await batch.commit();
+  refreshWidgetShoppingFromFirestore(familyId, listId);
 }
 
 export async function deleteShoppingItem(
@@ -387,6 +389,7 @@ export async function batchAddShoppingItems(
 
   await batch.commit();
   (globalThis as any).__shoppingNotifySelfAdd?.(listId);
+  refreshWidgetShoppingFromFirestore(familyId, listId);
 }
 
 export async function toggleAllShoppingItems(

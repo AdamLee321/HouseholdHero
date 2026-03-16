@@ -118,4 +118,7 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Widget providers directly call Firestore — expose the SDK to the app module
+    implementation("com.google.firebase:firebase-firestore:25.1.3")
 }

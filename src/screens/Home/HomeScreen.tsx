@@ -21,6 +21,7 @@ import { subscribeTilePrefs } from '../../services/tilePrefsService';
 import { subscribeToChats, isUnread } from '../../services/chatService';
 import { useTabBarScroll } from '../../hooks/useTabBarScroll';
 import auth from '@react-native-firebase/auth';
+import { refreshWidgetShoppingPreferred, refreshWidgetChoresFromFirestore } from '../../services/widgetDataService';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
 
@@ -130,6 +131,9 @@ export default function HomeScreen() {
     );
     const unsubShopping = subscribeToShoppingLists(family.id, lists => {
       setShoppingCount(lists.reduce((sum, l) => sum + l.uncheckedCount, 0));
+      if (lists.length > 0) {
+        refreshWidgetShoppingPreferred(family.id, lists[0].id);
+      }
     });
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
@@ -141,6 +145,8 @@ export default function HomeScreen() {
     const unsubChats = subscribeToChats(family.id, uid, chats => {
       setUnreadChats(chats.filter(c => isUnread(c, uid)).length);
     });
+    refreshWidgetChoresFromFirestore(family.id);
+
     return () => {
       unsubTodos();
       unsubShopping();

@@ -37,5 +37,30 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+
+    <receiver
+      android:name=".widget.ShoppingWidgetProvider"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="ie.al.householdhero.SHOPPING_TOGGLE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_shopping_medium" />
+    </receiver>
+
+    <receiver
+      android:name=".widget.ChoresWidgetProvider"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        <action android:name="ie.al.householdhero.CHORE_TOGGLE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/widget_chores_medium" />
+    </receiver>
+
   </application>
 </manifest>

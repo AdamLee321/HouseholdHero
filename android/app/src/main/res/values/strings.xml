@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">HouseholdHero</string>
+    <string name="widget_shopping_description">Shopping list widget</string>
+    <string name="widget_chores_description">Chores widget</string>
 </resources>

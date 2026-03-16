@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { logActivity } from './activityService';
+import { refreshWidgetChoresFromFirestore } from './widgetDataService';
 import {
   BADGE_MAP,
   computeNewStreak,
@@ -273,6 +274,7 @@ export async function updateChoreStatus(
     .collection('chores')
     .doc(chore.id)
     .update(update);
+  refreshWidgetChoresFromFirestore(familyId);
 }
 
 export async function deleteChore(familyId: string, choreId: string) {
