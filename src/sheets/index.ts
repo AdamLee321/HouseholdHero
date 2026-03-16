@@ -16,6 +16,7 @@ import PhotoActionsSheet from './PhotoActionsSheet';
 import ImportRecipeSheet from './ImportRecipeSheet';
 import AddShoppingItemSheet from './AddShoppingItemSheet';
 import AssignMealSheet from './AssignMealSheet';
+import SelectShoppingListSheet from './SelectShoppingListSheet';
 
 registerSheet('add-event', AddEventModal);
 registerSheet('add-chore', AddChoreModal);
@@ -33,6 +34,7 @@ registerSheet('photo-actions', PhotoActionsSheet);
 registerSheet('import-recipe', ImportRecipeSheet);
 registerSheet('add-shopping-item', AddShoppingItemSheet);
 registerSheet('assign-meal', AssignMealSheet);
+registerSheet('select-shopping-list', SelectShoppingListSheet);
 
 export {};
 
@@ -45,7 +47,7 @@ import type { DocumentFolder } from '../services/documentService';
 import type { Chat } from '../services/chatService';
 import type { GalleryPhoto } from '../services/galleryService';
 import type { ImportedRecipeData } from '../services/recipeImportService';
-import type { ShoppingCategory } from '../services/shoppingService';
+import type { ShoppingCategory, ShoppingList } from '../services/shoppingService';
 import type { DayOfWeek, MealType, MealSlot } from '../services/mealPlanService';
 import type { Recipe } from '../services/recipeService';
 
@@ -159,6 +161,13 @@ declare module 'react-native-actions-sheet' {
         categories: ShoppingCategory[];
         uid: string;
         displayName: string;
+      };
+    }>;
+    'select-shopping-list': SheetDefinition<{
+      payload: {
+        lists: ShoppingList[];
+        ingredientCount: number;
+        onSelect: (listId: string, listName: string) => void;
       };
     }>;
     'assign-meal': SheetDefinition<{

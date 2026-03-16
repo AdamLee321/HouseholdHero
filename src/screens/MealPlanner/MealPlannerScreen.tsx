@@ -36,6 +36,7 @@ import {
   ShoppingList,
   batchAddShoppingItems,
 } from '../../services/shoppingService';
+import { lookupCategory } from '../../data/shoppingDictionary';
 
 export default function MealPlannerScreen() {
   const { colors } = useTheme();
@@ -109,7 +110,7 @@ export default function MealPlannerScreen() {
         if (slot?.recipeId) {
           const recipe = recipes.find(r => r.id === slot.recipeId);
           recipe?.ingredients.forEach(ing => {
-            items.push({ name: ing.name, quantity: ing.amount ?? '', category: 'Other' });
+            items.push({ name: ing.name, quantity: ing.amount ?? '', category: lookupCategory(ing.name) });
           });
         }
       }
@@ -127,32 +128,28 @@ export default function MealPlannerScreen() {
       Alert.alert('No Lists', 'Create a shopping list first in the Shopping section.');
       return;
     }
-    Alert.alert(
-      'Add to Shopping List',
-      `Add ${ingredients.length} ingredient${ingredients.length !== 1 ? 's' : ''} to which list?`,
-      [
-        ...shoppingLists.map(list => ({
-          text: list.name,
-          onPress: async () => {
-            if (!family) { return; }
-            setAddingToList(true);
-            try {
-              await batchAddShoppingItems(
-                family.id,
-                list.id,
-                ingredients,
-                uid,
-                profile?.displayName ?? 'Someone',
-              );
-              Alert.alert('Done', `${ingredients.length} item${ingredients.length !== 1 ? 's' : ''} added to "${list.name}".`);
-            } finally {
-              setAddingToList(false);
-            }
-          },
-        })),
-        { text: 'Cancel', style: 'cancel' },
-      ],
-    );
+    SheetManager.show('select-shopping-list', {
+      payload: {
+        lists: shoppingLists,
+        ingredientCount: ingredients.length,
+        onSelect: async (listId, listName) => {
+          if (!family) { return; }
+          setAddingToList(true);
+          try {
+            await batchAddShoppingItems(
+              family.id,
+              listId,
+              ingredients,
+              uid,
+              profile?.displayName ?? 'Someone',
+            );
+            Alert.alert('Done', `${ingredients.length} item${ingredients.length !== 1 ? 's' : ''} added to "${listName}".`);
+          } finally {
+            setAddingToList(false);
+          }
+        },
+      },
+    });
   }
 
   const days = plan.days ?? {};

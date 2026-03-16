@@ -300,6 +300,17 @@ export async function deleteShoppingItem(
   await batch.commit();
 }
 
+function mergeQuantity(existing: string, incoming: string): string {
+  const a = existing.trim();
+  const b = incoming.trim();
+  if (!b) { return a; }
+  if (!a) { return b; }
+  const numA = Number(a);
+  const numB = Number(b);
+  if (!isNaN(numA) && !isNaN(numB)) { return String(numA + numB); }
+  return `${a} + ${b}`;
+}
+
 export async function batchAddShoppingItems(
   familyId: string,
   listId: string,
@@ -308,27 +319,53 @@ export async function batchAddShoppingItems(
   displayName: string,
 ) {
   if (items.length === 0) { return; }
+
+  // Fetch existing items to detect duplicates
+  const existingSnap = await itemsRef(familyId, listId).get();
+  const existing = existingSnap.docs.map(doc => ({
+    id: doc.id,
+    ...(doc.data() as Omit<ShoppingItem, 'id'>),
+  }));
+
   const batch = firestore().batch();
   const now = Date.now();
+  let newCount = 0;
+  let lastName = '';
+
   items.forEach((item, i) => {
-    const ref = itemsRef(familyId, listId).doc();
-    batch.set(ref, {
-      name: item.name,
-      quantity: item.quantity,
-      category: item.category,
-      checked: false,
-      addedBy: uid,
-      addedByName: displayName,
-      createdAt: now + i,
-    });
+    const nameLower = item.name.toLowerCase().trim();
+    const match = existing.find(e => e.name.toLowerCase().trim() === nameLower);
+    if (match) {
+      const merged = mergeQuantity(match.quantity, item.quantity);
+      if (merged !== match.quantity) {
+        batch.update(itemsRef(familyId, listId).doc(match.id), { quantity: merged });
+      }
+    } else {
+      batch.set(itemsRef(familyId, listId).doc(), {
+        name: item.name,
+        quantity: item.quantity,
+        category: item.category,
+        checked: false,
+        addedBy: uid,
+        addedByName: displayName,
+        createdAt: now + i,
+      });
+      newCount++;
+      lastName = item.name;
+    }
   });
-  batch.update(listsRef(familyId).doc(listId), {
-    itemCount: firestore.FieldValue.increment(items.length),
-    uncheckedCount: firestore.FieldValue.increment(items.length),
+
+  const listUpdates: Record<string, any> = {
     lastAddedBy: uid,
     lastAddedByName: displayName,
-    lastAddedItemName: items[items.length - 1].name,
-  });
+    lastAddedItemName: lastName || items[items.length - 1].name,
+  };
+  if (newCount > 0) {
+    listUpdates.itemCount = firestore.FieldValue.increment(newCount);
+    listUpdates.uncheckedCount = firestore.FieldValue.increment(newCount);
+  }
+  batch.update(listsRef(familyId).doc(listId), listUpdates);
+
   await batch.commit();
   (globalThis as any).__shoppingNotifySelfAdd?.(listId);
 }
