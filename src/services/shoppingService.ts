@@ -300,6 +300,39 @@ export async function deleteShoppingItem(
   await batch.commit();
 }
 
+export async function batchAddShoppingItems(
+  familyId: string,
+  listId: string,
+  items: Array<{ name: string; quantity: string; category: string }>,
+  uid: string,
+  displayName: string,
+) {
+  if (items.length === 0) { return; }
+  const batch = firestore().batch();
+  const now = Date.now();
+  items.forEach((item, i) => {
+    const ref = itemsRef(familyId, listId).doc();
+    batch.set(ref, {
+      name: item.name,
+      quantity: item.quantity,
+      category: item.category,
+      checked: false,
+      addedBy: uid,
+      addedByName: displayName,
+      createdAt: now + i,
+    });
+  });
+  batch.update(listsRef(familyId).doc(listId), {
+    itemCount: firestore.FieldValue.increment(items.length),
+    uncheckedCount: firestore.FieldValue.increment(items.length),
+    lastAddedBy: uid,
+    lastAddedByName: displayName,
+    lastAddedItemName: items[items.length - 1].name,
+  });
+  await batch.commit();
+  (globalThis as any).__shoppingNotifySelfAdd?.(listId);
+}
+
 export async function toggleAllShoppingItems(
   familyId: string,
   listId: string,

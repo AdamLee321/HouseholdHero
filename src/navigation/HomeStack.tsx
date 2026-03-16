@@ -25,6 +25,7 @@ import GalleryScreen from '../screens/Gallery/GalleryScreen';
 import GalleryGroupScreen from '../screens/Gallery/GalleryGroupScreen';
 import RecipesScreen from '../screens/Recipes/RecipesScreen';
 import ActivityFeedScreen from '../screens/Home/ActivityFeedScreen';
+import MealPlannerScreen from '../screens/MealPlanner/MealPlannerScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -162,6 +163,11 @@ export default function HomeStack() {
         name="Activity"
         component={ActivityFeedScreen}
         options={{ title: 'Family Activity' }}
+      />
+      <Stack.Screen
+        name="MealPlanner"
+        component={MealPlannerScreen}
+        options={{ title: 'Meal Planner' }}
       />
     </Stack.Navigator>
   );

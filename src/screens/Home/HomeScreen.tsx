@@ -93,6 +93,13 @@ const TILES: Tile[] = [
     screen: 'Activity',
     colorKey: 'activity',
   },
+  {
+    label: 'Meal Planner',
+    subtitle: 'Plan your weekly meals',
+    emoji: '🍽️',
+    screen: 'MealPlanner',
+    colorKey: 'mealPlanner',
+  },
 ];
 
 export default function HomeScreen() {

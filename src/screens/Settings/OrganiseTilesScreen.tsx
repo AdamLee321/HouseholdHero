@@ -57,7 +57,8 @@ const TILE_META: Record<
   Budget: { label: 'Budget', emoji: '💰', colorKey: 'budget' },
   Gallery: { label: 'Gallery', emoji: '📸', colorKey: 'gallery' },
   Recipes:  { label: 'Recipes', emoji: '🍳', colorKey: 'recipes' },
-  Activity: { label: 'Activity Feed', emoji: '📋', colorKey: 'activity' },
+  Activity:    { label: 'Activity Feed', emoji: '📋', colorKey: 'activity' },
+  MealPlanner: { label: 'Meal Planner',  emoji: '🍽️', colorKey: 'mealPlanner' },
 };
 
 function buildItems(prefs: TilePref): TileItem[] {

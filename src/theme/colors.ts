@@ -26,8 +26,9 @@ export const lightColors = {
     family:    { bg: '#E8F8F8', icon: '#00C7BE' },
     budget:    { bg: '#E8F6EE', icon: '#30B050' },
     gallery:   { bg: '#FEE8F5', icon: '#FF2D9B' },
-    recipes:   { bg: '#FFF0E8', icon: '#FF6B35' },
-    activity:  { bg: '#EEF6FF', icon: '#007AFF' },
+    recipes:     { bg: '#FFF0E8', icon: '#FF6B35' },
+    activity:    { bg: '#EEF6FF', icon: '#007AFF' },
+    mealPlanner: { bg: '#F0FEF4', icon: '#00B374' },
   },
 };
 
@@ -58,8 +59,9 @@ export const darkColors: typeof lightColors = {
     family:    { bg: '#0D2B2B', icon: '#5AC8FA' },
     budget:    { bg: '#0D2B1A', icon: '#30D158' },
     gallery:   { bg: '#2B0D1E', icon: '#FF375F' },
-    recipes:   { bg: '#2B1A0D', icon: '#FF9F0A' },
-    activity:  { bg: '#0D1F2B', icon: '#0A84FF' },
+    recipes:     { bg: '#2B1A0D', icon: '#FF9F0A' },
+    activity:    { bg: '#0D1F2B', icon: '#0A84FF' },
+    mealPlanner: { bg: '#0D2B1F', icon: '#30D98A' },
   },
 };
 

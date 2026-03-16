@@ -214,6 +214,11 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // ── Meal planner ──────────────────────────────────────────────────────
+      match /mealPlan/{weekKey} {
+        allow read, write: if isFamilyMember(familyId);
+      }
+
       // ── Recipes ───────────────────────────────────────────────────────────
       match /recipes/{recipeId} {
         allow read, create: if isFamilyMember(familyId);
