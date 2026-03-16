@@ -112,26 +112,31 @@ function PlaceMarkerView({
   const fontSize = Math.round(16 * scale);
 
   return (
-    <View style={styles.placeMarkerWrap}>
-      <View
-        style={[
-          styles.placeMarkerCircle,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: cfg.color,
-            borderWidth: isSelected ? 2 : 2,
-            borderColor: '#fff',
-          },
-        ]}
-      >
-        <Text style={{ fontSize }}>{cfg.emoji}</Text>
-      </View>
-      <View style={[styles.placeMarkerLabel, { backgroundColor: cfg.color, opacity: isSelected ? 1 : 0 }]}>
-        <Text style={styles.placeMarkerLabelText}>
-          {place.name.toUpperCase()}
-        </Text>
+    // collapsable={false} prevents Android from flattening the view tree,
+    // which causes custom marker content to be clipped on first render.
+    // The padding gives elevation shadows room so they aren't cut off.
+    <View style={styles.placeMarkerOuter} collapsable={false}>
+      <View style={styles.placeMarkerWrap}>
+        <View
+          style={[
+            styles.placeMarkerCircle,
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              backgroundColor: cfg.color,
+              borderWidth: 2,
+              borderColor: '#fff',
+            },
+          ]}
+        >
+          <Text style={{ fontSize }}>{cfg.emoji}</Text>
+        </View>
+        <View style={[styles.placeMarkerLabel, { backgroundColor: cfg.color, opacity: isSelected ? 1 : 0 }]}>
+          <Text style={styles.placeMarkerLabelText}>
+            {place.name.toUpperCase()}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -332,16 +337,19 @@ export default function LocationScreen() {
             key={loc.uid}
             coordinate={{ latitude: loc.lat, longitude: loc.lng }}
             anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
           >
-            <View
-              style={[
-                styles.memberPin,
-                { backgroundColor: memberColor(loc.displayName) },
-              ]}
-            >
-              <Text style={styles.memberInitials}>
-                {initials(loc.displayName)}
-              </Text>
+            <View style={styles.memberPinOuter} collapsable={false}>
+              <View
+                style={[
+                  styles.memberPin,
+                  { backgroundColor: memberColor(loc.displayName) },
+                ]}
+              >
+                <Text style={styles.memberInitials}>
+                  {initials(loc.displayName)}
+                </Text>
+              </View>
             </View>
           </Marker>
         ))}
@@ -517,6 +525,9 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   // Member markers
+  memberPinOuter: {
+    padding: 6, // space for elevation shadow on Android
+  },
   memberPin: {
     width: 40,
     height: 40,
@@ -534,6 +545,9 @@ const styles = StyleSheet.create({
   memberInitials: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
   // Place markers
+  placeMarkerOuter: {
+    padding: 6, // space for elevation shadow on Android
+  },
   placeMarkerWrap: { alignItems: 'center' },
   placeMarkerCircle: {
     alignItems: 'center',
