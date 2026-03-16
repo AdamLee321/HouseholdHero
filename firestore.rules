@@ -100,10 +100,25 @@ service cloud.firestore {
           (isFamilyMember(familyId) && request.auth.uid == resource.data.addedBy);
       }
 
-      // ── Shopping list ─────────────────────────────────────────────────────
-      match /shoppingList/{itemId} {
+      // ── Shopping lists ────────────────────────────────────────────────────
+      match /shoppingLists/{listId} {
         allow read, create: if isFamilyMember(familyId);
         allow update, delete: if isFamilyMember(familyId);
+
+        match /items/{itemId} {
+          allow read, create: if isFamilyMember(familyId);
+          allow update, delete: if isFamilyMember(familyId);
+        }
+      }
+
+      match /shoppingCategories/{catId} {
+        allow read, create: if isFamilyMember(familyId);
+        allow update, delete: if isFamilyMember(familyId);
+      }
+
+      match /shoppingHistory/{itemId} {
+        allow read: if isFamilyMember(familyId);
+        allow write: if isFamilyMember(familyId);
       }
 
       // ── Todo lists + items ────────────────────────────────────────────────

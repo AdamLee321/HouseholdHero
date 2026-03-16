@@ -15,7 +15,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { NonAdminRole } from '../../services/tileAccessService';
 import { subscribeToTodoLists } from '../../services/todoService';
-import { subscribeToShoppingList } from '../../services/shoppingService';
+import { subscribeToShoppingLists } from '../../services/shoppingService';
 import { subscribeToCalendarEvents } from '../../services/calendarService';
 import { subscribeTilePrefs } from '../../services/tilePrefsService';
 import { subscribeToChats, isUnread } from '../../services/chatService';
@@ -121,8 +121,8 @@ export default function HomeScreen() {
     const unsubTodos = subscribeToTodoLists(family.id, uid, lists =>
       setTodosCount(lists.length),
     );
-    const unsubShopping = subscribeToShoppingList(family.id, items => {
-      setShoppingCount(items.filter(i => !i.checked).length);
+    const unsubShopping = subscribeToShoppingLists(family.id, lists => {
+      setShoppingCount(lists.reduce((sum, l) => sum + l.uncheckedCount, 0));
     });
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);

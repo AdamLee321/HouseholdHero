@@ -1,307 +1,408 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   TouchableOpacity,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
+  StyleSheet,
   Alert,
   ActivityIndicator,
-  Animated,
+  Keyboard,
+  Platform,
+  TextInput as RNTextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Text from '../../components/Text';
-import TextInput from '../../components/TextInput';
-import { Swipeable } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import auth from '@react-native-firebase/auth';
+import LucideIcon from '@react-native-vector-icons/lucide';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import {
-  ShoppingItem,
-  subscribeToShoppingList,
-  addShoppingItem,
-  toggleShoppingItem,
-  deleteShoppingItem,
-  clearCheckedItems,
+  ShoppingList,
+  subscribeToShoppingLists,
+  createShoppingList,
+  renameShoppingList,
+  deleteShoppingList,
 } from '../../services/shoppingService';
+import { HomeStackParamList } from '../../types';
+
+type NavProp = NativeStackNavigationProp<HomeStackParamList, 'Shopping'>;
+
+const VIEW_KEY = '@shopping_view_mode';
 
 export default function ShoppingScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { family, profile } = useFamilyStore();
-  const [items, setItems] = useState<ShoppingItem[]>([]);
+  const navigation = useNavigation<NavProp>();
+  const { family } = useFamilyStore();
+  const uid = auth().currentUser?.uid ?? '';
+  const ACCENT = colors.tiles.shopping.icon;
+
+  const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [itemName, setItemName] = useState('');
-  const [itemQty, setItemQty] = useState('');
-  const [adding, setAdding] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = Keyboard.addListener(showEvent, e =>
+      setKeyboardHeight(e.endCoordinates.height),
+    );
+    const onHide = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, []);
+
+  // Load persisted view mode
+  useEffect(() => {
+    AsyncStorage.getItem(VIEW_KEY).then(val => {
+      if (val === 'list' || val === 'grid') {
+        setViewMode(val);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!family) {
       return;
     }
-    const unsub = subscribeToShoppingList(family.id, data => {
-      setItems(data);
+    return subscribeToShoppingLists(family.id, data => {
+      setLists(data);
       setLoading(false);
     });
-    return unsub;
   }, [family]);
 
-  const unchecked = items.filter(i => !i.checked);
-  const checked = items.filter(i => i.checked);
-  const allItems = [
-    ...unchecked,
-    ...(checked.length > 0 ? [{ id: '__divider__' } as any] : []),
-    ...checked,
-  ];
+  function toggleView() {
+    const next = viewMode === 'grid' ? 'list' : 'grid';
+    setViewMode(next);
+    AsyncStorage.setItem(VIEW_KEY, next);
+  }
 
-  async function handleAdd() {
-    if (!itemName.trim() || !family) {
+  async function handleCreate() {
+    if (!newName.trim() || !family) {
       return;
     }
-    setAdding(true);
+    const name = newName.trim();
+    const optimisticId = `__optimistic_${Date.now()}`;
+    // Optimistically show the list immediately so there is no empty-state flash
+    setLists(prev => [
+      ...prev,
+      {
+        id: optimisticId,
+        name,
+        createdAt: Date.now(),
+        createdBy: uid,
+        itemCount: 0,
+        uncheckedCount: 0,
+      },
+    ]);
+    setNewName('');
+    setShowCreate(false);
+    Keyboard.dismiss();
+    setCreating(true);
     try {
-      await addShoppingItem(
-        family.id,
-        itemName,
-        itemQty,
-        auth().currentUser?.uid ?? '',
-        profile?.displayName ?? 'Someone',
-      );
-      setItemName('');
-      setItemQty('');
-      setModalVisible(false);
+      await createShoppingList(family.id, name, uid);
+      // Firestore snapshot will replace the optimistic entry with the confirmed one
+    } catch {
+      // Roll back on failure
+      setLists(prev => prev.filter(l => l.id !== optimisticId));
+      setShowCreate(true);
+      setNewName(name);
     } finally {
-      setAdding(false);
+      setCreating(false);
     }
   }
 
-  async function handleClearChecked() {
-    if (!family || checked.length === 0) {
-      return;
-    }
-    Alert.alert(
-      'Clear Checked',
-      `Remove ${checked.length} checked item${
-        checked.length !== 1 ? 's' : ''
-      }?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
+  const handleLongPress = useCallback(
+    (list: ShoppingList) => {
+      if (!family) {
+        return;
+      }
+      Alert.alert(list.name, undefined, [
         {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: () => clearCheckedItems(family.id),
+          text: 'Rename',
+          onPress: () => promptRename(list),
         },
-      ],
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => confirmDelete(list),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    },
+    [family],
+  );
+
+  function promptRename(list: ShoppingList) {
+    Alert.prompt(
+      'Rename List',
+      undefined,
+      async text => {
+        if (text?.trim() && family) {
+          await renameShoppingList(family.id, list.id, text);
+        }
+      },
+      'plain-text',
+      list.name,
     );
   }
 
-  function renderItem({ item }: { item: ShoppingItem & { id: string } }) {
-    if (item.id === '__divider__') {
-      return (
-        <View style={styles.dividerRow}>
-          <View
-            style={[styles.dividerLine, { backgroundColor: colors.border }]}
-          />
-          <Text style={[styles.dividerLabel, { color: colors.textTertiary }]}>
-            Checked
-          </Text>
-          <TouchableOpacity onPress={handleClearChecked}>
-            <Text style={[styles.clearBtn, { color: colors.danger }]}>
-              Clear
-            </Text>
-          </TouchableOpacity>
-        </View>
-      );
+  function confirmDelete(list: ShoppingList) {
+    if (!family) {
+      return;
     }
+    const itemWord = list.itemCount === 1 ? 'item' : 'items';
+    const message =
+      list.itemCount > 0
+        ? `This will permanently delete "${list.name}" and all ${list.itemCount} ${itemWord} in it.`
+        : `Are you sure you want to delete "${list.name}"?`;
+    Alert.alert('Delete List', message, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteShoppingList(family.id, list.id),
+      },
+    ]);
+  }
 
+  function renderGridItem({ item }: { item: ShoppingList }) {
     return (
-      <Swipeable
-        renderRightActions={() => (
-          <TouchableOpacity
-            style={[styles.deleteAction, { backgroundColor: colors.danger }]}
-            onPress={() => family && deleteShoppingItem(family.id, item.id)}
-          >
-            <Text style={styles.deleteActionText}>Delete</Text>
-          </TouchableOpacity>
-        )}
+      <TouchableOpacity
+        style={[styles.gridCard, { backgroundColor: colors.surface }]}
+        onPress={() =>
+          navigation.navigate('ShoppingList', {
+            listId: item.id,
+            listName: item.name,
+          })
+        }
+        onLongPress={() => handleLongPress(item)}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          style={[styles.itemRow, { backgroundColor: colors.surface }]}
-          onPress={() =>
-            family && toggleShoppingItem(family.id, item.id, item.checked)
-          }
-          activeOpacity={0.7}
+        <Text style={styles.gridCardEmoji}>🛒</Text>
+        <Text
+          style={[styles.gridCardName, { color: colors.text }]}
+          numberOfLines={2}
         >
-          {/* Checkbox */}
-          <View
-            style={[
-              styles.checkbox,
-              { borderColor: item.checked ? colors.success : colors.border },
-              item.checked && { backgroundColor: colors.success },
-            ]}
-          >
-            {item.checked && <Text style={styles.checkmark}>✓</Text>}
+          {item.name}
+        </Text>
+        {item.uncheckedCount > 0 ? (
+          <View style={[styles.badge, { backgroundColor: ACCENT }]}>
+            <Text style={styles.badgeText}>{item.uncheckedCount} Items</Text>
           </View>
+        ) : item.itemCount > 0 ? (
+          <View style={[styles.badge, { backgroundColor: colors.success }]}>
+            <Text style={styles.badgeText}>Done</Text>
+          </View>
+        ) : (
+          <Text style={[styles.gridCardEmpty, { color: colors.textTertiary }]}>
+            Empty
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  }
 
-          {/* Text */}
-          <View style={styles.itemText}>
-            <Text
-              style={[
-                styles.itemName,
-                { color: colors.text },
-                item.checked && {
-                  textDecorationLine: 'line-through',
-                  color: colors.textTertiary,
-                },
-              ]}
-            >
-              {item.name}
-            </Text>
-            <Text style={[styles.itemMeta, { color: colors.textTertiary }]}>
-              {item.quantity ? `${item.quantity} · ` : ''}
-              {item.addedByName}
+  function renderListItem({ item }: { item: ShoppingList }) {
+    return (
+      <TouchableOpacity
+        style={[styles.listCard, { backgroundColor: colors.surface }]}
+        onPress={() =>
+          navigation.navigate('ShoppingList', {
+            listId: item.id,
+            listName: item.name,
+          })
+        }
+        onLongPress={() => handleLongPress(item)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.listCardEmoji}>🛒</Text>
+        <View style={styles.listCardBody}>
+          <Text style={[styles.listCardName, { color: colors.text }]}>
+            {item.name}
+          </Text>
+          <View style={[styles.badge, { backgroundColor: ACCENT }]}>
+            <Text style={styles.badgeText}>
+              {' '}
+              {item.itemCount === 0 ? 'Empty' : `${item.uncheckedCount} items`}
             </Text>
           </View>
-        </TouchableOpacity>
-      </Swipeable>
+        </View>
+
+        {item.uncheckedCount === 0 && item.itemCount > 0 && (
+          <LucideIcon name="check-circle" size={20} color={colors.success} />
+        )}
+        <LucideIcon
+          name="chevron-right"
+          size={18}
+          color={colors.textTertiary}
+          style={styles.chevron}
+        />
+      </TouchableOpacity>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* View toggle */}
+      <View
+        style={[
+          styles.toolbar,
+          { backgroundColor: colors.surface, borderBottomColor: colors.border },
+        ]}
+      >
+        <Text style={[styles.toolbarCount, { color: colors.textSecondary }]}>
+          {lists.length} {lists.length === 1 ? 'list' : 'lists'}
+        </Text>
+        <TouchableOpacity onPress={toggleView} style={styles.toolbarBtn}>
+          <LucideIcon
+            name={viewMode === 'grid' ? 'list' : 'grid-2x2'}
+            size={20}
+            color={ACCENT}
+          />
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
-        <ActivityIndicator style={styles.loader} color={colors.primary} />
-      ) : items.length === 0 ? (
+        <ActivityIndicator style={styles.loader} color={ACCENT} />
+      ) : lists.length === 0 && !showCreate ? (
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🛒</Text>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
-            Your list is empty
+            No shopping lists
           </Text>
-          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-            Tap + to add your first item
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+            Tap + to create your first list
           </Text>
         </View>
+      ) : viewMode === 'grid' ? (
+        <FlatList
+          key="grid"
+          data={lists}
+          keyExtractor={i => i.id}
+          renderItem={renderGridItem}
+          numColumns={2}
+          columnWrapperStyle={styles.gridRow}
+          contentContainerStyle={[
+            styles.gridContent,
+            { paddingBottom: insets.bottom + 100 },
+          ]}
+        />
       ) : (
         <FlatList
-          data={allItems}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
+          key="list"
+          data={lists}
+          keyExtractor={i => i.id}
+          renderItem={renderListItem}
           contentContainerStyle={[
-            styles.list,
+            styles.listContent,
             { paddingBottom: insets.bottom + 100 },
           ]}
           ItemSeparatorComponent={() => (
-            <View
-              style={[styles.separator, { backgroundColor: colors.border }]}
-            />
+            <View style={[styles.sep, { backgroundColor: colors.border }]} />
           )}
         />
       )}
 
-      {/* FAB */}
-      <TouchableOpacity
-        style={[
-          styles.fab,
-          { backgroundColor: colors.primary, bottom: insets.bottom + 30 },
-        ]}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-
-      {/* Add item modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      {/* Inline create input */}
+      {showCreate && (
+        <View
+          style={[
+            styles.createBar,
+            {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.border,
+              bottom: keyboardHeight,
+              paddingBottom: keyboardHeight > 0 ? 20 : insets.bottom + 20,
+            },
+          ]}
         >
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            onPress={() => setModalVisible(false)}
-          />
-          <View
+          <RNTextInput
             style={[
-              styles.modalSheet,
-              {
-                backgroundColor: colors.surface,
-                paddingBottom: insets.bottom + 16,
-              },
+              styles.createInput,
+              { backgroundColor: colors.background, color: colors.text },
             ]}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="List name…"
+            placeholderTextColor={colors.textTertiary}
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={handleCreate}
+          />
+          <TouchableOpacity
+            style={[
+              styles.createConfirm,
+              { backgroundColor: newName.trim() ? ACCENT : colors.border },
+            ]}
+            onPress={handleCreate}
+            disabled={!newName.trim() || creating}
           >
-            <View
-              style={[styles.modalHandle, { backgroundColor: colors.border }]}
-            />
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Add Item
-            </Text>
+            {creating ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <LucideIcon name="check" size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.createCancel,
+              { backgroundColor: colors.background },
+            ]}
+            onPress={() => {
+              setShowCreate(false);
+              setNewName('');
+            }}
+          >
+            <LucideIcon name="x" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
+      )}
 
-            <TextInput
-              style={[
-                styles.modalInput,
-                {
-                  borderColor: colors.border,
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="Item name"
-              placeholderTextColor={colors.textTertiary}
-              value={itemName}
-              onChangeText={setItemName}
-              autoFocus
-              returnKeyType="next"
-            />
-            <TextInput
-              style={[
-                styles.modalInput,
-                {
-                  borderColor: colors.border,
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="Quantity (optional)"
-              placeholderTextColor={colors.textTertiary}
-              value={itemQty}
-              onChangeText={setItemQty}
-              returnKeyType="done"
-              onSubmitEditing={handleAdd}
-            />
-
-            <TouchableOpacity
-              style={[
-                styles.addBtn,
-                { backgroundColor: colors.primary },
-                !itemName.trim() && { opacity: 0.5 },
-              ]}
-              onPress={handleAdd}
-              disabled={!itemName.trim() || adding}
-            >
-              {adding ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.addBtnText}>Add to List</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      {/* FAB */}
+      {!showCreate && (
+        <TouchableOpacity
+          style={[
+            styles.fab,
+            { backgroundColor: ACCENT, bottom: insets.bottom + 30 },
+          ]}
+          onPress={() => setShowCreate(true)}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
+const CARD_GAP = 12;
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loader: { flex: 1, marginTop: 60 },
-  list: { paddingTop: 8 },
+
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  toolbarCount: { fontSize: 13, fontWeight: '600' },
+  toolbarBtn: { padding: 4 },
+
   empty: {
     flex: 1,
     alignItems: 'center',
@@ -310,44 +411,85 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', marginBottom: 8 },
-  emptySubtitle: { fontSize: 15 },
-  itemRow: {
+  emptySub: { fontSize: 15 },
+
+  // Grid
+  gridContent: { padding: 16 },
+  gridRow: { gap: CARD_GAP, marginBottom: CARD_GAP },
+  gridCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 16,
+    minHeight: 130,
+    justifyContent: 'space-between',
+  },
+  gridCardEmoji: { fontSize: 32, marginBottom: 8 },
+  gridCardName: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+    flexShrink: 1,
+  },
+  gridCardEmpty: { fontSize: 12 },
+
+  // List
+  listContent: { paddingTop: 8 },
+  listCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
+    gap: 12,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
+  listCardEmoji: { fontSize: 28 },
+  listCardBody: { flex: 1 },
+  listCardName: { fontSize: 16, fontWeight: '700', marginBottom: 5 },
+  listCardMeta: { fontSize: 13, marginTop: 2 },
+  chevron: { marginLeft: 4 },
+  sep: { height: StyleSheet.hairlineWidth, marginLeft: 56 },
+
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+  },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+
+  // Create bar
+  createBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 16,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  createInput: {
+    flex: 1,
     borderRadius: 12,
-    borderWidth: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+  },
+  createConfirm: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
-    flexShrink: 0,
   },
-  checkmark: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  itemText: { flex: 1 },
-  itemName: { fontSize: 16, fontWeight: '500' },
-  itemMeta: { fontSize: 12, marginTop: 2 },
-  separator: { height: StyleSheet.hairlineWidth, marginLeft: 54 },
-  dividerRow: {
-    flexDirection: 'row',
+  createCancel: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
-  dividerLabel: { fontSize: 12, fontWeight: '600' },
-  clearBtn: { fontSize: 12, fontWeight: '600' },
-  deleteAction: {
     justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
   },
-  deleteActionText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+
   fab: {
     position: 'absolute',
     right: 20,
@@ -363,34 +505,4 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalBackdrop: { flex: 1 },
-  modalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  modalInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  addBtn: {
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

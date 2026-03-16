@@ -18,7 +18,7 @@ import {
   scheduleEventReminder,
 } from '../services/notificationService';
 import { subscribeToChats, getChatDisplayName } from '../services/chatService';
-import { subscribeToShoppingList } from '../services/shoppingService';
+import { subscribeToShoppingLists } from '../services/shoppingService';
 import { subscribeToPhotos } from '../services/galleryService';
 import { subscribeToContacts } from '../services/contactService';
 import { subscribeToActivity, activityLabel } from '../services/activityService';
@@ -80,18 +80,22 @@ export function useBackgroundNotifications(): void {
   useEffect(() => {
     if (!familyId || !uid || !prefs.shoppingListUpdates) { return; }
     let initialized = false;
-    const knownIds = new Set<string>();
-    return subscribeToShoppingList(familyId, items => {
+    const knownCounts = new Map<string, number>();
+    return subscribeToShoppingLists(familyId, lists => {
       if (!initialized) {
-        items.forEach(i => knownIds.add(i.id));
+        lists.forEach(l => knownCounts.set(l.id, l.itemCount));
         initialized = true;
         return;
       }
-      for (const item of items) {
-        if (!knownIds.has(item.id) && item.addedBy !== uid) {
-          showShoppingNotification(item.addedByName, item.name);
-          knownIds.add(item.id);
+      for (const list of lists) {
+        const prev = knownCounts.get(list.id) ?? 0;
+        if (list.itemCount > prev && list.lastAddedBy !== uid) {
+          showShoppingNotification(
+            list.lastAddedByName ?? 'Someone',
+            list.lastAddedItemName ?? 'an item',
+          );
         }
+        knownCounts.set(list.id, list.itemCount);
       }
     });
   }, [familyId, uid, prefs.shoppingListUpdates]);

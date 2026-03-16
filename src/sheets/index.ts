@@ -14,6 +14,7 @@ import BudgetCurrencySheet from './BudgetCurrencySheet';
 import DocumentOptionsSheet from './DocumentOptionsSheet';
 import PhotoActionsSheet from './PhotoActionsSheet';
 import ImportRecipeSheet from './ImportRecipeSheet';
+import AddShoppingItemSheet from './AddShoppingItemSheet';
 
 registerSheet('add-event', AddEventModal);
 registerSheet('add-chore', AddChoreModal);
@@ -29,6 +30,7 @@ registerSheet('budget-currency', BudgetCurrencySheet);
 registerSheet('doc-options', DocumentOptionsSheet);
 registerSheet('photo-actions', PhotoActionsSheet);
 registerSheet('import-recipe', ImportRecipeSheet);
+registerSheet('add-shopping-item', AddShoppingItemSheet);
 
 export {};
 
@@ -41,6 +43,7 @@ import type { DocumentFolder } from '../services/documentService';
 import type { Chat } from '../services/chatService';
 import type { GalleryPhoto } from '../services/galleryService';
 import type { ImportedRecipeData } from '../services/recipeImportService';
+import type { ShoppingCategory } from '../services/shoppingService';
 
 declare module 'react-native-actions-sheet' {
   interface Sheets {
@@ -143,6 +146,15 @@ declare module 'react-native-actions-sheet' {
     'import-recipe': SheetDefinition<{
       payload: {
         onImport: (data: ImportedRecipeData) => void;
+      };
+    }>;
+    'add-shopping-item': SheetDefinition<{
+      payload: {
+        familyId: string;
+        listId: string;
+        categories: ShoppingCategory[];
+        uid: string;
+        displayName: string;
       };
     }>;
   }

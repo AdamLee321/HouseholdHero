@@ -7,6 +7,8 @@ import { useTheme } from '../theme/useTheme';
 import { HomeStackParamList } from '../types';
 import HomeScreen from '../screens/Home/HomeScreen';
 import ShoppingScreen from '../screens/Shopping/ShoppingScreen';
+import ShoppingListScreen from '../screens/Shopping/ShoppingListScreen';
+import ManageCategoriesScreen from '../screens/Shopping/ManageCategoriesScreen';
 import TodosScreen from '../screens/Todos/TodosScreen';
 import TodoListScreen from '../screens/Todos/TodoListScreen';
 import ChoresScreen from '../screens/Chores/ChoresScreen';
@@ -60,7 +62,20 @@ export default function HomeStack() {
       <Stack.Screen
         name="Shopping"
         component={ShoppingScreen}
-        options={{ title: 'Shopping List' }}
+        options={{ title: 'Shopping Lists' }}
+      />
+      <Stack.Screen
+        name="ShoppingList"
+        component={ShoppingListScreen}
+        options={({ route }) => ({
+          title: route.params.listName,
+          headerLeft: undefined,
+        })}
+      />
+      <Stack.Screen
+        name="ManageCategories"
+        component={ManageCategoriesScreen}
+        options={{ title: 'Manage Categories', headerLeft: undefined }}
       />
       <Stack.Screen
         name="Todos"

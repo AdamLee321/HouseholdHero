@@ -37,6 +37,8 @@ export type MainTabParamList = {
 export type HomeStackParamList = {
   Home: undefined;
   Shopping: undefined;
+  ShoppingList: { listId: string; listName: string };
+  ManageCategories: undefined;
   Todos: undefined;
   TodoList: {listId: string; title: string};
   Chores: undefined;

@@ -1288,7 +1288,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-typescript@npm:^7.25.2, @babel/plugin-transform-typescript@npm:^7.27.1":
+"@babel/plugin-transform-typescript@npm:^7.25.2, @babel/plugin-transform-typescript@npm:^7.27.1, @babel/plugin-transform-typescript@npm:^7.28.5":
   version: 7.28.6
   resolution: "@babel/plugin-transform-typescript@npm:7.28.6"
   dependencies:
@@ -1455,6 +1455,21 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 38020f1b23e88ec4fbffd5737da455d8939244bddfb48a2516aef93fb5947bd9163fb807ce6eff3e43fa5ffe9113aa131305fef0fb5053998410bbfcfe6ce0ec
+  languageName: node
+  linkType: hard
+
+"@babel/preset-typescript@npm:^7.17.12":
+  version: 7.28.5
+  resolution: "@babel/preset-typescript@npm:7.28.5"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.27.1
+    "@babel/helper-validator-option": ^7.27.1
+    "@babel/plugin-syntax-jsx": ^7.27.1
+    "@babel/plugin-transform-modules-commonjs": ^7.27.1
+    "@babel/plugin-transform-typescript": ^7.28.5
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 22f889835d9db1e627846e71ca2f02e2d24e2eb9ebcf9845b3b1d37bd3a53787967bafabbbcb342f06aaf7627399a7102ba6ca18f9a0e17066c865d680d2ceb9
   languageName: node
   linkType: hard
 
@@ -4039,6 +4054,7 @@ __metadata:
     react-native-bootsplash: ^7.1.0
     react-native-calendar-events: ^2.2.0
     react-native-calendars: ^1.1314.0
+    react-native-draggable-flatlist: ^4.0.3
     react-native-fs-turbo: ^0.5.0
     react-native-gesture-handler: ^2.30.0
     react-native-image-picker: ^8.2.1
@@ -9221,6 +9237,19 @@ __metadata:
     moment:
       optional: true
   checksum: 298c113432fa7c8941aff526e60751d5baaa28519ce0245ceac9f0eeb4f9139f89db3c2567790fafe08638028078bc07ea8a5c2f77e7e55c02a8f25cc9cac0b8
+  languageName: node
+  linkType: hard
+
+"react-native-draggable-flatlist@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "react-native-draggable-flatlist@npm:4.0.3"
+  dependencies:
+    "@babel/preset-typescript": ^7.17.12
+  peerDependencies:
+    react-native: ">=0.64.0"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ">=2.8.0"
+  checksum: 89f32fc36935f8cdbf98c9968ec40cbb89baeee8626b9bc82060e6e8eb1c2255c682f89b2293b6a3952fdb539e0031ac7fe45412ffe18b09ac9ab1fb40ab8f3d
   languageName: node
   linkType: hard
 
