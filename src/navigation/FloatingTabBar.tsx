@@ -29,7 +29,7 @@ export default function FloatingTabBar({state, navigation}: BottomTabBarProps) {
   const {colors, isDark} = useTheme();
   const insets = useSafeAreaInsets();
   const visible = useTabBarStore(s => s.visible);
-  const bottomOffset = insets.bottom > 0 ? insets.bottom : 16;
+  const bottomOffset = (insets.bottom > 0 ? insets.bottom : 16) + 12;
 
   // Hide when navigated into a nested screen
   const activeRoute = state.routes[state.index];

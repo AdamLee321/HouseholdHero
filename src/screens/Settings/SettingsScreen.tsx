@@ -38,12 +38,13 @@ export default function SettingsScreen() {
   }
 
   return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={{ height: insets.top, backgroundColor: colors.background }} />
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
       {...tabBarScroll}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 100 },
+        { paddingTop: 8, paddingBottom: insets.bottom + 100 },
       ]}
     >
       {/* Profile card */}
@@ -178,6 +179,7 @@ export default function SettingsScreen() {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 }
 
