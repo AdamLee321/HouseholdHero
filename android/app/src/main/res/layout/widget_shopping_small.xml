@@ -15,7 +15,7 @@
         android:text="Shopping"
         android:textSize="15sp"
         android:textStyle="bold"
-        android:textColor="#1A1A1A"
+        android:textColor="#FFFFFF"
         android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end" />
@@ -27,7 +27,7 @@
         android:layout_marginTop="6dp"
         android:text="0 items left"
         android:textSize="13sp"
-        android:textColor="#666666"
+        android:textColor="#CCFFFFFF"
         android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end" />

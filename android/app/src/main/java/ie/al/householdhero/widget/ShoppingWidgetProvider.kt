@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.view.View
 import android.widget.RemoteViews
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,19 +21,6 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
         const val EXTRA_CHECKED = "checked"
         const val EXTRA_LIST_ID = "list_id"
         const val EXTRA_FAMILY_ID = "family_id"
-
-        private val ITEM_ROW_IDS = intArrayOf(
-            R.id.item_row_1, R.id.item_row_2, R.id.item_row_3,
-            R.id.item_row_4, R.id.item_row_5
-        )
-        private val ITEM_NAME_IDS = intArrayOf(
-            R.id.item_name_1, R.id.item_name_2, R.id.item_name_3,
-            R.id.item_name_4, R.id.item_name_5
-        )
-        private val ITEM_CHECK_IDS = intArrayOf(
-            R.id.item_check_1, R.id.item_check_2, R.id.item_check_3,
-            R.id.item_check_4, R.id.item_check_5
-        )
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
@@ -57,18 +43,16 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
         familyId: String,
         listId: String,
         itemId: String,
-        currentChecked: Boolean
+        currentChecked: Boolean,
     ) {
         val newChecked = !currentChecked
         val db = FirebaseFirestore.getInstance()
 
-        // Update the item
         db.collection("families").document(familyId)
             .collection("shoppingLists").document(listId)
             .collection("items").document(itemId)
             .update("checked", newChecked)
 
-        // Update uncheckedCount on the list
         val delta = if (currentChecked) 1L else -1L
         db.collection("families").document(familyId)
             .collection("shoppingLists").document(listId)
@@ -95,10 +79,9 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
             e.printStackTrace()
         }
 
-        // Refresh all shopping widget instances
         val manager = AppWidgetManager.getInstance(context)
         val ids = manager.getAppWidgetIds(
-            android.content.ComponentName(context, ShoppingWidgetProvider::class.java)
+            android.content.ComponentName(context, ShoppingWidgetProvider::class.java),
         )
         ids.forEach { updateWidget(context, manager, it) }
     }
@@ -111,10 +94,13 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
         val prefs = context.getSharedPreferences(WidgetDataModule.PREFS_NAME, Context.MODE_PRIVATE)
         val jsonStr = prefs.getString(WidgetDataModule.KEY_DATA, null)
 
-        val views = if (isMedium) buildMediumView(context, jsonStr)
+        val views = if (isMedium) buildMediumView(context, jsonStr, widgetId)
                     else buildSmallView(context, jsonStr)
 
         manager.updateAppWidget(widgetId, views)
+        if (isMedium) {
+            manager.notifyAppWidgetViewDataChanged(widgetId, R.id.widget_list)
+        }
     }
 
     // ── Small widget ────────────────────────────────────────────────────────
@@ -136,7 +122,7 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_title, shopping.optString("listName", "Shopping"))
                 views.setTextViewText(
                     R.id.widget_count,
-                    if (unchecked == 0) "All done!" else "$unchecked item${if (unchecked != 1) "s" else ""} left"
+                    if (unchecked == 0) "All done!" else "$unchecked item${if (unchecked != 1) "s" else ""} left",
                 )
             }
         } catch (e: Exception) {
@@ -148,16 +134,14 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
 
     // ── Medium widget ───────────────────────────────────────────────────────
 
-    private fun buildMediumView(context: Context, jsonStr: String?): RemoteViews {
+    private fun buildMediumView(context: Context, jsonStr: String?, widgetId: Int): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_shopping_medium)
 
-        // "+" button always opens app
         views.setOnClickPendingIntent(R.id.widget_add_btn, openAppIntent(context, 99))
 
         if (jsonStr == null) {
             views.setTextViewText(R.id.widget_title, "Shopping")
             views.setTextViewText(R.id.widget_footer, "Open app to get started")
-            ITEM_ROW_IDS.forEach { views.setViewVisibility(it, View.GONE) }
             return views
         }
 
@@ -166,7 +150,6 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
             if (shopping == null) {
                 views.setTextViewText(R.id.widget_title, "Shopping")
                 views.setTextViewText(R.id.widget_footer, "No lists yet")
-                ITEM_ROW_IDS.forEach { views.setViewVisibility(it, View.GONE) }
                 return views
             }
 
@@ -174,53 +157,35 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
             val familyId = shopping.optString("familyId", "")
             val listId = shopping.optString("listId", "")
             val unchecked = shopping.optInt("uncheckedCount", 0)
-            val items = shopping.optJSONArray("items")
-            val itemCount = items?.length() ?: 0
+            val itemCount = shopping.optJSONArray("items")?.length() ?: 0
 
             views.setTextViewText(R.id.widget_title, listName)
             views.setTextViewText(
                 R.id.widget_footer,
                 if (unchecked == 0 && itemCount > 0) "All done! ✓"
-                else "$unchecked item${if (unchecked != 1) "s" else ""} left"
+                else "$unchecked item${if (unchecked != 1) "s" else ""} left",
             )
 
-            for (i in 0 until 5) {
-                if (items != null && i < itemCount) {
-                    val item = items.getJSONObject(i)
-                    val itemId = item.getString("id")
-                    val itemName = item.getString("name")
-                    val itemChecked = item.getBoolean("checked")
-
-                    views.setViewVisibility(ITEM_ROW_IDS[i], View.VISIBLE)
-                    views.setTextViewText(ITEM_NAME_IDS[i], itemName)
-                    views.setFloat(ITEM_NAME_IDS[i], "setAlpha", if (itemChecked) 0.4f else 1.0f)
-                    views.setImageViewResource(
-                        ITEM_CHECK_IDS[i],
-                        if (itemChecked) R.drawable.widget_check_on else R.drawable.widget_check_off
-                    )
-
-                    // Each item needs a unique URI so PendingIntents don't collide
-                    val toggleIntent = Intent(context, ShoppingWidgetProvider::class.java).apply {
-                        action = ACTION_TOGGLE
-                        data = Uri.parse("widget://shopping/$itemId")
-                        putExtra(EXTRA_ITEM_ID, itemId)
-                        putExtra(EXTRA_CHECKED, itemChecked)
-                        putExtra(EXTRA_LIST_ID, listId)
-                        putExtra(EXTRA_FAMILY_ID, familyId)
-                    }
-                    val togglePi = PendingIntent.getBroadcast(
-                        context, 0, toggleIntent,
-                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-                    )
-                    views.setOnClickPendingIntent(ITEM_ROW_IDS[i], togglePi)
-                } else {
-                    views.setViewVisibility(ITEM_ROW_IDS[i], View.GONE)
-                }
+            // Attach the scrollable list adapter
+            val serviceIntent = Intent(context, ShoppingWidgetService::class.java).apply {
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
+                data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
             }
+            views.setRemoteAdapter(R.id.widget_list, serviceIntent)
+
+            // Template PendingIntent — item-specific extras are filled in by the factory
+            val toggleTemplate = Intent(context, ShoppingWidgetProvider::class.java).apply {
+                action = ACTION_TOGGLE
+            }
+            val togglePi = PendingIntent.getBroadcast(
+                context, widgetId, toggleTemplate,
+                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            views.setPendingIntentTemplate(R.id.widget_list, togglePi)
+
         } catch (e: Exception) {
             e.printStackTrace()
             views.setTextViewText(R.id.widget_title, "Shopping")
-            ITEM_ROW_IDS.forEach { views.setViewVisibility(it, View.GONE) }
         }
 
         return views
@@ -233,7 +198,7 @@ class ShoppingWidgetProvider : AppWidgetProvider() {
         }
         return PendingIntent.getActivity(
             context, requestCode, intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
 }

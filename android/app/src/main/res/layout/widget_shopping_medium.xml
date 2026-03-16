@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:id="@+id/widget_title"
@@ -22,7 +22,7 @@
             android:text="Shopping"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:textColor="#1A1A1A"
+            android:textColor="#FFFFFF"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -32,72 +32,20 @@
             android:layout_height="28dp"
             android:text="+"
             android:textSize="20sp"
-            android:textColor="#3B82F6"
+            android:textColor="#FFFFFF"
             android:gravity="center"
             android:textStyle="bold" />
 
     </LinearLayout>
 
-    <!-- Item rows -->
-    <LinearLayout android:id="@+id/item_row_1"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:paddingVertical="5dp">
-        <ImageView android:id="@+id/item_check_1"
-            android:layout_width="22dp" android:layout_height="22dp"
-            android:src="@drawable/widget_check_off" android:layout_marginEnd="10dp" />
-        <TextView android:id="@+id/item_name_1"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="13sp" android:textColor="#1A1A1A" android:maxLines="1" android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout android:id="@+id/item_row_2"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:paddingVertical="5dp">
-        <ImageView android:id="@+id/item_check_2"
-            android:layout_width="22dp" android:layout_height="22dp"
-            android:src="@drawable/widget_check_off" android:layout_marginEnd="10dp" />
-        <TextView android:id="@+id/item_name_2"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="13sp" android:textColor="#1A1A1A" android:maxLines="1" android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout android:id="@+id/item_row_3"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:paddingVertical="5dp">
-        <ImageView android:id="@+id/item_check_3"
-            android:layout_width="22dp" android:layout_height="22dp"
-            android:src="@drawable/widget_check_off" android:layout_marginEnd="10dp" />
-        <TextView android:id="@+id/item_name_3"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="13sp" android:textColor="#1A1A1A" android:maxLines="1" android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout android:id="@+id/item_row_4"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:paddingVertical="5dp">
-        <ImageView android:id="@+id/item_check_4"
-            android:layout_width="22dp" android:layout_height="22dp"
-            android:src="@drawable/widget_check_off" android:layout_marginEnd="10dp" />
-        <TextView android:id="@+id/item_name_4"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="13sp" android:textColor="#1A1A1A" android:maxLines="1" android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout android:id="@+id/item_row_5"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:paddingVertical="5dp">
-        <ImageView android:id="@+id/item_check_5"
-            android:layout_width="22dp" android:layout_height="22dp"
-            android:src="@drawable/widget_check_off" android:layout_marginEnd="10dp" />
-        <TextView android:id="@+id/item_name_5"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:textSize="13sp" android:textColor="#1A1A1A" android:maxLines="1" android:ellipsize="end" />
-    </LinearLayout>
+    <!-- Scrollable item list -->
+    <ListView
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp" />
 
     <!-- Footer -->
     <TextView
@@ -106,7 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:textSize="11sp"
-        android:textColor="#888888"
+        android:textColor="#CCFFFFFF"
         android:maxLines="1"
         android:ellipsize="end" />
 

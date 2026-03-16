@@ -50,7 +50,12 @@
         android:resource="@xml/widget_shopping_medium" />
     </receiver>
 
-    <receiver
+    <service
+      android:name=".widget.ShoppingWidgetService"
+      android:exported="true"
+      android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
       android:name=".widget.ChoresWidgetProvider"
       android:exported="true">
       <intent-filter>
