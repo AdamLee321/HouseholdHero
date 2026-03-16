@@ -66,6 +66,16 @@ const SECTIONS: { title: string; rows: NotifRow[] }[] = [
     ],
   },
   {
+    title: 'GALLERY',
+    rows: [
+      {
+        key: 'galleryUploads',
+        label: 'Photo Uploads',
+        description: 'Notify when a family member adds a photo',
+      },
+    ],
+  },
+  {
     title: 'BUDGET',
     rows: [
       {
@@ -89,6 +99,16 @@ const SECTIONS: { title: string; rows: NotifRow[] }[] = [
         key: 'activityFeed',
         label: 'Family Activity',
         description: 'Notify when there is new family activity',
+      },
+      {
+        key: 'emergencyContactsUpdates',
+        label: 'Emergency Contacts',
+        description: 'Notify when emergency contacts are added or updated',
+      },
+      {
+        key: 'locationUpdates',
+        label: 'Location Sharing',
+        description: 'Notify when a family member starts sharing their location',
       },
     ],
   },
@@ -120,10 +140,6 @@ export default function NotificationSettingsScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
     >
-      <Text style={[styles.hint, { color: colors.textSecondary }]}>
-        Manage which notifications you receive. Notifications will be enabled in a future update.
-      </Text>
-
       {SECTIONS.map(section => {
         const visibleRows = section.rows.filter(
           row => !row.roles || row.roles.includes(role as any),
@@ -170,11 +186,6 @@ export default function NotificationSettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16 },
-  hint: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 20,
-  },
   sectionWrap: { marginBottom: 16 },
   sectionTitle: {
     fontSize: 11,

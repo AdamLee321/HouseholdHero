@@ -3580,8 +3580,28 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNFS (2.20.0):
+  - RNFSTurbo (0.5.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGestureHandler (2.30.0):
     - hermes-engine
     - RCTRequired
@@ -3897,7 +3917,7 @@ DEPENDENCIES:
   - "RNFBFirestore (from `../node_modules/@react-native-firebase/firestore`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - "RNFBStorage (from `../node_modules/@react-native-firebase/storage`)"
-  - RNFS (from `../node_modules/react-native-fs`)
+  - RNFSTurbo (from `../node_modules/react-native-fs-turbo`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -4116,8 +4136,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNFBStorage:
     :path: "../node_modules/@react-native-firebase/storage"
-  RNFS:
-    :path: "../node_modules/react-native-fs"
+  RNFSTurbo:
+    :path: "../node_modules/react-native-fs-turbo"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNNotifee:
@@ -4247,7 +4267,7 @@ SPEC CHECKSUMS:
   RNFBFirestore: e1dbf5e4f0b94a4cfd72dbd29f532a0a5159627d
   RNFBMessaging: 40923618afea919a321d1f0eab610d363229293e
   RNFBStorage: 9202fbab07e892279b7265db608d04ffb5c68e6c
-  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
+  RNFSTurbo: b58391df7c81a9339377d3270323d276d7cbb6af
   RNGestureHandler: d9e942967ed2a9a555c41591c4ee9dfeabee1f01
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNReanimated: e8365b1438aba0119ea2656b56e70b9a1708b930

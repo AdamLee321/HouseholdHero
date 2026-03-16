@@ -9,6 +9,9 @@ export interface NotificationPrefs {
   shoppingListUpdates: boolean;
   budgetLimitWarning: boolean;
   activityFeed: boolean;
+  galleryUploads: boolean;
+  emergencyContactsUpdates: boolean;
+  locationUpdates: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
@@ -20,6 +23,9 @@ export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
   shoppingListUpdates: false,
   budgetLimitWarning: true,
   activityFeed: false,
+  galleryUploads: true,
+  emergencyContactsUpdates: true,
+  locationUpdates: false,
 };
 
 function docRef(uid: string) {

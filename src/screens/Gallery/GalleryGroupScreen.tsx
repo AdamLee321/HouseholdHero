@@ -15,7 +15,7 @@ import Text from '../../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
-import RNFS from 'react-native-fs';
+import RNFS from 'react-native-fs-turbo';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { SheetManager } from 'react-native-actions-sheet';
 import { useTheme } from '../../theme/useTheme';

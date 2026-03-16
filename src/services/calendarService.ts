@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { logActivity } from './activityService';
+import { cancelEventReminder } from './notificationService';
 
 export interface CalendarEvent {
   id: string;
@@ -46,6 +47,7 @@ export async function addCalendarEvent(
 }
 
 export async function deleteCalendarEvent(familyId: string, eventId: string) {
+  cancelEventReminder(eventId);
   await firestore()
     .collection('families')
     .doc(familyId)

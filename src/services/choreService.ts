@@ -6,6 +6,11 @@ import {
   checkNewBadges,
   todayString,
 } from './badgeService';
+import {
+  showBadgeNotification,
+  getCachedPref,
+  cancelChoreReminder,
+} from './notificationService';
 
 export type ChoreFrequency = 'daily' | 'weekly' | 'monthly';
 export type ChoreEffort = 'easy' | 'medium' | 'hard';
@@ -225,7 +230,12 @@ export async function updateChoreStatus(
           badgeName: def.name,
           badgeEmoji: def.emoji,
         });
+        if (getCachedPref('badgeEarned')) {
+          showBadgeNotification(def.name, def.emoji);
+        }
       }
+      // Cancel the scheduled chore reminder now that it's done
+      cancelChoreReminder(chore.id);
     } else {
       // Completed this period but re-marked — just record who did it, no extra points.
       update.completedBy = uid;
@@ -266,6 +276,7 @@ export async function updateChoreStatus(
 }
 
 export async function deleteChore(familyId: string, choreId: string) {
+  cancelChoreReminder(choreId);
   await firestore()
     .collection('families')
     .doc(familyId)

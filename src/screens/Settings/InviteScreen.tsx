@@ -14,7 +14,6 @@ import LucideIcon from '@react-native-vector-icons/lucide';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import { regenerateInviteCode } from '../../services/familyService';
-import auth from '@react-native-firebase/auth';
 
 type InviteRole = 'parent' | 'guardian' | 'child';
 
@@ -81,9 +80,9 @@ function InviteCard({
 export default function InviteScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { family, setFamily } = useFamilyStore();
+  const { family, setFamily, profile } = useFamilyStore();
   const [regenerating, setRegenerating] = useState<InviteRole | null>(null);
-  const isAdmin = auth().currentUser?.uid === family?.createdBy;
+  const isAdmin = profile?.role === 'admin';
 
   async function handleRegenerate(role: InviteRole) {
     if (!family) { return; }
