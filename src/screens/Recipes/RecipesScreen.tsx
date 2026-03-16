@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import {
   View,
   FlatList,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Animated,
 } from 'react-native';
 import Text from '../../components/Text';
 import TextInput from '../../components/TextInput';
@@ -21,8 +22,10 @@ import {
   updateRecipe,
   deleteRecipe,
 } from '../../services/recipeService';
+import { SheetManager } from 'react-native-actions-sheet';
 import AddRecipeModal from './components/AddRecipeModal';
 import RecipeDetailModal from './components/RecipeDetailModal';
+import { ImportedRecipeData } from '../../services/recipeImportService';
 
 const ALL_TAGS = [
   'Breakfast',
@@ -65,6 +68,18 @@ export default function RecipesScreen() {
     undefined,
   );
   const [showAdd, setShowAdd] = useState(false);
+  const [importData, setImportData] = useState<ImportedRecipeData | null>(null);
+  const [fabOpen, setFabOpen] = useState(false);
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+
+  function toggleFab(open: boolean) {
+    setFabOpen(open);
+    Animated.timing(overlayAnim, {
+      toValue: open ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }
 
   useEffect(() => {
     if (!family) {
@@ -132,8 +147,21 @@ export default function RecipesScreen() {
   }
 
   function openAdd() {
+    toggleFab(false);
     setEditRecipe(null);
+    setImportData(null);
     setShowAdd(true);
+  }
+
+  function handleImported(data: ImportedRecipeData) {
+    setEditRecipe(null);
+    setImportData(data);
+    setShowAdd(true);
+  }
+
+  function openImport() {
+    toggleFab(false);
+    SheetManager.show('import-recipe', { payload: { onImport: handleImported } });
   }
 
   function renderItem({ item }: { item: Recipe }) {
@@ -315,15 +343,47 @@ export default function RecipesScreen() {
         ]}
       />
 
+      {/* FAB overlay */}
+      <Animated.View
+        pointerEvents={fabOpen ? 'auto' : 'none'}
+        style={[styles.fabBackdrop, { opacity: overlayAnim }]}
+      >
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={() => toggleFab(false)}
+        />
+      </Animated.View>
+
+      {/* FAB menu items */}
+      {fabOpen && (
+        <View style={[styles.fabMenu, { bottom: insets.bottom + 100 }]}>
+          <TouchableOpacity
+            style={[styles.fabMenuItem, { backgroundColor: colors.surface }]}
+            onPress={openImport}
+          >
+            <Text style={styles.fabMenuItemEmoji}>🔗</Text>
+            <Text style={[styles.fabMenuItemLabel, { color: colors.text }]}>Import from URL</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.fabMenuItem, { backgroundColor: colors.surface }]}
+            onPress={openAdd}
+          >
+            <Text style={styles.fabMenuItemEmoji}>✏️</Text>
+            <Text style={[styles.fabMenuItemLabel, { color: colors.text }]}>Add manually</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* FAB */}
       <TouchableOpacity
         style={[
           styles.fab,
           { backgroundColor: ACCENT, bottom: insets.bottom + 30 },
         ]}
-        onPress={openAdd}
+        onPress={() => toggleFab(!fabOpen)}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={[styles.fabText, fabOpen && styles.fabTextOpen]}>+</Text>
       </TouchableOpacity>
 
       {/* Detail modal */}
@@ -340,9 +400,11 @@ export default function RecipesScreen() {
         visible={showAdd}
         familyId={family?.id ?? ''}
         editRecipe={editRecipe}
+        importData={importData}
         onClose={() => {
           setShowAdd(false);
           setEditRecipe(undefined);
+          setImportData(null);
         }}
         onSave={handleSave}
       />
@@ -427,6 +489,34 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
+    zIndex: 11,
   },
   fabText: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '300' },
+  fabTextOpen: { transform: [{ rotate: '45deg' }] },
+  fabBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    zIndex: 9,
+  },
+  fabMenu: {
+    position: 'absolute',
+    right: 16,
+    zIndex: 10,
+    gap: 8,
+  },
+  fabMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  fabMenuItemEmoji: { fontSize: 18 },
+  fabMenuItemLabel: { fontSize: 15, fontWeight: '600' },
 });

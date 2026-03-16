@@ -13,6 +13,7 @@ import ChatInfoSheet from '../screens/Messages/ChatInfoSheet';
 import BudgetCurrencySheet from './BudgetCurrencySheet';
 import DocumentOptionsSheet from './DocumentOptionsSheet';
 import PhotoActionsSheet from './PhotoActionsSheet';
+import ImportRecipeSheet from './ImportRecipeSheet';
 
 registerSheet('add-event', AddEventModal);
 registerSheet('add-chore', AddChoreModal);
@@ -27,6 +28,7 @@ registerSheet('chat-info', ChatInfoSheet);
 registerSheet('budget-currency', BudgetCurrencySheet);
 registerSheet('doc-options', DocumentOptionsSheet);
 registerSheet('photo-actions', PhotoActionsSheet);
+registerSheet('import-recipe', ImportRecipeSheet);
 
 export {};
 
@@ -38,6 +40,7 @@ import type { PlaceType, FamilyPlace } from '../types';
 import type { DocumentFolder } from '../services/documentService';
 import type { Chat } from '../services/chatService';
 import type { GalleryPhoto } from '../services/galleryService';
+import type { ImportedRecipeData } from '../services/recipeImportService';
 
 declare module 'react-native-actions-sheet' {
   interface Sheets {
@@ -135,6 +138,11 @@ declare module 'react-native-actions-sheet' {
         onDownload: () => void;
         onShare: () => void;
         onDelete: (photo: GalleryPhoto) => void;
+      };
+    }>;
+    'import-recipe': SheetDefinition<{
+      payload: {
+        onImport: (data: ImportedRecipeData) => void;
       };
     }>;
   }

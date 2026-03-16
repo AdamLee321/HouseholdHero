@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -13,46 +13,51 @@ import {
 } from 'react-native';
 import Text from '../../../components/Text';
 import TextInput from '../../../components/TextInput';
-import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from '../../../theme/useTheme';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../../theme/useTheme';
 import {
   Recipe,
   RecipeIngredient,
   uploadRecipePhoto,
 } from '../../../services/recipeService';
+import { ImportedRecipeData } from '../../../services/recipeImportService';
 
 const PRESET_TAGS = [
-  {label: 'Breakfast', emoji: '🍳'},
-  {label: 'Lunch', emoji: '🥗'},
-  {label: 'Dinner', emoji: '🍲'},
-  {label: 'Dessert', emoji: '🍰'},
-  {label: 'Drinks', emoji: '🥤'},
-  {label: 'Snack', emoji: '🥨'},
-  {label: 'Vegetarian', emoji: '🌱'},
-  {label: 'Quick', emoji: '⚡'},
-  {label: 'Baking', emoji: '🎂'},
-  {label: 'Seafood', emoji: '🐟'},
+  { label: 'Breakfast', emoji: '🍳' },
+  { label: 'Lunch', emoji: '🥗' },
+  { label: 'Dinner', emoji: '🍲' },
+  { label: 'Dessert', emoji: '🍰' },
+  { label: 'Drinks', emoji: '🥤' },
+  { label: 'Snack', emoji: '🥨' },
+  { label: 'Vegetarian', emoji: '🌱' },
+  { label: 'Quick', emoji: '⚡' },
+  { label: 'Baking', emoji: '🎂' },
+  { label: 'Seafood', emoji: '🐟' },
 ];
 
 interface Props {
   visible: boolean;
   familyId: string;
   editRecipe?: Recipe | null;
+  importData?: ImportedRecipeData | null;
   onClose: () => void;
-  onSave: (data: Omit<Recipe, 'id' | 'createdAt' | 'addedBy' | 'addedByName'>) => Promise<void>;
+  onSave: (
+    data: Omit<Recipe, 'id' | 'createdAt' | 'addedBy' | 'addedByName'>,
+  ) => Promise<void>;
 }
 
-const EMPTY_INGREDIENT: RecipeIngredient = {amount: '', name: ''};
+const EMPTY_INGREDIENT: RecipeIngredient = { amount: '', name: '' };
 
 export default function AddRecipeModal({
   visible,
   familyId,
   editRecipe,
+  importData,
   onClose,
   onSave,
 }: Props) {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const ACCENT = colors.tiles.recipes.icon;
 
@@ -63,7 +68,7 @@ export default function AddRecipeModal({
   const [cookMins, setCookMins] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([
-    {amount: '', name: ''},
+    { amount: '', name: '' },
   ]);
   const [steps, setSteps] = useState<string[]>(['']);
   const [photoURI, setPhotoURI] = useState('');
@@ -72,7 +77,7 @@ export default function AddRecipeModal({
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Populate fields when editing
+  // Populate fields when editing or importing
   useEffect(() => {
     if (editRecipe) {
       setTitle(editRecipe.title);
@@ -81,15 +86,35 @@ export default function AddRecipeModal({
       setPrepMins(editRecipe.prepMins ? String(editRecipe.prepMins) : '');
       setCookMins(editRecipe.cookMins ? String(editRecipe.cookMins) : '');
       setTags(editRecipe.tags ?? []);
-      setIngredients(editRecipe.ingredients?.length ? editRecipe.ingredients : [{amount: '', name: ''}]);
+      setIngredients(
+        editRecipe.ingredients?.length
+          ? editRecipe.ingredients
+          : [{ amount: '', name: '' }],
+      );
       setSteps(editRecipe.steps?.length ? editRecipe.steps : ['']);
       setPhotoURL(editRecipe.photoURL ?? '');
       setPhotoStoragePath(editRecipe.photoStoragePath ?? '');
       setPhotoURI('');
+    } else if (importData) {
+      setTitle(importData.title);
+      setDescription(importData.description);
+      setServings(importData.servings ? String(importData.servings) : '4');
+      setPrepMins(importData.prepMins ? String(importData.prepMins) : '');
+      setCookMins(importData.cookMins ? String(importData.cookMins) : '');
+      setTags(importData.tags);
+      setIngredients(
+        importData.ingredients.length
+          ? importData.ingredients
+          : [{ amount: '', name: '' }],
+      );
+      setSteps(importData.steps.length ? importData.steps : ['']);
+      setPhotoURL(importData.photoURL);
+      setPhotoStoragePath('');
+      setPhotoURI('');
     } else {
       resetForm();
     }
-  }, [editRecipe, visible]);
+  }, [editRecipe, importData, visible]);
 
   function resetForm() {
     setTitle('');
@@ -98,7 +123,7 @@ export default function AddRecipeModal({
     setPrepMins('');
     setCookMins('');
     setTags([]);
-    setIngredients([{amount: '', name: ''}]);
+    setIngredients([{ amount: '', name: '' }]);
     setSteps(['']);
     setPhotoURI('');
     setPhotoURL('');
@@ -106,7 +131,9 @@ export default function AddRecipeModal({
   }
 
   function handleClose() {
-    if (!editRecipe) {resetForm();}
+    if (!editRecipe) {
+      resetForm();
+    }
     onClose();
   }
 
@@ -117,15 +144,19 @@ export default function AddRecipeModal({
   }
 
   // Ingredients
-  function updateIngredient(idx: number, field: 'amount' | 'name', val: string) {
+  function updateIngredient(
+    idx: number,
+    field: 'amount' | 'name',
+    val: string,
+  ) {
     setIngredients(prev => {
       const next = [...prev];
-      next[idx] = {...next[idx], [field]: val};
+      next[idx] = { ...next[idx], [field]: val };
       return next;
     });
   }
   function addIngredient() {
-    setIngredients(prev => [...prev, {...EMPTY_INGREDIENT}]);
+    setIngredients(prev => [...prev, { ...EMPTY_INGREDIENT }]);
   }
   function removeIngredient(idx: number) {
     setIngredients(prev => prev.filter((_, i) => i !== idx));
@@ -149,15 +180,15 @@ export default function AddRecipeModal({
   // Photo picker
   function pickPhoto() {
     Alert.alert('Recipe Photo', 'Choose a source', [
-      {text: 'Camera', onPress: pickFromCamera},
-      {text: 'Photo Library', onPress: pickFromLibrary},
-      {text: 'Cancel', style: 'cancel'},
+      { text: 'Camera', onPress: pickFromCamera },
+      { text: 'Photo Library', onPress: pickFromLibrary },
+      { text: 'Cancel', style: 'cancel' },
     ]);
   }
 
   async function pickFromCamera() {
     try {
-      const result = await launchCamera({mediaType: 'photo', quality: 0.8});
+      const result = await launchCamera({ mediaType: 'photo', quality: 0.8 });
       if (!result.didCancel && result.assets?.[0]?.uri) {
         setPhotoURI(result.assets[0].uri);
       }
@@ -168,7 +199,10 @@ export default function AddRecipeModal({
 
   async function pickFromLibrary() {
     try {
-      const result = await launchImageLibrary({mediaType: 'photo', quality: 0.8});
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
       if (!result.didCancel && result.assets?.[0]?.uri) {
         setPhotoURI(result.assets[0].uri);
       }
@@ -179,7 +213,9 @@ export default function AddRecipeModal({
 
   async function handleSave() {
     const trimmedTitle = title.trim();
-    if (!trimmedTitle) {return;}
+    if (!trimmedTitle) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -211,7 +247,9 @@ export default function AddRecipeModal({
         photoURL: finalPhotoURL,
         photoStoragePath: finalStoragePath,
       });
-      if (!editRecipe) {resetForm();}
+      if (!editRecipe) {
+        resetForm();
+      }
       onClose();
     } catch (err: any) {
       Alert.alert('Error', err?.message ?? 'Could not save recipe.');
@@ -226,24 +264,48 @@ export default function AddRecipeModal({
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        style={[styles.container, {backgroundColor: colors.background}]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        style={[styles.container, { backgroundColor: colors.background }]}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         {/* Header */}
-        <View style={[styles.header, {backgroundColor: colors.surface, borderBottomColor: colors.border, paddingTop: insets.top + 14}]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.border,
+              paddingTop: Platform.OS === 'ios' ? insets.top + 6 : 20,
+            },
+          ]}
+        >
           <TouchableOpacity onPress={handleClose} style={styles.headerBtn}>
-            <Text style={[styles.headerBtnText, {color: colors.textSecondary}]}>Cancel</Text>
+            <Text
+              style={[styles.headerBtnText, { color: colors.textSecondary }]}
+            >
+              Cancel
+            </Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, {color: colors.text}]}>
-            {editRecipe ? 'Edit Recipe' : 'New Recipe'}
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {editRecipe
+              ? 'Edit Recipe'
+              : importData
+              ? 'Import Recipe'
+              : 'New Recipe'}
           </Text>
           <TouchableOpacity
             onPress={handleSave}
             style={styles.headerBtn}
-            disabled={!title.trim() || saving}>
+            disabled={!title.trim() || saving}
+          >
             {saving ? (
               <ActivityIndicator size="small" color={ACCENT} />
             ) : (
-              <Text style={[styles.headerSave, {color: title.trim() ? ACCENT : colors.textTertiary}]}>
+              <Text
+                style={[
+                  styles.headerSave,
+                  { color: title.trim() ? ACCENT : colors.textTertiary },
+                ]}
+              >
                 Save
               </Text>
             )}
@@ -252,16 +314,27 @@ export default function AddRecipeModal({
 
         <ScrollView
           contentContainerStyle={styles.form}
-          keyboardShouldPersistTaps="handled">
-
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Photo */}
           <TouchableOpacity style={styles.photoPicker} onPress={pickPhoto}>
             {previewPhoto ? (
-              <Image source={{uri: previewPhoto}} style={styles.photoPreview} resizeMode="cover" />
+              <Image
+                source={{ uri: previewPhoto }}
+                style={styles.photoPreview}
+                resizeMode="cover"
+              />
             ) : (
-              <View style={[styles.photoPlaceholder, {backgroundColor: colors.surface}]}>
+              <View
+                style={[
+                  styles.photoPlaceholder,
+                  { backgroundColor: colors.surface },
+                ]}
+              >
                 <Text style={styles.photoIcon}>📷</Text>
-                <Text style={[styles.photoHint, {color: colors.textSecondary}]}>
+                <Text
+                  style={[styles.photoHint, { color: colors.textSecondary }]}
+                >
                   Add cover photo (optional)
                 </Text>
               </View>
@@ -274,9 +347,14 @@ export default function AddRecipeModal({
           </TouchableOpacity>
 
           {/* Title */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Title *</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            Title *
+          </Text>
           <TextInput
-            style={[styles.input, {backgroundColor: colors.surface, color: colors.text}]}
+            style={[
+              styles.input,
+              { backgroundColor: colors.surface, color: colors.text },
+            ]}
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Grandma's Lasagna"
@@ -284,9 +362,15 @@ export default function AddRecipeModal({
           />
 
           {/* Description */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Description</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            Description
+          </Text>
           <TextInput
-            style={[styles.input, styles.multiline, {backgroundColor: colors.surface, color: colors.text}]}
+            style={[
+              styles.input,
+              styles.multiline,
+              { backgroundColor: colors.surface, color: colors.text },
+            ]}
             value={description}
             onChangeText={setDescription}
             placeholder="A short description…"
@@ -298,9 +382,14 @@ export default function AddRecipeModal({
           {/* Stats row */}
           <View style={styles.statsRow}>
             <View style={styles.statField}>
-              <Text style={[styles.label, {color: colors.textSecondary}]}>Servings</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Servings
+              </Text>
               <TextInput
-                style={[styles.statInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.statInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={servings}
                 onChangeText={setServings}
                 keyboardType="number-pad"
@@ -309,9 +398,14 @@ export default function AddRecipeModal({
               />
             </View>
             <View style={styles.statField}>
-              <Text style={[styles.label, {color: colors.textSecondary}]}>Prep (min)</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Prep (min)
+              </Text>
               <TextInput
-                style={[styles.statInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.statInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={prepMins}
                 onChangeText={setPrepMins}
                 keyboardType="number-pad"
@@ -320,9 +414,14 @@ export default function AddRecipeModal({
               />
             </View>
             <View style={styles.statField}>
-              <Text style={[styles.label, {color: colors.textSecondary}]}>Cook (min)</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Cook (min)
+              </Text>
               <TextInput
-                style={[styles.statInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.statInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={cookMins}
                 onChangeText={setCookMins}
                 keyboardType="number-pad"
@@ -333,7 +432,9 @@ export default function AddRecipeModal({
           </View>
 
           {/* Tags */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Tags</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            Tags
+          </Text>
           <View style={styles.tagGrid}>
             {PRESET_TAGS.map(t => {
               const selected = tags.includes(t.label);
@@ -347,9 +448,15 @@ export default function AddRecipeModal({
                       borderColor: selected ? ACCENT : colors.border,
                     },
                   ]}
-                  onPress={() => toggleTag(t.label)}>
+                  onPress={() => toggleTag(t.label)}
+                >
                   <Text style={styles.tagEmoji}>{t.emoji}</Text>
-                  <Text style={[styles.tagLabel, {color: selected ? '#fff' : colors.text}]}>
+                  <Text
+                    style={[
+                      styles.tagLabel,
+                      { color: selected ? '#fff' : colors.text },
+                    ]}
+                  >
                     {t.label}
                   </Text>
                 </TouchableOpacity>
@@ -358,45 +465,73 @@ export default function AddRecipeModal({
           </View>
 
           {/* Ingredients */}
-          <Text style={[styles.label, {color: colors.textSecondary}]}>Ingredients</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>
+            Ingredients
+          </Text>
           {ingredients.map((ing, idx) => (
             <View key={idx} style={styles.ingredientRow}>
               <TextInput
-                style={[styles.amountInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.amountInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={ing.amount}
                 onChangeText={v => updateIngredient(idx, 'amount', v)}
                 placeholder="2 cups"
                 placeholderTextColor={colors.textTertiary}
               />
               <TextInput
-                style={[styles.nameInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.nameInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={ing.name}
                 onChangeText={v => updateIngredient(idx, 'name', v)}
                 placeholder="flour"
                 placeholderTextColor={colors.textTertiary}
               />
               {ingredients.length > 1 && (
-                <TouchableOpacity onPress={() => removeIngredient(idx)} style={styles.removeBtn}>
-                  <Text style={[styles.removeBtnText, {color: colors.danger}]}>✕</Text>
+                <TouchableOpacity
+                  onPress={() => removeIngredient(idx)}
+                  style={styles.removeBtn}
+                >
+                  <Text
+                    style={[styles.removeBtnText, { color: colors.danger }]}
+                  >
+                    ✕
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
           ))}
           <TouchableOpacity
-            style={[styles.addRowBtn, {borderColor: ACCENT}]}
-            onPress={addIngredient}>
-            <Text style={[styles.addRowText, {color: ACCENT}]}>+ Add ingredient</Text>
+            style={[styles.addRowBtn, { borderColor: ACCENT }]}
+            onPress={addIngredient}
+          >
+            <Text style={[styles.addRowText, { color: ACCENT }]}>
+              + Add ingredient
+            </Text>
           </TouchableOpacity>
 
           {/* Steps */}
-          <Text style={[styles.label, {color: colors.textSecondary, marginTop: 20}]}>Steps</Text>
+          <Text
+            style={[
+              styles.label,
+              { color: colors.textSecondary, marginTop: 20 },
+            ]}
+          >
+            Steps
+          </Text>
           {steps.map((step, idx) => (
             <View key={idx} style={styles.stepRow}>
-              <View style={[styles.stepNum, {backgroundColor: ACCENT}]}>
+              <View style={[styles.stepNum, { backgroundColor: ACCENT }]}>
                 <Text style={styles.stepNumText}>{idx + 1}</Text>
               </View>
               <TextInput
-                style={[styles.stepInput, {backgroundColor: colors.surface, color: colors.text}]}
+                style={[
+                  styles.stepInput,
+                  { backgroundColor: colors.surface, color: colors.text },
+                ]}
                 value={step}
                 onChangeText={v => updateStep(idx, v)}
                 placeholder={`Step ${idx + 1}…`}
@@ -404,16 +539,29 @@ export default function AddRecipeModal({
                 multiline
               />
               {steps.length > 1 && (
-                <TouchableOpacity onPress={() => removeStep(idx)} style={styles.removeBtn}>
-                  <Text style={[styles.removeBtnText, {color: colors.danger}]}>✕</Text>
+                <TouchableOpacity
+                  onPress={() => removeStep(idx)}
+                  style={styles.removeBtn}
+                >
+                  <Text
+                    style={[styles.removeBtnText, { color: colors.danger }]}
+                  >
+                    ✕
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
           ))}
           <TouchableOpacity
-            style={[styles.addRowBtn, {borderColor: ACCENT, marginBottom: 40}]}
-            onPress={addStep}>
-            <Text style={[styles.addRowText, {color: ACCENT}]}>+ Add step</Text>
+            style={[
+              styles.addRowBtn,
+              { borderColor: ACCENT, marginBottom: 40 },
+            ]}
+            onPress={addStep}
+          >
+            <Text style={[styles.addRowText, { color: ACCENT }]}>
+              + Add step
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -422,7 +570,7 @@ export default function AddRecipeModal({
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1},
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -431,15 +579,15 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  headerBtn: {padding: 4},
-  headerBtnText: {fontSize: 16},
-  headerTitle: {fontSize: 17, fontWeight: '700'},
-  headerSave: {fontSize: 16, fontWeight: '700'},
+  headerBtn: { padding: 4 },
+  headerBtnText: { fontSize: 16 },
+  headerTitle: { fontSize: 17, fontWeight: '700' },
+  headerSave: { fontSize: 16, fontWeight: '700' },
 
-  form: {padding: 16},
+  form: { padding: 16 },
 
-  photoPicker: {marginBottom: 20, borderRadius: 12, overflow: 'hidden'},
-  photoPreview: {width: '100%', height: 200},
+  photoPicker: { marginBottom: 20, borderRadius: 12, overflow: 'hidden' },
+  photoPreview: { width: '100%', height: 200 },
   photoPlaceholder: {
     height: 160,
     borderRadius: 12,
@@ -447,8 +595,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  photoIcon: {fontSize: 36},
-  photoHint: {fontSize: 14},
+  photoIcon: { fontSize: 36 },
+  photoHint: { fontSize: 14 },
   photoOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
@@ -463,14 +611,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 6,
   },
-  input: {borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16},
-  multiline: {minHeight: 80, textAlignVertical: 'top'},
+  input: { borderRadius: 10, padding: 12, fontSize: 16, marginBottom: 16 },
+  multiline: { minHeight: 80, textAlignVertical: 'top' },
 
-  statsRow: {flexDirection: 'row', gap: 10, marginBottom: 16},
-  statField: {flex: 1},
-  statInput: {borderRadius: 10, padding: 12, fontSize: 16, textAlign: 'center'},
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  statField: { flex: 1 },
+  statInput: {
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    textAlign: 'center',
+  },
 
-  tagGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20},
+  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -480,14 +633,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  tagEmoji: {fontSize: 13},
-  tagLabel: {fontSize: 13, fontWeight: '600'},
+  tagEmoji: { fontSize: 13 },
+  tagLabel: { fontSize: 13, fontWeight: '600' },
 
-  ingredientRow: {flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center'},
-  amountInput: {width: 90, borderRadius: 10, padding: 10, fontSize: 14},
-  nameInput: {flex: 1, borderRadius: 10, padding: 10, fontSize: 14},
-  removeBtn: {padding: 6},
-  removeBtnText: {fontSize: 16, fontWeight: '700'},
+  ingredientRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+    alignItems: 'center',
+  },
+  amountInput: { width: 90, borderRadius: 10, padding: 10, fontSize: 14 },
+  nameInput: { flex: 1, borderRadius: 10, padding: 10, fontSize: 14 },
+  removeBtn: { padding: 6 },
+  removeBtnText: { fontSize: 16, fontWeight: '700' },
 
   addRowBtn: {
     borderRadius: 10,
@@ -498,9 +656,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 4,
   },
-  addRowText: {fontSize: 14, fontWeight: '600'},
+  addRowText: { fontSize: 14, fontWeight: '600' },
 
-  stepRow: {flexDirection: 'row', gap: 10, marginBottom: 10, alignItems: 'flex-start'},
+  stepRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+    alignItems: 'flex-start',
+  },
   stepNum: {
     width: 26,
     height: 26,
@@ -509,6 +672,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 10,
   },
-  stepNumText: {color: '#fff', fontSize: 12, fontWeight: '700'},
-  stepInput: {flex: 1, borderRadius: 10, padding: 10, fontSize: 14, textAlignVertical: 'top'},
+  stepNumText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  stepInput: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 14,
+    textAlignVertical: 'top',
+  },
 });
