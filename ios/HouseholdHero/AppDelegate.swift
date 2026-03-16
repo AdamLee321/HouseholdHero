@@ -43,6 +43,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
     Messaging.messaging().apnsToken = deviceToken
   }
+
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+    return Orientation.getOrientation()
+  }
 }
 
 extension AppDelegate: UNUserNotificationCenterDelegate {

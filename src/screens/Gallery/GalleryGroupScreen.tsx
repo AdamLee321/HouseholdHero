@@ -10,7 +10,9 @@ import {
   Dimensions,
   Share,
   Platform,
+  StatusBar,
 } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Text from '../../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -19,6 +21,8 @@ import RNFS from 'react-native-fs-turbo';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { SheetManager } from 'react-native-actions-sheet';
 import { useTheme } from '../../theme/useTheme';
+import Orientation from 'react-native-orientation-locker';
+import ZoomableImage from '../../components/ZoomableImage';
 import { useFamilyStore } from '../../store/familyStore';
 import {
   GalleryPhoto,
@@ -61,6 +65,7 @@ export default function GalleryGroupScreen() {
 
   const [allPhotos, setAllPhotos] = useState<GalleryPhoto[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [zoomUri, setZoomUri] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
 
   const pagerRef = useRef<FlatList>(null);
@@ -83,6 +88,16 @@ export default function GalleryGroupScreen() {
 
   function closeViewer() {
     setSelectedIndex(null);
+  }
+
+  function openZoom(uri: string) {
+    Orientation.unlockAllOrientations();
+    setZoomUri(uri);
+  }
+
+  function closeZoom() {
+    Orientation.lockToPortrait();
+    setZoomUri(null);
   }
 
   function onPagerScroll(e: any) {
@@ -175,13 +190,17 @@ export default function GalleryGroupScreen() {
 
   function renderPage({ item }: { item: GalleryPhoto }) {
     return (
-      <View style={styles.page}>
+      <TouchableOpacity
+        style={styles.page}
+        activeOpacity={1}
+        onPress={() => openZoom(item.downloadURL)}
+      >
         <Image
           source={{ uri: item.downloadURL }}
           style={styles.pageImage}
           resizeMode="contain"
         />
-      </View>
+      </TouchableOpacity>
     );
   }
 
@@ -262,6 +281,26 @@ export default function GalleryGroupScreen() {
           )}
         </View>
       </Modal>
+
+      {/* ── Fullscreen zoom viewer ─────────────────────────────────────────── */}
+      <Modal
+        visible={zoomUri !== null}
+        animationType="fade"
+        transparent={false}
+        statusBarTranslucent
+        onRequestClose={closeZoom}
+      >
+        <StatusBar hidden />
+        <GestureHandlerRootView style={styles.zoomViewer}>
+          {zoomUri !== null && <ZoomableImage uri={zoomUri} />}
+          <TouchableOpacity
+            style={[styles.topBtn, styles.zoomCloseBtn]}
+            onPress={closeZoom}
+          >
+            <Text style={styles.topBtnText}>✕</Text>
+          </TouchableOpacity>
+        </GestureHandlerRootView>
+      </Modal>
     </View>
   );
 }
@@ -327,6 +366,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Zoom viewer
+  zoomViewer: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
   },
 
   // Bottom info bar

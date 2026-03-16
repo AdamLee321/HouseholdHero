@@ -4043,6 +4043,7 @@ __metadata:
     react-native-gesture-handler: ^2.30.0
     react-native-image-picker: ^8.2.1
     react-native-maps: ^1.27.2
+    react-native-orientation-locker: ^1.7.0
     react-native-reanimated: ^4.2.2
     react-native-safe-area-context: ^5.7.0
     react-native-screens: ^4.24.0
@@ -9280,6 +9281,20 @@ __metadata:
     react-native-web:
       optional: true
   checksum: e6cf3faa7ce5d28ba66679781732ad429386773b1528b34c96c0a5bdd29d276af05a5058badbe03290b7eb89ded179b2768b9e8518946ff31741d2fc46ebd9e6
+  languageName: node
+  linkType: hard
+
+"react-native-orientation-locker@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "react-native-orientation-locker@npm:1.7.0"
+  peerDependencies:
+    react: ">=16.13.1"
+    react-native: ">=0.63.2"
+    react-native-windows: ">=0.63.3"
+  peerDependenciesMeta:
+    react-native-windows:
+      optional: true
+  checksum: 495010b3150adcbc1dcb24e0ca5c13838f02dbcee7c6ec391fe07bd47f9b75ac57b0ec1144aaab5d6ed62e7a354497e9fa5399359d896099ecbea439908817cf
   languageName: node
   linkType: hard
 

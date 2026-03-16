@@ -353,6 +353,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ie.al.householdhero;
 				PRODUCT_NAME = HouseholdHero;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "HouseholdHero/HouseholdHero-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -384,6 +385,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ie.al.householdhero;
 				PRODUCT_NAME = HouseholdHero;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OBJC_BRIDGING_HEADER = "HouseholdHero/HouseholdHero-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import Orientation from 'react-native-orientation-locker';
 import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import auth from '@react-native-firebase/auth';
@@ -16,6 +17,10 @@ import { subscribeTileAccess } from '../services/tileAccessService';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
+  useEffect(() => {
+    Orientation.lockToPortrait();
+  }, []);
+
   const { user, initialising, setUser, setInitialising } = useAuthStore();
   const { family, loading: familyLoading, setFamily, setProfile, setTileAccess, setLoading } = useFamilyStore();
   const profileUnsubRef = useRef<(() => void) | null>(null);

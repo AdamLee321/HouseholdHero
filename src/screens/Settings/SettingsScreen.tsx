@@ -19,7 +19,10 @@ import { useAuthStore } from '../../store/authStore';
 import { useFamilyStore } from '../../store/familyStore';
 import { SettingsStackParamList } from '../../navigation/SettingsStack';
 
-type SettingsNavProp = NativeStackNavigationProp<SettingsStackParamList, 'SettingsHome'>;
+type SettingsNavProp = NativeStackNavigationProp<
+  SettingsStackParamList,
+  'SettingsHome'
+>;
 
 export default function SettingsScreen() {
   const navigation = useNavigation<SettingsNavProp>();
@@ -39,146 +42,187 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={{ height: insets.top, backgroundColor: colors.background }} />
-    <ScrollView
-      {...tabBarScroll}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: 8, paddingBottom: insets.bottom + 100 },
-      ]}
-    >
-      {/* Profile card */}
-      <View style={[styles.card, { backgroundColor: colors.surface }]}>
-        <View style={[styles.avatar, { backgroundColor: colors.primaryLight }]}>
-          <Text style={[styles.avatarText, { color: colors.primary }]}>
-            {profile?.displayName?.charAt(0).toUpperCase() ?? '?'}
+      <View
+        style={{ height: insets.top, backgroundColor: colors.background }}
+      />
+      <ScrollView
+        {...tabBarScroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: 8, paddingBottom: insets.bottom + 100 },
+        ]}
+      >
+        {/* Profile card */}
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+          <View
+            style={[styles.avatar, { backgroundColor: colors.primaryLight }]}
+          >
+            <Text style={[styles.avatarText, { color: colors.primary }]}>
+              {profile?.displayName?.charAt(0).toUpperCase() ?? '?'}
+            </Text>
+          </View>
+          <Text style={[styles.displayName, { color: colors.text }]}>
+            {profile?.displayName ?? 'Unknown'}
+          </Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]}>
+            {user?.email ?? user?.phoneNumber ?? ''}
           </Text>
         </View>
-        <Text style={[styles.displayName, { color: colors.text }]}>
-          {profile?.displayName ?? 'Unknown'}
-        </Text>
-        <Text style={[styles.email, { color: colors.textSecondary }]}>
-          {user?.email ?? user?.phoneNumber ?? ''}
-        </Text>
-      </View>
 
-      {/* Admin-only family controls */}
-      {family && profile?.role === 'admin' && (
+        {/* Admin-only family controls */}
+        {family && profile?.role === 'admin' && (
+          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <Text
+              style={[styles.sectionTitle, { color: colors.textSecondary }]}
+            >
+              FAMILY
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.row,
+                styles.rowDivider,
+                { borderBottomColor: colors.border },
+              ]}
+              onPress={() => navigation.navigate('Invite')}
+            >
+              <Text style={[styles.rowLabel, { color: colors.text }]}>
+                Invite Members
+              </Text>
+              <LucideIcon
+                name="chevron-right"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => navigation.navigate('TileAccess')}
+            >
+              <Text style={[styles.rowLabel, { color: colors.text }]}>
+                Tile Access
+              </Text>
+              <LucideIcon
+                name="chevron-right"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Appearance */}
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            FAMILY
+            APPEARANCE
           </Text>
-          <TouchableOpacity
-            style={[styles.row, styles.rowDivider, { borderBottomColor: colors.border }]}
-            onPress={() => navigation.navigate('Invite')}>
+
+          <View
+            style={[
+              styles.row,
+              styles.rowDivider,
+              { borderBottomColor: colors.border },
+            ]}
+          >
             <Text style={[styles.rowLabel, { color: colors.text }]}>
-              Invite Members
+              Dark Mode
             </Text>
-            <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
+            <Switch
+              value={isDark}
+              onValueChange={val => setPreference(val ? 'dark' : 'light')}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#fff"
+            />
+          </View>
+
           <TouchableOpacity
             style={styles.row}
-            onPress={() => navigation.navigate('TileAccess')}>
+            onPress={() => setPreference('system')}
+          >
             <Text style={[styles.rowLabel, { color: colors.text }]}>
-              Tile Access
+              Use System Default
             </Text>
-            <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
+            {preference === 'system' && (
+              <Text style={[styles.checkmark, { color: colors.primary }]}>
+                ✓
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
-      )}
 
-      {/* Appearance */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          APPEARANCE
-        </Text>
-
-        <View style={[styles.row, styles.rowDivider, { borderBottomColor: colors.border }]}>
-          <Text style={[styles.rowLabel, { color: colors.text }]}>
-            Dark Mode
+        {/* Account */}
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            ACCOUNT
           </Text>
-          <Switch
-            value={isDark}
-            onValueChange={val => setPreference(val ? 'dark' : 'light')}
-            trackColor={{ false: colors.border, true: colors.primary }}
-            thumbColor="#fff"
-          />
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('Account')}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Email &amp; Password
+            </Text>
+            <LucideIcon
+              name="chevron-right"
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => setPreference('system')}
-        >
-          <Text style={[styles.rowLabel, { color: colors.text }]}>
-            Use System Default
+        {/* Home Screen */}
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            HOME SCREEN
           </Text>
-          {preference === 'system' && (
-            <Text style={[styles.checkmark, { color: colors.primary }]}>✓</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('OrganiseTiles')}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Organise Tiles
+            </Text>
+            <LucideIcon
+              name="chevron-right"
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* Account */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          ACCOUNT
-        </Text>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => navigation.navigate('Account')}
-        >
-          <Text style={[styles.rowLabel, { color: colors.text }]}>
-            Email &amp; Password
+        {/* Notifications */}
+        <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            NOTIFICATIONS
           </Text>
-          <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('NotificationSettings')}
+          >
+            <Text style={[styles.rowLabel, { color: colors.text }]}>
+              Notification Settings
+            </Text>
+            <LucideIcon
+              name="chevron-right"
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* Home Screen */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          HOME SCREEN
-        </Text>
+        {/* Sign out */}
         <TouchableOpacity
-          style={styles.row}
-          onPress={() => navigation.navigate('OrganiseTiles')}
+          style={[
+            styles.signOutBtn,
+            { backgroundColor: colors.surface, borderColor: colors.danger },
+          ]}
+          onPress={handleSignOut}
         >
-          <Text style={[styles.rowLabel, { color: colors.text }]}>
-            Organise Tiles
+          <Text style={[styles.signOutText, { color: colors.danger }]}>
+            Sign Out
           </Text>
-          <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
-      </View>
-
-      {/* Notifications */}
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          NOTIFICATIONS
-        </Text>
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => navigation.navigate('NotificationSettings')}
-        >
-          <Text style={[styles.rowLabel, { color: colors.text }]}>
-            Notification Settings
-          </Text>
-          <LucideIcon name="chevron-right" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Sign out */}
-      <TouchableOpacity
-        style={[
-          styles.signOutBtn,
-          { backgroundColor: colors.surface, borderColor: colors.danger },
-        ]}
-        onPress={handleSignOut}
-      >
-        <Text style={[styles.signOutText, { color: colors.danger }]}>
-          Sign Out
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
     </View>
   );
 }

@@ -2934,6 +2934,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-orientation-locker (1.7.0):
+    - React-Core
   - react-native-safe-area-context (5.7.0):
     - hermes-engine
     - RCTRequired
@@ -3870,6 +3872,7 @@ DEPENDENCIES:
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-maps (from `../node_modules/react-native-maps`)
+  - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-vector-icons-feather (from `../node_modules/@react-native-vector-icons/feather`)"
   - "react-native-vector-icons-lucide (from `../node_modules/@react-native-vector-icons/lucide`)"
@@ -4042,6 +4045,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-picker"
   react-native-maps:
     :path: "../node_modules/react-native-maps"
+  react-native-orientation-locker:
+    :path: "../node_modules/react-native-orientation-locker"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-vector-icons-feather:
@@ -4219,6 +4224,7 @@ SPEC CHECKSUMS:
   react-native-geolocation: b2fa81eb9f75c46b8e6e74ed9a4b56dab1523927
   react-native-image-picker: 4123dc2b15a0b6fc2f027e6cf94ae5f48c9ae9b0
   react-native-maps: af78b37e4581e4c534ee6932e89e92d33b3d9db3
+  react-native-orientation-locker: cc6f357b289a2e0dd2210fea0c52cb8e0727fdaa
   react-native-safe-area-context: 90476586077446d5eab1d41ac3e767b016ac41d6
   react-native-vector-icons-feather: e1fb94dbb68e5469194cc80311f27e6427c84aa3
   react-native-vector-icons-lucide: 00fefa767abccdcc044f41e34a4a1fc41f6a2da5
