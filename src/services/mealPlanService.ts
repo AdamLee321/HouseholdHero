@@ -3,10 +3,15 @@ import firestore from '@react-native-firebase/firestore';
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type DayOfWeek =
-  | 'monday' | 'tuesday' | 'wednesday' | 'thursday'
-  | 'friday' | 'saturday' | 'sunday';
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
 
-export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner';
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface MealSlot {
   name: string;
@@ -34,28 +39,39 @@ export interface MealPlan {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 export const DAYS_OF_WEEK: DayOfWeek[] = [
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
 ];
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
-  monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday',
-  thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
 };
 
-export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack', 'dinner'];
+export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export const MEAL_LABELS: Record<MealType, string> = {
   breakfast: 'Breakfast',
   lunch: 'Lunch',
-  snack: 'Snack',
   dinner: 'Dinner',
+  snack: 'Snack',
 };
 
 export const MEAL_EMOJIS: Record<MealType, string> = {
   breakfast: '🌅',
   lunch: '☀️',
-  snack: '🍎',
   dinner: '🌙',
+  snack: '🍎',
 };
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
@@ -79,8 +95,15 @@ export function toWeekKey(monday: Date): string {
 export function formatWeekLabel(monday: Date): string {
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
-  const startStr = monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const endStr = sunday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const startStr = monday.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  });
+  const endStr = sunday.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
   return `${startStr} – ${endStr}`;
 }
 
