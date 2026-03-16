@@ -6,9 +6,6 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Keyboard,
-  Platform,
-  TextInput as RNTextInput,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Text from '../../components/Text';
@@ -17,13 +14,12 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import auth from '@react-native-firebase/auth';
 import LucideIcon from '@react-native-vector-icons/lucide';
+import { SheetManager } from 'react-native-actions-sheet';
 import { useTheme } from '../../theme/useTheme';
 import { useFamilyStore } from '../../store/familyStore';
 import {
   ShoppingList,
   subscribeToShoppingLists,
-  createShoppingList,
-  renameShoppingList,
   deleteShoppingList,
 } from '../../services/shoppingService';
 import { HomeStackParamList } from '../../types';
@@ -43,25 +39,6 @@ export default function ShoppingScreen() {
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    const showEvent =
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent =
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const onShow = Keyboard.addListener(showEvent, e =>
-      setKeyboardHeight(e.endCoordinates.height),
-    );
-    const onHide = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-    return () => {
-      onShow.remove();
-      onHide.remove();
-    };
-  }, []);
 
   // Load persisted view mode
   useEffect(() => {
@@ -88,99 +65,47 @@ export default function ShoppingScreen() {
     AsyncStorage.setItem(VIEW_KEY, next);
   }
 
-  async function handleCreate() {
-    if (!newName.trim() || !family) {
-      return;
-    }
-    const name = newName.trim();
-    const optimisticId = `__optimistic_${Date.now()}`;
-    // Optimistically show the list immediately so there is no empty-state flash
-    setLists(prev => [
-      ...prev,
-      {
-        id: optimisticId,
-        name,
-        createdAt: Date.now(),
-        createdBy: uid,
-        itemCount: 0,
-        uncheckedCount: 0,
-      },
-    ]);
-    setNewName('');
-    setShowCreate(false);
-    Keyboard.dismiss();
-    setCreating(true);
-    try {
-      await createShoppingList(family.id, name, uid);
-      // Firestore snapshot will replace the optimistic entry with the confirmed one
-    } catch {
-      // Roll back on failure
-      setLists(prev => prev.filter(l => l.id !== optimisticId));
-      setShowCreate(true);
-      setNewName(name);
-    } finally {
-      setCreating(false);
-    }
+  function openCreateSheet() {
+    if (!family) { return; }
+    SheetManager.show('edit-shopping-list', {
+      payload: { familyId: family.id, uid },
+    });
   }
 
   const handleLongPress = useCallback(
     (list: ShoppingList) => {
-      if (!family) {
-        return;
-      }
-      Alert.alert(list.name, undefined, [
-        {
-          text: 'Rename',
-          onPress: () => promptRename(list),
+      if (!family) { return; }
+      SheetManager.show('edit-shopping-list', {
+        payload: {
+          familyId: family.id,
+          list,
+          onDelete: () => {
+            const itemWord = list.itemCount === 1 ? 'item' : 'items';
+            const message =
+              list.itemCount > 0
+                ? `This will permanently delete "${list.name}" and all ${list.itemCount} ${itemWord} in it.`
+                : `Are you sure you want to delete "${list.name}"?`;
+            Alert.alert('Delete List', message, [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => deleteShoppingList(family.id, list.id),
+              },
+            ]);
+          },
         },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => confirmDelete(list),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
+      });
     },
     [family],
   );
 
-  function promptRename(list: ShoppingList) {
-    Alert.prompt(
-      'Rename List',
-      undefined,
-      async text => {
-        if (text?.trim() && family) {
-          await renameShoppingList(family.id, list.id, text);
-        }
-      },
-      'plain-text',
-      list.name,
-    );
-  }
-
-  function confirmDelete(list: ShoppingList) {
-    if (!family) {
-      return;
-    }
-    const itemWord = list.itemCount === 1 ? 'item' : 'items';
-    const message =
-      list.itemCount > 0
-        ? `This will permanently delete "${list.name}" and all ${list.itemCount} ${itemWord} in it.`
-        : `Are you sure you want to delete "${list.name}"?`;
-    Alert.alert('Delete List', message, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => deleteShoppingList(family.id, list.id),
-      },
-    ]);
-  }
-
   function renderGridItem({ item }: { item: ShoppingList }) {
+    const listEmoji = item.emoji ?? '🛒';
+    const listColor = item.color ?? ACCENT;
     return (
       <TouchableOpacity
-        style={[styles.gridCard, { backgroundColor: colors.surface }]}
+        style={[styles.gridCard, { backgroundColor: listColor + '1A' }]}
         onPress={() =>
           navigation.navigate('ShoppingList', {
             listId: item.id,
@@ -190,7 +115,7 @@ export default function ShoppingScreen() {
         onLongPress={() => handleLongPress(item)}
         activeOpacity={0.8}
       >
-        <Text style={styles.gridCardEmoji}>🛒</Text>
+        <Text style={styles.gridCardEmoji}>{listEmoji}</Text>
         <Text
           style={[styles.gridCardName, { color: colors.text }]}
           numberOfLines={2}
@@ -198,12 +123,12 @@ export default function ShoppingScreen() {
           {item.name}
         </Text>
         {item.uncheckedCount > 0 ? (
-          <View style={[styles.badge, { backgroundColor: ACCENT }]}>
-            <Text style={styles.badgeText}>{item.uncheckedCount} Items</Text>
+          <View style={[styles.badge, { backgroundColor: listColor }]}>
+            <Text style={[styles.badgeText, { color: '#fff' }]}>{item.uncheckedCount} Items</Text>
           </View>
         ) : item.itemCount > 0 ? (
           <View style={[styles.badge, { backgroundColor: colors.success }]}>
-            <Text style={styles.badgeText}>Done</Text>
+            <Text style={[styles.badgeText, { color: '#fff' }]}>Done</Text>
           </View>
         ) : (
           <Text style={[styles.gridCardEmpty, { color: colors.textTertiary }]}>
@@ -215,6 +140,8 @@ export default function ShoppingScreen() {
   }
 
   function renderListItem({ item }: { item: ShoppingList }) {
+    const listEmoji = item.emoji ?? '🛒';
+    const listColor = item.color ?? ACCENT;
     return (
       <TouchableOpacity
         style={[styles.listCard, { backgroundColor: colors.surface }]}
@@ -227,14 +154,15 @@ export default function ShoppingScreen() {
         onLongPress={() => handleLongPress(item)}
         activeOpacity={0.8}
       >
-        <Text style={styles.listCardEmoji}>🛒</Text>
+        <View style={[styles.listCardIcon, { backgroundColor: listColor + '22' }]}>
+          <Text style={styles.listCardEmoji}>{listEmoji}</Text>
+        </View>
         <View style={styles.listCardBody}>
           <Text style={[styles.listCardName, { color: colors.text }]}>
             {item.name}
           </Text>
-          <View style={[styles.badge, { backgroundColor: ACCENT }]}>
-            <Text style={styles.badgeText}>
-              {' '}
+          <View style={[styles.badge, { backgroundColor: listColor + '22' }]}>
+            <Text style={[styles.badgeText, { color: listColor }]}>
               {item.itemCount === 0 ? 'Empty' : `${item.uncheckedCount} items`}
             </Text>
           </View>
@@ -276,7 +204,7 @@ export default function ShoppingScreen() {
 
       {loading ? (
         <ActivityIndicator style={styles.loader} color={ACCENT} />
-      ) : lists.length === 0 && !showCreate ? (
+      ) : lists.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyEmoji}>🛒</Text>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -315,73 +243,13 @@ export default function ShoppingScreen() {
         />
       )}
 
-      {/* Inline create input */}
-      {showCreate && (
-        <View
-          style={[
-            styles.createBar,
-            {
-              backgroundColor: colors.surface,
-              borderTopColor: colors.border,
-              bottom: keyboardHeight,
-              paddingBottom: keyboardHeight > 0 ? 20 : insets.bottom + 20,
-            },
-          ]}
-        >
-          <RNTextInput
-            style={[
-              styles.createInput,
-              { backgroundColor: colors.background, color: colors.text },
-            ]}
-            value={newName}
-            onChangeText={setNewName}
-            placeholder="List name…"
-            placeholderTextColor={colors.textTertiary}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={handleCreate}
-          />
-          <TouchableOpacity
-            style={[
-              styles.createConfirm,
-              { backgroundColor: newName.trim() ? ACCENT : colors.border },
-            ]}
-            onPress={handleCreate}
-            disabled={!newName.trim() || creating}
-          >
-            {creating ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <LucideIcon name="check" size={20} color="#fff" />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.createCancel,
-              { backgroundColor: colors.background },
-            ]}
-            onPress={() => {
-              setShowCreate(false);
-              setNewName('');
-            }}
-          >
-            <LucideIcon name="x" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* FAB */}
-      {!showCreate && (
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            { backgroundColor: ACCENT, bottom: insets.bottom + 30 },
-          ]}
-          onPress={() => setShowCreate(true)}
-        >
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: ACCENT, bottom: insets.bottom + 30 }]}
+        onPress={openCreateSheet}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -438,10 +306,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     gap: 12,
   },
-  listCardEmoji: { fontSize: 28 },
+  listCardIcon: {
+    width: 48, height: 48, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  listCardEmoji: { fontSize: 26 },
   listCardBody: { flex: 1 },
   listCardName: { fontSize: 16, fontWeight: '700', marginBottom: 5 },
   listCardMeta: { fontSize: 13, marginTop: 2 },
@@ -454,41 +326,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignSelf: 'flex-start',
   },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-
-  // Create bar
-  createBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 16,
-    paddingTop: 14,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  createInput: {
-    flex: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  createConfirm: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  createCancel: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  badgeText: { fontSize: 11, fontWeight: '700' },
 
   fab: {
     position: 'absolute',

@@ -3,9 +3,14 @@ import { logActivity } from './activityService';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+export const DEFAULT_LIST_EMOJI = '🛒';
+export const DEFAULT_LIST_COLOR = '#3B82F6';
+
 export interface ShoppingList {
   id: string;
   name: string;
+  emoji: string;
+  color: string;
   createdAt: number;
   createdBy: string;
   itemCount: number;
@@ -185,15 +190,29 @@ export async function createShoppingList(
   familyId: string,
   name: string,
   uid: string,
+  emoji = DEFAULT_LIST_EMOJI,
+  color = DEFAULT_LIST_COLOR,
 ) {
   const ref = await listsRef(familyId).add({
     name: name.trim(),
+    emoji,
+    color,
     createdAt: Date.now(),
     createdBy: uid,
     itemCount: 0,
     uncheckedCount: 0,
   });
   return ref.id;
+}
+
+export async function updateShoppingListMeta(
+  familyId: string,
+  listId: string,
+  name: string,
+  emoji: string,
+  color: string,
+) {
+  await listsRef(familyId).doc(listId).update({ name: name.trim(), emoji, color });
 }
 
 export async function renameShoppingList(

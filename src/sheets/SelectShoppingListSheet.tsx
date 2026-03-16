@@ -41,8 +41,8 @@ export default function SelectShoppingListSheet(props: SheetProps<'select-shoppi
               ]}
               onPress={() => handleSelect(item.id, item.name)}
             >
-              <View style={[styles.iconWrap, { backgroundColor: colors.tiles.shopping.bg }]}>
-                <Text style={styles.iconEmoji}>🛒</Text>
+              <View style={[styles.iconWrap, { backgroundColor: (item.color ?? '#3B82F6') + '22' }]}>
+                <Text style={styles.iconEmoji}>{item.emoji ?? '🛒'}</Text>
               </View>
               <View style={styles.rowBody}>
                 <Text style={[styles.rowName, { color: colors.text }]}>{item.name}</Text>
